@@ -581,8 +581,10 @@ input:focus,select:focus,textarea:focus{outline:none;box-shadow:0 0 0 3px rgba(9
     <div class="card own-only" id="inboxBox" hidden></div>
     <div class="card own-only" id="usrBox"></div>
     <details class="card own-only" id="tagBox"><summary style="font-weight:800;font-size:16px;cursor:pointer">🗂 Бирки рулонов <span id="tagCnt"></span></summary><div class="rw2" style="margin:8px 0"><select id="tagMon"></select><input id="tagQ" placeholder="№ рулона, цвет, завод" style="flex:1;min-width:0"></div><div id="tagList"></div></details>
-    <div class="card own-only"><div class="rt" style="font-weight:800;font-size:16px;margin-bottom:8px">📊 Отчёт за день</div>
-      <div class="rw2">дата <input id="repDate" style="width:120px"> <button class="chip" id="repShow">Показать</button><button class="chip" id="repCopy">Копировать</button><button class="chip on" id="repPrint">🖨 PDF</button></div>
+    <div class="card own-only"><div class="rt" style="font-weight:800;font-size:16px;margin-bottom:8px">📊 Отчёт склада</div>
+      <div class="seg" id="repSeg" style="margin-bottom:8px"><button data-rmode="d" class="on">День</button><button data-rmode="10">10 дней</button><button data-rmode="m">Месяц</button><button data-rmode="p">Период</button></div>
+      <div class="rw2"><span id="repFromW" hidden>с <input id="repFrom" style="width:120px" placeholder="01.11.2026"></span><span id="repToL">дата</span> <input id="repDate" style="width:120px"> <button class="chip" id="repShow">Показать</button><button class="chip" id="repCopy">Копировать</button><button class="chip on" id="repPrint">🖨 PDF</button></div>
+      <div id="repRange" style="font-size:13px;color:var(--mut);margin-top:6px"></div>
       <div id="repBody"></div></div>
     <div id="skList"></div>
     <details class="card own-only"><summary style="font-weight:700;cursor:pointer">⚙️ Метров в 1 тонне (по толщине)</summary><div id="skMpt"></div></details>
@@ -2638,25 +2640,30 @@ $('tagList').addEventListener('click',e=>{const z=e.target.closest('[data-tz]');
 $('tagBox').addEventListener('toggle',()=>{tagsStart();renderTags()});
 // ---------- дневной отчёт ----------
 function dayStart(d){const m=String(d||'').match(/(\d{1,2})\.(\d{1,2})\.(\d{4})/);return m?new Date(+m[3],+m[2]-1,+m[1]).getTime():0}
-function dayReport(d){const t0=dayStart(d),t1=t0+864e5;const its=Object.fromEntries(SK_ITEMS.map(i=>[i.id,i]));
+function dayReport(d){return periodReport(d,d)}
+function periodReport(d,d2){const t0=dayStart(d),t1=dayStart(d2||d)+864e5;const per=(d2||d)!=d;const its=Object.fromEntries(SK_ITEMS.map(i=>[i.id,i]));
   const mv=SK_MOVES.filter(m=>m.ts>=t0&&m.ts<t1), ins={},outs={};
   mv.forEach(m=>{const q=num(m.qty);const tgt=q>=0?ins:outs;tgt[m.item]=(tgt[m.item]||0)+Math.abs(q)});
-  const ords=saved.filter(o=>o.date==d||(o.ts>=t0&&o.ts<t1&&!o.date));
+  const inR=o=>{const ds=o.date?dayStart(o.date):0;return ds?ds>=t0&&ds<t1:o.ts>=t0&&o.ts<t1};const ords=saved.filter(inR);
   const bal=SK_ITEMS.map(i=>[i,SK_MOVES.filter(m=>m.item==i.id&&m.ts<t1).reduce((a,m)=>a+num(m.qty),0)]);
-  const pays=[];saved.forEach(o=>{if(o.date==d&&num((o.cli||{}).pre))pays.push([o,num(String(o.cli.pre).replace(/\s/g,'')),'предоплата',(o.cli||{}).preM||'']);(o.pays||[]).forEach(p=>{if(p.ts>=t0&&p.ts<t1)pays.push([o,num(p.sum),p.note||'оплата',pmGuess(p)])})});
+  const pays=[];saved.forEach(o=>{if(inR(o)&&num((o.cli||{}).pre))pays.push([o,num(String(o.cli.pre).replace(/\s/g,'')),'предоплата',(o.cli||{}).preM||'']);(o.pays||[]).forEach(p=>{if(p.ts>=t0&&p.ts<t1)pays.push([o,num(p.sum),p.note||'оплата',pmGuess(p)])})});
   const debts=saved.filter(o=>oDebt(o)>0);
   const byU={};mv.forEach(m=>{const q=num(m.qty);if(q>=0)return;const u=m._by||'';const g=byU[u]||(byU[u]={});g[m.item]=(g[m.item]||0)-q});
-  return {d,its,ins,outs,ords,bal,pays,debts,byU}}
+  const open=Object.fromEntries(SK_ITEMS.map(i=>[i.id,SK_MOVES.filter(m=>m.item==i.id&&m.ts<t0).reduce((a,m)=>a+num(m.qty),0)]));
+  return {d:per?d+' — '+d2:d,per,its,ins,outs,ords,bal,pays,debts,byU,open}}
 function reportHtml(R,print){const L=(it,q)=>esc(skName(it))+'</td><td style="text-align:right;white-space:nowrap"><b>'+fmt(Math.round(q*100)/100)+' '+skUnit(it)+'</b>'+(it.kind=='coil'&&mptOf(it.t)?' <span style="color:#64748b">≈ '+fmt(Math.round(q/mptOf(it.t)*1000)/1000)+' т</span>':'');
   const tot=R.ords.reduce((a,o)=>a+(o.total||0),0);
   let h='<table class="rep">';
-  h+='<tr class="grp"><td colspan="2">Заказы за день: '+R.ords.length+(tot?' · на сумму '+money(tot)+' сум':'')+'</td></tr>'+(R.ords.map(o=>'<tr><td>'+esc(o.client||'без имени')+' <span style="color:#64748b">('+((o.mode||'roof')=='tun'?'тунукабонд':'кровля')+')</span>'+(o._by?' <span class="who">👤 '+esc(uName(o._by))+'</span>':'')+'</td><td style="text-align:right">'+(o.total?money(o.total)+' сум':'')+'</td></tr>').join('')||'<tr><td colspan="2" style="color:#64748b">нет</td></tr>');
+  h+='<tr class="grp"><td colspan="2">Заказы за '+(R.per?'период':'день')+': '+R.ords.length+(tot?' · на сумму '+money(tot)+' сум':'')+'</td></tr>'+(R.ords.map(o=>'<tr><td>'+esc(o.client||'без имени')+' <span style="color:#64748b">('+((o.mode||'roof')=='tun'?'тунукабонд':'кровля')+')</span>'+(o._by?' <span class="who">👤 '+esc(uName(o._by))+'</span>':'')+'</td><td style="text-align:right">'+(o.total?money(o.total)+' сум':'')+'</td></tr>').join('')||'<tr><td colspan="2" style="color:#64748b">нет</td></tr>');
   const pt=R.pays.reduce((a,p)=>a+p[1],0),ptm=pmTot(R.pays.map(p=>({sum:p[1],m:p[3]})));h+='<tr class="grp"><td colspan="2">Получено денег: '+money(pt)+' сум</td></tr>'+(pt?'<tr><td colspan="2" style="font-size:13px">'+['cash','card','bank',''].filter(k=>ptm[k]).map(k=>pmName(k)+': <b>'+money(ptm[k])+'</b>').join(' · ')+'</td></tr>':'')+(R.pays.map(p=>'<tr><td>'+esc(p[0].client||'без имени')+' <span style="color:#64748b">('+esc(p[2])+')</span></td><td style="text-align:right">'+money(p[1])+'</td></tr>').join('')||'<tr><td colspan="2" style="color:#64748b">нет</td></tr>');
   const dt=R.debts.reduce((a,o)=>a+oDebt(o),0);h+='<tr class="grp"><td colspan="2">Долги клиентов всего: '+money(dt)+' сум</td></tr>'+R.debts.map(o=>'<tr><td>'+esc(o.client||'без имени')+' <span style="color:#64748b">('+esc(o.date||'')+')</span></td><td style="text-align:right;color:#dc2626"><b>'+money(oDebt(o))+'</b></td></tr>').join('');
   const ko=Object.keys(R.outs);h+='<tr class="grp"><td colspan="2">Списано (расход)</td></tr>'+(ko.map(k=>R.its[k]?'<tr><td>'+L(R.its[k],R.outs[k])+'</td></tr>':'').join('')||'<tr><td colspan="2" style="color:#64748b">нет</td></tr>');
   const ki=Object.keys(R.ins);h+='<tr class="grp"><td colspan="2">Приход</td></tr>'+(ki.map(k=>R.its[k]?'<tr><td>'+L(R.its[k],R.ins[k])+'</td></tr>':'').join('')||'<tr><td colspan="2" style="color:#64748b">нет</td></tr>');
   const ku=Object.keys(R.byU||{});if(ku.length&&(ku.length>1||ku[0])){h+='<tr class="grp"><td colspan="2">Кто сколько израсходовал</td></tr>';ku.forEach(u=>{h+='<tr><td colspan="2"><b>👤 '+esc(uName(u))+'</b></td></tr>'+Object.keys(R.byU[u]).map(k=>R.its[k]?'<tr><td style="padding-left:18px">'+L(R.its[k],R.byU[u][k])+'</td></tr>':'').join('')})}
-  h+='<tr class="grp"><td colspan="2">Остаток на конец дня</td></tr>'+(R.bal.map(([i,q])=>'<tr'+(num(i.min)&&q<num(i.min)?' style="color:#b45309"':'')+'><td>'+L(i,q)+'</td></tr>').join('')||'<tr><td colspan="2" style="color:#64748b">склад пуст</td></tr>');
+  if(R.per){const T=k=>{const it=R.its[k];return it&&it.kind=='coil'&&mptOf(it.t)?1/mptOf(it.t):0};const tn=(k,q)=>T(k)?' <span style="color:#64748b">'+fmt(Math.round(q*T(k)*1000)/1000)+' т</span>':'';
+    h+='<tr class="grp"><td colspan="2">Движение по складу за период</td></tr><tr><td colspan="2" style="padding:0"><table style="width:100%;border-collapse:collapse;font-size:13px"><tr style="font-weight:700;background:#f8fafc"><td style="padding:6px 8px">Материал</td><td style="text-align:right;padding:6px">На начало</td><td style="text-align:right;padding:6px">Приход</td><td style="text-align:right;padding:6px">Расход</td><td style="text-align:right;padding:6px">На конец</td></tr>'+
+    R.bal.map(([i,q])=>{const k=i.id,o=R.open[k]||0,ii=R.ins[k]||0,oo=R.outs[k]||0;if(!o&&!ii&&!oo&&!q)return '';const f=x=>fmt(Math.round(x*100)/100);return '<tr style="border-top:1px solid #e2e8f0"><td style="padding:6px 8px">'+esc(skName(i))+' <span style="color:#64748b">'+skUnit(i)+'</span></td><td style="text-align:right;padding:6px">'+f(o)+tn(k,o)+'</td><td style="text-align:right;padding:6px;color:#16a34a">'+(ii?'+'+f(ii)+tn(k,ii):'—')+'</td><td style="text-align:right;padding:6px;color:#dc2626">'+(oo?'−'+f(oo)+tn(k,oo):'—')+'</td><td style="text-align:right;padding:6px"><b>'+f(q)+'</b>'+tn(k,q)+'</td></tr>'}).join('')+'</table></td></tr>'}
+  h+='<tr class="grp"><td colspan="2">Остаток на конец '+(R.per?'периода':'дня')+'</td></tr>'+(R.bal.map(([i,q])=>'<tr'+(num(i.min)&&q<num(i.min)?' style="color:#b45309"':'')+'><td>'+L(i,q)+'</td></tr>').join('')||'<tr><td colspan="2" style="color:#64748b">склад пуст</td></tr>');
   return h+'</table>'}
 function reportText(R){const tot=R.ords.reduce((a,o)=>a+(o.total||0),0);let t='SPS Group — ОТЧЁТ ЗА '+R.d+'\n\nЗаказы: '+R.ords.length+(tot?' на '+money(tot)+' сум':'')+'\n';
   R.ords.forEach(o=>t+='  • '+(o.client||'без имени')+((o.mode||'roof')=='tun'?' (тунукабонд)':' (кровля)')+(o.total?' — '+money(o.total)+' сум':'')+'\n');
@@ -2667,13 +2674,20 @@ function reportText(R){const tot=R.ords.reduce((a,o)=>a+(o.total||0),0);let t='S
   const ku=Object.keys(R.byU||{});if(ku.length&&(ku.length>1||ku[0])){t+='\nКто сколько израсходовал:\n';ku.forEach(u=>{t+='  '+uName(u)+':\n'+Object.keys(R.byU[u]).map(k=>'  '+ln(k,R.byU[u][k])).join('')})}
   t+='\nПриход:\n'+(Object.keys(R.ins).map(k=>ln(k,R.ins[k])).join('')||'  нет\n');
   t+='\nОстаток:\n'+(R.bal.map(([i,q])=>'  • '+skName(i)+': '+fmt(Math.round(q*100)/100)+' '+skUnit(i)+'\n').join('')||'  —\n');return t}
-function renderRep(){if(!IS_OWNER)return;const d=$('repDate').value||today();$('repBody').innerHTML=reportHtml(dayReport(d))}
-$('repDate').value=today(); $('repDate').addEventListener('input',renderRep); $('repShow').onclick=renderRep;
-$('repCopy').onclick=async()=>{try{await navigator.clipboard.writeText(reportText(dayReport($('repDate').value||today())));toast('Отчёт скопирован')}catch(_){toast('Не удалось скопировать')}};
-$('repPrint').onclick=async()=>{const R=dayReport($('repDate').value||today());
-  $('sheet').innerHTML='<div class="pbrand"><img src="'+LOGO_B+'" alt=""><span>SPS Group</span></div><h2>ОТЧЁТ ЗА ДЕНЬ: '+esc(R.d)+'</h2>'+reportHtml(R,true)+'<div class="sign"><span>Кладовщик: ____________</span><span>Руководитель: ____________</span></div>';
+let REP_MODE='d';
+function repRange(){const d=$('repDate').value||today(),e=new Date(dayStart(d)||Date.now());let a=d;
+  if(REP_MODE=='10'){const x=new Date(e);x.setDate(x.getDate()-9);a=dRu(x)}else if(REP_MODE=='m')a=dRu(new Date(e.getFullYear(),e.getMonth(),1));else if(REP_MODE=='p')a=$('repFrom').value||dRu(new Date(e.getFullYear(),e.getMonth(),1));
+  if(dayStart(a)>dayStart(d))a=d;return [a,d]}
+function repNow(){const [a,b]=repRange();return periodReport(a,b)}
+function renderRep(){if(!IS_OWNER)return;document.querySelectorAll('[data-rmode]').forEach(b=>b.classList.toggle('on',b.dataset.rmode==REP_MODE));$('repFromW').hidden=REP_MODE!='p';$('repToL').textContent=REP_MODE=='d'?'дата':'по';
+  const [a,b]=repRange();$('repRange').textContent=a==b?'':'Период: '+a+' — '+b;$('repBody').innerHTML=reportHtml(periodReport(a,b))}
+document.addEventListener('click',e=>{const b=e.target.closest('[data-rmode]');if(!b)return;REP_MODE=b.dataset.rmode;renderRep()});
+$('repDate').value=today(); $('repDate').addEventListener('input',renderRep); $('repFrom').addEventListener('input',renderRep); $('repShow').onclick=renderRep;
+$('repCopy').onclick=async()=>{try{await navigator.clipboard.writeText(reportText(repNow()));toast('Отчёт скопирован')}catch(_){toast('Не удалось скопировать')}};
+$('repPrint').onclick=async()=>{const R=repNow();
+  $('sheet').innerHTML='<div class="pbrand"><img src="'+LOGO_B+'" alt=""><span>SPS Group</span></div><h2>'+(R.per?'ОТЧЁТ ЗА ПЕРИОД':'ОТЧЁТ ЗА ДЕНЬ')+': '+esc(R.d)+'</h2>'+reportHtml(R,true)+'<div class="sign"><span>Кладовщик: ____________</span><span>Руководитель: ____________</span></div>';
   try{const {jsPDF}=window.jspdf;const pdf=new jsPDF('p','mm','a4');onePage(pdf,await snap(),true);const blob=pdf.output('blob');
-    if(!dl){try{dl=await window.claude.use('downloads')}catch(_){}} if(dl){await dl.save({filename:'Отчёт_'+R.d.replace(/\./g,'-')+'.pdf',data:blob});toast('PDF отчёта готов')} else toast('Печать недоступна в этом окне')}catch(e){if(!(e&&e.code=='declined'))toast('Ошибка: '+(e&&e.message||e))}};
+    if(!dl){try{dl=await window.claude.use('downloads')}catch(_){}} if(dl){await dl.save({filename:'Отчёт_'+R.d.replace(/\./g,'-').replace(/ — /,'_')+'.pdf',data:blob});toast('PDF отчёта готов')} else toast('Печать недоступна в этом окне')}catch(e){if(!(e&&e.code=='declined'))toast('Ошибка: '+(e&&e.message||e))}};
 drawerSync();
 $('mdRoof').classList.toggle('on',MODE=='roof');$('mdTun').classList.toggle('on',MODE=='tun');
 (function(){const sub=document.querySelector('header .sub');if(sub)sub.textContent=MODE=='tun'?'заказ: тунукабонд (потолки и фасады)':'заказ: кровля и доборные элементы';
