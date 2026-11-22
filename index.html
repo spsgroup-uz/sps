@@ -454,6 +454,7 @@ input[readonly]{color:#000!important}
   <button class="dl" data-dtab="ord">🛠 Заказ (цех)</button>
   <button class="dl" data-dtab="cli">👤 Клиент</button>
   <button class="dl" data-dtab="log">📒 Журнал и долги</button>
+  <button class="dl" data-dtab="dxf">📐 Расчёт по DXF</button>
   <button class="dl own-only" data-dtab="sk">📦 Склад и отчёт</button>
   <button class="dl own-only" data-dtab="pl">📈 Прибыль и расходы</button>
   <button class="dl own-only" data-dtab="cl">📇 Клиенты и должники</button>
@@ -509,7 +510,7 @@ input[readonly]{color:#000!important}
   </section>
   <section id="vSk" hidden>
     <div class="card" id="skNote" hidden></div>
-    <div class="skbtns own-only"><button class="pri" id="skIn">+ Приход рулона</button><button id="skNew">+ Другой материал</button><button id="skOut">− Списать заказ вручную</button></div>
+    <div class="skbtns own-only"><button class="pri" id="skIn">+ Приход рулона</button><button id="skNew">+ Другой материал</button><button id="skOut">− Списать заказ вручную</button><button id="skWipe" style="color:#b91c1c;border-color:#fca5a5">🗑 Очистить склад</button></div>
     <div class="card own-only" id="inboxBox" hidden></div>
     <div class="card own-only" id="usrBox"></div>
     <details class="card own-only" id="tagBox"><summary style="font-weight:800;font-size:16px;cursor:pointer">🗂 Бирки рулонов <span id="tagCnt"></span></summary><div class="rw2" style="margin:8px 0"><select id="tagMon"></select><input id="tagQ" placeholder="№ рулона, цвет, завод" style="flex:1;min-width:0"></div><div id="tagList"></div></details>
@@ -582,6 +583,7 @@ input[readonly]{color:#000!important}
 
 <div class="bar">
   <button id="bClear">Очистить</button>
+  <button id="bDxf">📐 DXF</button>
   <button id="bCopy">Копировать</button>
   <button id="bSave">Сохранить</button>
   <button id="bPrint" class="pri">🖨 Печать</button>
@@ -1375,7 +1377,7 @@ function drawerSync(){document.querySelectorAll('[data-dtab]').forEach(b=>b.clas
 function drawer(o){$('drawer').classList.toggle('open',o);$('drawerBg').classList.toggle('show',o)}
 $('menuBtn').onclick=()=>{if(innerWidth>=900){const h=!document.body.classList.contains('navhide');document.body.classList.toggle('navhide',h);store.set('rz_navhide',h?1:0)}else drawer(true)};
 if(store.get('rz_navhide',0))document.body.classList.add('navhide'); $('drawerBg').onclick=()=>drawer(false);
-$('drawer').addEventListener('click',e=>{const b=e.target.closest('[data-dtab]');if(b&&b.dataset.dtab=='bak'){drawer(false);bakOpen();return}if(b&&b.dataset.dtab=='usr'){drawer(false);renderSk();tab('sk');renderUsers();setTimeout(()=>{const u=$('usrBox');if(u){u.scrollIntoView({behavior:'smooth',block:'start'});u.style.outline='3px solid #2563eb';setTimeout(()=>u.style.outline='',2500)}},120);return}
+$('drawer').addEventListener('click',e=>{const b=e.target.closest('[data-dtab]');if(b&&b.dataset.dtab=='dxf'){drawer(false);dxfOpen();return}if(b&&b.dataset.dtab=='bak'){drawer(false);bakOpen();return}if(b&&b.dataset.dtab=='usr'){drawer(false);renderSk();tab('sk');renderUsers();setTimeout(()=>{const u=$('usrBox');if(u){u.scrollIntoView({behavior:'smooth',block:'start'});u.style.outline='3px solid #2563eb';setTimeout(()=>u.style.outline='',2500)}},120);return}
   if(b&&['tab','me','cl','pl','home'].includes(b.dataset.dtab)){tab(b.dataset.dtab);drawer(false);return}if(b){({cat:'tCat',ord:'tOrd',cli:'tCli',log:'tLog',sk:'tSk'})[b.dataset.dtab]&&$(({cat:'tCat',ord:'tOrd',cli:'tCli',log:'tLog',sk:'tSk'})[b.dataset.dtab]).click();drawer(false)} if(e.target.closest('[data-dmode]'))drawer(false)});
 function tab(w){if(typeof IS_OWNER!='undefined'&&!IS_OWNER){const ok=document.body.classList.contains('sales')?['me','cat','ord','cli','log']:['me'];if(!ok.includes(w))w='me'}curTab=w;$('vTab').hidden=w!='tab';if(w=='tab')renderTab();$('vMe').hidden=w!='me';if(w=='me')renderMe();$('vCl').hidden=w!='cl';if(w=='cl')renderCl();$('vPl').hidden=w!='pl';if(w=='pl')renderPl();$('vHome').hidden=w!='home';if(w=='home')renderHome();setTimeout(drawerSync,0);$('vSk').hidden=w!='sk';$('tSk').classList.toggle('on',w=='sk');$('vCat').hidden=w!='cat';$('vOrd').hidden=w!='ord';$('vLog').hidden=w!='log';$('vCli').hidden=w!='cli';$('tCat').classList.toggle('on',w=='cat');$('tOrd').classList.toggle('on',w=='ord');$('tLog').classList.toggle('on',w=='log');$('tCli').classList.toggle('on',w=='cli');document.querySelector('.bar').hidden=['log','sk','tab','me','cl','pl','home'].includes(w);window.scrollTo(0,0)}
 $('tLog').onclick=()=>{renderLog();tab('log')};
@@ -1954,7 +1956,7 @@ function renderSk(){
   $('skHist').innerHTML=SK_MOVES.slice().sort((a,b)=>b.ts-a.ts).slice(0,60).map(m=>{const it=its[m.item];if(!it)return '';const q=num(m.qty);
     return '<div class="hrow"><span>'+esc(m.date||'')+' · '+esc(skName(it))+(m._by?' <span class="who">👤 '+esc(uName(m._by))+'</span>':'')+(m.note?'<br><span style="color:var(--mut)">'+esc(m.note)+'</span>':'')+'</span><span class="'+(q>=0?'p':'m')+'">'+(q>=0?'+':'')+fmt(Math.round(q*100)/100)+' '+skUnit(it)+'</span></div>'}).join('')||'<div class="empty" style="padding:10px">Пока нет движений</div>';
 }
-function skOpen(title,html,ok){$('skTitle').textContent=title;$('skForm').innerHTML='<div class="skf">'+html+'</div>';$('mSk').classList.add('show');$('skOk').onclick=ok}
+function skOpen(title,html,ok,btn){$('skOk').textContent=btn||'Сохранить';$('skTitle').textContent=title;$('skForm').innerHTML='<div class="skf">'+html+'</div>';$('mSk').classList.add('show');$('skOk').onclick=ok}
 function skVal(id){const e=$('skForm').querySelector('#'+id);return e?e.value:''}
 function colorOpts(sel){return RAL.map(r=>{const v=r[0]=='ZN'?'Оцинковка':'RAL '+r[0]+' '+r[1];return '<option'+(v==sel?' selected':'')+'>'+esc(v)+'</option>'}).join('')}
 async function skAddMove(item,qty,note,extra,col){await DB.collection(col||movColFor(null)).add({item,qty,note:note||'',date:today(),ts:Date.now(),...(extra||{})})}
@@ -2188,6 +2190,147 @@ $('tmCopy').onclick=async()=>{try{await navigator.clipboard.writeText(monText())
 $('tmPdf').onclick=async()=>{const M=monData();$('sheet').innerHTML='<div class="pbrand"><img src="'+LOGO_B+'" alt=""><span>SPS Group</span></div><h2>ТАБЕЛЬ ПЕРСОНАЛА: '+esc(M.lbl)+'</h2>'+monHtml(M).replace(/class="mg"/g,'class="mg" style="overflow:visible"')+'<div class="sign"><span>Руководитель: ____________</span></div>';
   try{const {jsPDF}=window.jspdf;const pdf=new jsPDF('l','mm','a4');onePage(pdf,await snap(),true);const blob=pdf.output('blob');
     if(!dl){try{dl=await window.claude.use('downloads')}catch(_){}} if(dl){await dl.save({filename:'Табель_'+M.lbl.replace(' ','_')+'.pdf',data:blob});toast('PDF табеля готов')} else toast('Печать недоступна в этом окне')}catch(e){if(!(e&&e.code=='declined'))toast('Ошибка: '+(e&&e.message||e))}};
+
+// ---------- очистка склада (начать с нуля) ----------
+$('skWipe').onclick=()=>{if(!IS_OWNER||!DB)return;
+  skOpen('🗑 Очистить склад','<div class="skcalc" style="color:#b91c1c">Будут удалены <b>все рулоны, материалы, приходы и списания</b> — склад станет пустым.<br>Заказы, клиенты, оплаты, расходы и табель <b>останутся</b>.<br><br>Совет: сначала сделайте копию: ☰ → 💾 Копия / перенос данных.</div><label>Чтобы подтвердить, напишите слово <b>ОЧИСТИТЬ</b><input id="fWipe" autocomplete="off"></label>',async()=>{
+    if(skVal('fWipe').trim().toUpperCase()!='ОЧИСТИТЬ'){toast('Напишите слово ОЧИСТИТЬ');return}
+    $('mSk').classList.remove('show');toast('Очищаю склад…');
+    const cols=['sk_moves','sk_items'].concat(Object.keys(STAFF).map(u=>'um/'+u+'/moves'));let n=0;
+    try{for(const c of cols){const sn=await DB.collection(c).get();for(const d of sn.docs){await DB.doc(c+'/'+d.id).delete();n++}}
+      try{await DB.doc('sk_pub/bal').set({bal:{},ts:Date.now()})}catch(_){}
+      toast('Склад очищен. Удалено записей: '+n)}
+    catch(er){toast('Не всё удалилось: '+(er&&er.message||er))}},'🗑 Очистить')};
+// ---------- расчёт по DXF: развёртки → погонные метры рулона ----------
+function dxfParse(txt){
+  const L=txt.split(/\r?\n/);const ents=[];let i=0,inE=false,cur=null;
+  const push=()=>{if(cur)ents.push(cur);cur=null};
+  while(i<L.length-1){const c=parseInt(L[i].trim(),10),v=L[i+1].trim();i+=2;
+    if(c===0){push();if(v=='SECTION'){continue}if(v=='ENDSEC'){inE=false;continue}
+      if(inE){if(v=='VERTEX'&&ents.length&&ents[ents.length-1].t=='POLYLINE'&&!ents[ents.length-1].done){cur=ents.pop();cur.vx=true;continue}if(v=='SEQEND'&&ents.length&&ents[ents.length-1].t=='POLYLINE')ents[ents.length-1].done=true;cur={t:v,x:[],y:[],txt:'',r:0}}continue}
+    if(c===2&&(v=='ENTITIES')){inE=true;continue}
+    if(!cur)continue;
+    if(cur.t=='POLYLINE'&&!cur.vx&&(c===10||c===20||c===30))continue;
+    if(c===10||c===11)cur.x.push(parseFloat(v));else if(c===20||c===21)cur.y.push(parseFloat(v));
+    else if(c===8)cur.ly=v; else if(c===1)cur.txt+=v;else if(c===40&&(cur.t=='CIRCLE'||cur.t=='ARC'))cur.r=parseFloat(v)}
+  push();return ents}
+function dxfCalc(txt,coilW,edge){
+  const E=dxfParse(txt);const geo=[],texts=[];
+  E.forEach(e=>{if(!e.x.length||!e.y.length||/^(FORMA|INFO)$/i.test(e.ly||''))return;
+    if(e.t=='TEXT'||e.t=='MTEXT'){texts.push({s:e.txt.replace(/\\[A-Za-z][^;]*;|[{}]/g,'').trim(),x:e.x[0],y:e.y[0]});return}
+    if(!/^(LINE|LWPOLYLINE|POLYLINE|VERTEX|CIRCLE|ARC|SPLINE|ELLIPSE)$/.test(e.t))return;
+    const r=e.r||0;geo.push([Math.min(...e.x)-r,Math.min(...e.y)-r,Math.max(...e.x)+r,Math.max(...e.y)+r,1])});
+  // рамка листа (охватывает почти всё) — не деталь
+  {const inside=(o,i)=>i[0]>=o[0]-1&&i[1]>=o[1]-1&&i[2]<=o[2]+1&&i[3]<=o[3]+1;const fr=new Set();
+    geo.forEach((g,gi)=>{let c=0;geo.forEach((h,hi)=>{if(hi!=gi&&inside(g,h))c++});if(geo.length>8&&c>=geo.length*0.5)fr.add(gi)});
+    for(let k=geo.length-1;k>=0;k--)if(fr.has(k))geo.splice(k,1)}
+  // склеиваем касающиеся линии в детали
+  const tol=1,ov=(a,b)=>!(a[2]<b[0]-tol||a[0]>b[2]+tol||a[3]<b[1]-tol||a[1]>b[3]+tol);
+  let G=geo.slice().sort((a,b)=>a[0]-b[0]),ch=true;
+  while(ch){ch=false;const out=[];
+    for(const g of G){const h=out.find(o=>ov(o,g));if(h){h[0]=Math.min(h[0],g[0]);h[1]=Math.min(h[1],g[1]);h[2]=Math.max(h[2],g[2]);h[3]=Math.max(h[3],g[3]);h[4]+=g[4];ch=true}else out.push(g.slice())}
+    G=out}
+  // надпись толщина/цвет, например 0.40/9003
+  let th='',col='';texts.forEach(t=>{const m=t.s.match(/^(\d+[.,]\d+)\s*\/\s*(\S+)$/);if(m){th=m[1].replace(',','.');col=m[2]}});
+  // количество: каждое число — к ближайшей детали (по одной надписи на деталь)
+  const nums=texts.filter(t=>/^\d{1,4}$/.test(t.s));
+  const dist=(t,g)=>{const dx=Math.max(g[0]-t.x,0,t.x-g[2]),dy=Math.max(g[1]-t.y,0,t.y-g[3]);return Math.hypot(dx,dy)};
+  const pairs=[];nums.forEach((t,ti)=>G.forEach((g,gi)=>{const d=dist(t,g),sz=Math.max(g[2]-g[0],g[3]-g[1]);if(d<Math.max(400,sz*0.3))pairs.push([d,ti,gi])}));
+  pairs.sort((a,b)=>a[0]-b[0]);const ut=new Set(),ug=new Map();
+  pairs.forEach(([d,ti,gi])=>{if(ut.has(ti)||ug.has(gi))return;ut.add(ti);ug.set(gi,+nums[ti].s)});
+  const W=coilW-2*(edge||0),parts=[],skipped=[];
+  G.forEach((g,gi)=>{const a=g[2]-g[0],b=g[3]-g[1];if(!ug.has(gi)){if(a>50&&b>50)skipped.push([a,b]);return}
+    const n=ug.get(gi);let best=null;
+    [[a,b],[b,a]].forEach(([w,l])=>{if(w>W+0.5)return;const k=Math.floor((W+0.5)/w);const rows=Math.ceil(n/k),m=rows*l/1000;if(!best||m<best.m)best={w,l,k,m}});
+    parts.push({a,b,n,x:g[0],y:g[1],best,area:a*b*n/1e6})});
+  parts.sort((p,q)=>Math.max(q.a,q.b)-Math.max(p.a,p.b)||Math.min(q.a,q.b)-Math.min(p.a,p.b));
+  const tot=parts.reduce((s,p)=>s+(p.best?p.best.m:0),0),area=parts.reduce((s,p)=>s+p.area,0);
+  return {parts,skipped,th,col,tot,area,coilW}}
+function dxfHtml(R,name){const r=x=>Math.round(x);const kg=R.th?R.tot*R.coilW/1000*num(R.th)*7.85:0;
+  const bad=R.parts.filter(p=>!p.best);
+  return '<div class="skcalc">📐 <b>'+esc(name)+'</b>'+(R.th?' · металл <b>'+esc(R.th)+' мм</b>':'')+(R.col?' · цвет <b>'+esc(R.col)+'</b>':'')+'</div>'+
+  '<div style="overflow:auto;max-height:46vh"><table class="dxft" style="width:100%;border-collapse:collapse;font-size:13px"><tr style="font-weight:700"><td>Развёртка, мм</td><td>Шт</td><td>В ширину</td><td>Пог. м</td></tr>'+
+  R.parts.map(p=>'<tr style="border-top:1px solid var(--line)"><td>'+r(Math.min(p.a,p.b))+' × '+r(Math.max(p.a,p.b))+'</td><td>'+p.n+'</td><td>'+(p.best?p.best.k:'<b style="color:#b91c1c">шире листа</b>')+'</td><td><b>'+(p.best?fmt(Math.round(p.best.m*100)/100):'—')+'</b></td></tr>').join('')+'</table></div>'+
+  '<div class="skcalc" style="font-size:16px">Итого: <b>'+fmt(Math.round(R.tot*100)/100)+' пог. м</b> рулона '+fmt(R.coilW/1000)+' м'+(kg?' · ≈ <b>'+fmt(Math.round(kg))+' кг</b>':'')+
+  '<br><span style="font-size:13px">Деталей: '+R.parts.reduce((s,p)=>s+p.n,0)+' шт · площадь '+fmt(Math.round(R.area*10)/10)+' м² · отход ≈ '+(R.tot?Math.max(0,Math.round(100-R.area/(R.tot*R.coilW/1000)*100)):0)+' %</span></div>'+
+  (bad.length?'<div class="skcalc" style="color:#b91c1c">⚠ '+bad.length+' деталь(и) шире рулона — проверьте.</div>':'')+
+  (R.skipped.length?'<div style="font-size:12px;color:var(--mut)">Без количества (не посчитаны, это план или рамка): '+R.skipped.length+'. Чтобы деталь посчиталась, напишите число рядом с её развёрткой.</div>':'')}
+function dxfText(R,name){return 'Расчёт по DXF: '+name+(R.th?'\nМеталл: '+R.th+' мм'+(R.col?' / '+R.col:''):'')+'\n\n'+R.parts.map(p=>Math.round(Math.min(p.a,p.b))+'×'+Math.round(Math.max(p.a,p.b))+' мм — '+p.n+' шт — '+(p.best?fmt(Math.round(p.best.m*100)/100)+' пог.м':'шире листа')).join('\n')+'\n\nИтого: '+fmt(Math.round(R.tot*100)/100)+' пог. м рулона '+fmt(R.coilW/1000)+' м'}
+let DXF_TXT='',DXF_NAME='';
+function dxfOpen(){skOpen('📐 Расчёт по чертежу DXF','<label>Файл чертежа (.dxf из AutoCAD)<input type="file" id="dxfF" accept=".dxf"></label><div class="two"><label>Ширина рулона, мм<input id="dxfW" inputmode="numeric" value="'+esc(store.get('rz_dxfw','1250'))+'"></label><label>Запас с краю, мм<input id="dxfE" inputmode="numeric" value="'+esc(store.get('rz_dxfe','0'))+'"></label></div><div id="dxfOut"><div style="font-size:13px;color:var(--mut)">Загрузите DXF: программа найдёт развёртки и число рядом с каждой, и посчитает погонные метры. DWG не читается — в AutoCAD «Сохранить как» → DXF.</div></div>',async()=>{
+    if(!DXF_TXT){toast('Сначала загрузите DXF');return}const R=dxfRun();if(!R)return;try{await navigator.clipboard.writeText(dxfText(R,DXF_NAME));toast('Расчёт скопирован')}catch(_){toast('Не удалось скопировать')}},'📋 Копировать расчёт');
+  if(DXF_TXT)dxfRun()}
+function dxfRun(){const o=$('dxfOut');if(!o||!DXF_TXT)return null;const w=num($('dxfW').value)||1250,e=num($('dxfE').value)||0;store.set('rz_dxfw',String(w));store.set('rz_dxfe',String(e));
+  try{const R=dxfCalc(DXF_TXT,w,e);if(!R.parts.length){o.innerHTML='<div class="skcalc">В чертеже не нашлось развёрток с количеством. Напишите число (шт) рядом с каждой развёрткой.</div>';return null}o.innerHTML=dxfHtml(R,DXF_NAME);return R}
+  catch(er){o.innerHTML='<div class="skcalc">Не удалось прочитать файл: '+esc(er&&er.message||er)+'</div>';return null}}
+document.addEventListener('change',async e=>{if(e.target.id=='dxfF'){const f=e.target.files&&e.target.files[0];if(!f)return;
+    if(!/\.dxf$/i.test(f.name)){toast('Нужен файл .dxf');return}DXF_NAME=f.name.replace(/\.dxf$/i,'');DXF_TXT=await f.text();dxfRun()}
+  if(e.target.id=='dxfW'||e.target.id=='dxfE')dxfRun()});
+document.addEventListener('input',e=>{if(e.target.id=='dxfW'||e.target.id=='dxfE')dxfRun()});
+// ---------- заказ → чертёж DXF развёрток для лазера ----------
+function ordParts(){const P=[];
+  order.forEach(l=>{const nm=l.name||'';
+    if(l.unit=='face'){const f=faceCalc(l);if(f)P.push({nm,w:Math.round(f.bw*1000),L:Math.round(f.bh*1000),n:f.n,seg:[]});return}
+    if(l.unit!='m'||!razv(l))return;const w=Math.round(razv(l)*10);let L=realLen(l),n=num(l.qty)*noteNum(l);
+    if(divOf(l)<=1&&L>MAXSHEET){const c=cutPlan(l);if(c&&c.pieces){L=c.each;n=c.n}}
+    if(!L||!n)return;P.push({nm,icon:l.icon,w,L:Math.round(L*1000),n:Math.round(n),seg:(l.seg||[]).map(v=>num(v)*10)})});
+  // одинаковые детали складываем
+  const M={};P.forEach(p=>{const k=p.nm+'|'+p.w+'|'+p.L+'|'+p.seg.join(',');if(M[k])M[k].n+=p.n;else M[k]={...p}});return Object.values(M)}
+function nestM(p,W){let best=null;[[p.w,p.L],[p.L,p.w]].forEach(([w,l])=>{if(w>W+0.5)return;const k=Math.floor((W+0.5)/w),m=Math.ceil(p.n/k)*l/1000;if(!best||m<best.m)best={k,m}});return best}
+const LAT={а:'a',б:'b',в:'v',г:'g',д:'d',е:'e',ё:'yo',ж:'j',з:'z',и:'i',й:'y',к:'k',л:'l',м:'m',н:'n',о:'o',п:'p',р:'r',с:'s',т:'t',у:'u',ф:'f',х:'x',ц:'ts',ч:'ch',ш:'sh',щ:'sh',ъ:'',ы:'i',ь:'',э:'e',ю:'yu',я:'ya',ў:'o',қ:'q',ғ:'g',ҳ:'h'};
+function lat(t){return t.replace(/[А-яЁёЎўҚқҒғҲҳ]/g,c=>{const l=c.toLowerCase(),r=LAT[l]??'';return c===l?r:r.charAt(0).toUpperCase()+r.slice(1)}).replace(/[^\x20-\x7e]/g,'')}
+function cp1251(t){const u=new Uint8Array(t.length);for(let i=0;i<t.length;i++){const c=t.charCodeAt(i);u[i]=c<128?c:c>=0x410&&c<=0x44F?c-0x350:c==0x401?0xA8:c==0x451?0xB8:63}return u}
+function dxfWrite(parts,head){const o=[];const a=(...x)=>o.push(...x.map(String));
+  const ln=(x1,y1,x2,y2,ly)=>a(0,'LINE',8,ly,10,x1.toFixed(2),20,y1.toFixed(2),30,0,11,x2.toFixed(2),21,y2.toFixed(2),31,0);
+  const tx=(x,y,h,s,ly)=>a(0,'TEXT',8,ly||'TEXT',10,x.toFixed(2),20,y.toFixed(2),30,0,40,h,1,lat(String(s).replace(/[—–]/g,'-')));
+  a(0,'SECTION',2,'HEADER',9,'$ACADVER',1,'AC1009',9,'$DWGCODEPAGE',3,'ANSI_1251',9,'$INSUNITS',70,4,0,'ENDSEC');
+  a(0,'SECTION',2,'TABLES',0,'TABLE',2,'LAYER',70,3);
+  [['CUT',7],['GIB',1],['TEXT',3],['FORMA',4]].forEach(([n,c])=>a(0,'LAYER',2,n,70,0,62,c,6,'CONTINUOUS'));a(0,'ENDTAB',0,'ENDSEC');
+  a(0,'SECTION',2,'ENTITIES');
+  const maxL=Math.max(...parts.map(p=>p.L));let x=0;const y0=0;
+  // форма после гиба над каждой деталью
+  // настоящая форма: направления из рисунка детали, длины — из размеров (мм)
+  const shp=p=>{const S=PTS[p.icon];if(!S||S.length<2||!p.seg.length)return null;const P=[[0,0]];
+    for(let i=0;i<S.length-1;i++){const dx=S[i+1][0]-S[i][0],dy=-(S[i+1][1]-S[i][1]),d=Math.hypot(dx,dy)||1,v=p.seg[i]||0,q=P[P.length-1];P.push([q[0]+dx/d*v,q[1]+dy/d*v])}
+    const xs=P.map(q=>q[0]),ys=P.map(q=>q[1]),bw=Math.max(...xs)-Math.min(...xs)||1,bh=Math.max(...ys)-Math.min(...ys)||1;
+    const sc=Math.min(Math.max(520,p.w)/bw,520/bh,8);return {P,sc,minx:Math.min(...xs),miny:Math.min(...ys),h:bh*sc,wd:bw*sc}};
+  const topH=head.forma?Math.max(0,...parts.map(p=>{const q=shp(p);return q?q.h+420:0})):0;
+  tx(0,maxL+topH+400,120,head.title);if(head.mat)tx(0,maxL+topH+220,100,head.mat);
+  parts.forEach((p,i)=>tx(0,-300-i*110,70,(i+1)+') '+(p.nm||'Деталь')+' - '+Math.round(p.w)+' x '+Math.round(p.L)+' мм - '+p.n+' шт'));
+  parts.forEach(p=>{const w=p.w,L=p.L;
+    {const bs=[];let s=0;p.seg.slice(0,-1).forEach(v=>{s+=v;if(s>0.5&&s<w-0.5)bs.push(s)});
+      const V=[[x,y0]];bs.forEach(b=>V.push([x+b,y0],[x+b,y0+7],[x+b,y0]));V.push([x+w,y0],[x+w,y0+L]);
+      bs.slice().reverse().forEach(b=>V.push([x+b,y0+L],[x+b,y0+L-7],[x+b,y0+L]));V.push([x,y0+L]);
+      a(0,'POLYLINE',8,'CUT',66,1,10,0,20,0,30,0,70,1);V.forEach(([vx,vy])=>a(0,'VERTEX',8,'CUT',10,vx.toFixed(2),20,vy.toFixed(2),30,0));a(0,'SEQEND',8,'CUT');
+      if(head.gib)bs.forEach(b=>ln(x+b,y0+7,x+b,y0+L-7,'GIB'))}
+    tx(x,y0+L+60,90,String(p.n));
+    {const q=head.forma&&shp(p);if(q){const by=y0+L+260,X=v=>x+(v-q.minx)*q.sc,Y=v=>by+(v-q.miny)*q.sc,P=q.P.map(t=>[X(t[0]),Y(t[1])]);
+      const cx=P.reduce((a,t)=>a+t[0],0)/P.length,cy=P.reduce((a,t)=>a+t[1],0)/P.length,boxes=[],th=36;
+      const pts=[];for(let i=0;i<P.length-1;i++){ln(P[i][0],P[i][1],P[i+1][0],P[i+1][1],'FORMA');const d=Math.hypot(P[i+1][0]-P[i][0],P[i+1][1]-P[i][1]),n=Math.max(1,Math.ceil(d/4));for(let k=0;k<=n;k++)pts.push([P[i][0]+(P[i+1][0]-P[i][0])*k/n,P[i][1]+(P[i+1][1]-P[i][1])*k/n])}
+      const free=(bx,by,bw,bh)=>!boxes.some(b=>bx<b[0]+b[2]+10&&bx+bw+10>b[0]&&by<b[1]+b[3]+8&&by+bh+8>b[1])&&!pts.some(t=>t[0]>bx-8&&t[0]<bx+bw+8&&t[1]>by-8&&t[1]<by+bh+8);
+      for(let i=0;i<P.length-1;i++){const v=p.seg[i];if(!v)continue;const mx=(P[i][0]+P[i+1][0])/2,my=(P[i][1]+P[i+1][1])/2,dx=P[i+1][0]-P[i][0],dy=P[i+1][1]-P[i][1],d=Math.hypot(dx,dy)||1;
+        let nx=-dy/d,ny=dx/d;if(nx*(mx-cx)+ny*(my-cy)<0){nx=-nx;ny=-ny}
+        const lab=fmt(Math.round(v)/10),tw=lab.length*th*0.72,c0=[mx-tw/2,my-th/2];let best=null;
+        for(let r=14;r<=260&&!best;r+=10)for(const sg of[1,-1])for(const t of[0,-0.25,0.25,-0.5,0.5]){if(best)break;
+          const ox=mx+sg*nx*(r+tw/2*Math.abs(nx))+dx/d*t*Math.min(d,120)-tw/2,oy=my+sg*ny*(r+th/2*Math.abs(ny))+dy/d*t*Math.min(d,120)-th/2;if(free(ox,oy,tw,th))best=[ox,oy]}
+        if(!best)best=[mx+nx*40-tw/2,my+ny*40-th/2];boxes.push([best[0],best[1],tw,th]);tx(best[0],best[1],th,lab,'FORMA')}}}
+    tx(x,y0-140,60,String(parts.indexOf(p)+1)+')');
+    {const q=head.forma&&shp(p);x+=Math.max(w,q?q.wd+120:0)+Math.max(400,w*0.5)}});
+  a(0,'ENDSEC',0,'EOF');return o.join('\r\n')+'\r\n'}
+function ordDxfOpen(){const parts=ordParts();if(!parts.length){toast('В заказе нет деталей с развёрткой');return}
+  const h=readHead(),th=curTh()||'0.40',c=curCol(),col=c?c[0]:'';
+  const W=num(store.get('rz_dxfw','1250'))||1250;let tot=0;
+  const rows=parts.map(p=>{const b=nestM(p,W);tot+=b?b.m:0;return '<tr style="border-top:1px solid var(--line)"><td>'+esc(p.nm)+'</td><td>'+p.w+' × '+p.L+'</td><td>'+p.n+'</td><td><b>'+(b?fmt(Math.round(b.m*100)/100):'шире листа')+'</b></td></tr>'}).join('');
+  const kg=tot*W/1000*num(th)*7.85;
+  skOpen('📐 Чертёж DXF для лазера','<div class="skcalc">'+esc(h.hClient||'Без имени')+' · металл <b>'+esc(th)+'/'+esc(col||'—')+'</b> · рулон '+fmt(W/1000)+' м</div><div style="overflow:auto;max-height:48vh"><table style="width:100%;border-collapse:collapse;font-size:13px"><tr style="font-weight:700"><td>Деталь</td><td>Развёртка, мм</td><td>Шт</td><td>Пог. м</td></tr>'+rows+'</table></div><div class="skcalc" style="font-size:16px">Итого: <b>'+fmt(Math.round(tot*100)/100)+' пог. м</b> · ≈ <b>'+fmt(Math.round(kg))+' кг</b></div><label style="flex-direction:row;align-items:center;gap:8px"><input type="checkbox" id="dxfGib" style="width:22px;height:22px"> линии гиба по всей длине (отдельный слой GIB; надрезы 7 мм на концах есть всегда)</label><div style="font-size:12px;color:var(--mut)">Скачаются 2 файла: <b>_lazer</b> — только контуры для резки (без форм), <b>_tsex</b> — то же + форма каждой детали после гиба с размерами, для гибщика.</div>',async()=>{
+    const name=lat((h.hClient||'Заказ')+' '+(h.hDate||today())).replace(/[\\/:*?"<>|]+/g,'_').trim().replace(/\s+/g,'_');
+    const hd={title:(h.hClient||'Заказ')+' '+(h.hDate||today()),mat:th+'/'+(col||''),gib:!!($('dxfGib')&&$('dxfGib').checked)};
+    const f1=dxfWrite(parts,{...hd,forma:false}),f2=dxfWrite(parts,{...hd,forma:true});
+    try{if(!dl){try{dl=await window.claude.use('downloads')}catch(_){}}
+      if(dl){await dl.save({filename:name+'_lazer.dxf',data:new Blob([cp1251(f1)],{type:'application/dxf'})});await new Promise(r=>setTimeout(r,700));
+        await dl.save({filename:name+'_tsex.dxf',data:new Blob([cp1251(f2)],{type:'application/dxf'})});toast('Готово 2 файла: для лазера и для цеха');$('mSk').classList.remove('show')}else toast('Скачивание недоступно в этом окне')}
+    catch(e){if(!(e&&e.code=='declined'))toast('Ошибка: '+(e&&e.message||e))}},'⬇ Скачать 2 файла DXF')}
+$('bDxf').onclick=ordDxfOpen;
 // ---------- пользователи (видит только руководитель) ----------
 function renderUsers(){const box=$('usrBox');if(!box||!IS_OWNER)return;if(typing(box))return;
   const per=box.dataset.per||'m0',its=Object.fromEntries(SK_ITEMS.map(i=>[i.id,i]));const us=['',...Object.keys(STAFF)];
