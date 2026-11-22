@@ -282,6 +282,9 @@ header{position:relative}
 .hgrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}@media(min-width:900px){.hgrid{grid-template-columns:repeat(4,minmax(0,1fr))}}
 .htile{border:0;background:#fff;border-radius:16px;padding:12px;text-align:left;box-shadow:0 1px 3px rgba(15,23,42,.08);color:#000;min-height:86px}.htile span{display:block;font-size:12px;color:#334155;font-weight:600}.htile b{display:block;font-size:20px;margin:3px 0}.htile i{display:block;font-style:normal;font-size:12px;color:#334155}.htile.g b{color:#16a34a}.htile.r b{color:#dc2626}
 .hact{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}@media(min-width:900px){.hact{grid-template-columns:repeat(3,minmax(0,1fr))}}.hact button{border:0;background:linear-gradient(135deg,#1e3a8a,#2563eb);color:#fff;border-radius:14px;padding:14px 10px;font-weight:800;font-size:15px}
+.merep{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:14px}.merep button{border:1px solid var(--line);background:#fff;border-radius:12px;padding:12px 6px;font-weight:800;font-size:15px;color:#000}
+.repn{background:#fef3c7;border-radius:10px;padding:8px 10px;font-size:13px;margin-bottom:6px}
+#skForm .mebtn{color:#fff!important}
 .mebtn{display:block;width:100%;border:0;border-radius:16px;padding:20px;font-size:21px;font-weight:800;color:#fff;margin-top:10px}.mebtn.in{background:linear-gradient(135deg,#15803d,#22c55e)}.mebtn.out{background:linear-gradient(135deg,#1e3a8a,#2563eb)}.mebtn:disabled{opacity:.35}
 .ph{display:inline-block;background:#dcfce7;color:#166534;border-radius:6px;padding:1px 6px;font-size:12px;font-weight:700}
 .tw .tm{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:8px}.tw .tm label{font-size:12px;color:var(--mut);display:flex;flex-direction:column;gap:3px}.tw .tm .r{display:flex;gap:4px}.tw .tm input{flex:1;min-width:0;width:100%;font-size:16px;padding:8px 4px;border:1px solid var(--line);border-radius:9px;color:#0f172a}
@@ -526,6 +529,7 @@ input[readonly]{color:#000!important}
       <div id="meState" style="font-size:16px;margin-bottom:14px"></div>
       <button class="mebtn in" id="meIn">✅ Я пришёл</button><button class="mebtn out" id="meOut">🚪 Я ушёл</button>
       <div id="meMsg" style="margin-top:12px;font-size:15px"></div>
+      <div class="merep"><button id="meSick">🤒 Я заболел</button><button id="meOff">📝 Отпроситься</button></div>
       <div style="font-size:12px;color:var(--mut);margin-top:12px">Время прихода и ухода (и фото отметки) видит руководитель.</div></div>
   </section>
   <section id="vRcv" hidden>
@@ -2052,7 +2056,7 @@ function hText(h){const m=Math.round(h*60);return Math.floor(m/60)+' ч'+(m%60?'
 function nowT(){const d=new Date();return String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0')}
 function isLate(r){const a=tMin(r&&r.in),s=tMin(TW.start);return r&&r.st=='w'&&a!=null&&s!=null&&a>s+5}
 function tbStartDb(){if(TB_ON||!DB||!IS_OWNER)return;TB_ON=true;
-  DB.doc('own/workers').onSnapshot(sn=>{const d=sn.exists?sn.data():{};TW={list:d.list||[],start:d.start||'08:00',geo:d.geo||null};TW_OK=true;autoLink();if(curTab=='tab')renderTab()},()=>{});
+  DB.doc('own/workers').onSnapshot(sn=>{const d=sn.exists?sn.data():{};TW={list:d.list||[],start:d.start||'08:00',geo:d.geo||null};TW_OK=true;autoLink();TW.list.forEach(w=>{if(w.uid)watchTk(w.uid)});if(curTab=='home')renderHome();if(curTab=='tab')renderTab()},()=>{});
   DB.collection('own/tab/days').onSnapshot(sn=>{TD={};sn.docs.forEach(x=>TD[x.id]=x.data().recs||{});if(curTab=='tab')renderTab()},()=>{});}
 const ART_URL=window.__FB?location.href.split('#')[0]:'https://claude.ai/artifact/ADizPCbFEdBNkqhqrry8YC';
 function pLink(w){return window.__FB?ART_URL:ART_URL+'#p='+w.id}
@@ -2074,8 +2078,10 @@ function distM(a,b,c,d){const R=6371000,t=x=>x*Math.PI/180;const h=Math.sin(t(c-
 function getPos(){return new Promise((ok,no)=>{if(!navigator.geolocation){no({code:0});return}navigator.geolocation.getCurrentPosition(p=>ok(p.coords),no,{enableHighAccuracy:true,timeout:20000,maximumAge:0})})}
 function geoErr(e){return e&&e.code==1?'Телефон не разрешил местоположение. Разрешите доступ к геолокации для браузера и попробуйте ещё раз.':'Не удалось узнать местоположение. Включите GPS (геолокацию) и попробуйте ещё раз.'}
 function recOf(w,k){const m=(TD[k]||{})[w.id]||{};const ph=w.uid&&TK[w.uid]&&TK[w.uid][k];if(!ph)return m;
+  if(!ph.in&&ph.rep){const r={...m,ph};if(!m.st)r.st=ph.rep;return r}
   const r={st:'w',in:ph.in||'',out:ph.out||'',ph};for(const f of ['in','out'])if(m[f])r[f]=m[f];if(m.st&&m.st!='w'&&!ph.in)r.st=m.st;return r}
-function watchTk(u){if(!DB||TK['__w'+u])return;TK['__w'+u]=1;DB.collection('um/'+u+'/tk').onSnapshot(sn=>{const o={};sn.docs.forEach(x=>o[x.id]=x.data());TK[u]=o;if(curTab=='tab')renderTab();if(curTab=='me')renderMe()},()=>{})}
+function noMark(w,k){const r=recOf(w,k);if(r&&r.st)return false;if(k!=dKey(new Date()))return false;const s=tMin(TW.start)||480;const n=new Date();return n.getHours()*60+n.getMinutes()>s+30}
+function watchTk(u){if(!DB||TK['__w'+u])return;TK['__w'+u]=1;DB.collection('um/'+u+'/tk').onSnapshot(sn=>{const o={};sn.docs.forEach(x=>o[x.id]=x.data());TK[u]=o;if(curTab=='tab')renderTab();if(curTab=='me')renderMe();if(curTab=='home')renderHome()},()=>{})}
 function typing(el){const a=document.activeElement;return !!(el&&a&&el.contains(a)&&/^(INPUT|SELECT|TEXTAREA)$/.test(a.tagName))}
 function renderGeo(){const g=geoOf(),box=$('geoBox');if(!box||typing(box))return;
   box.innerHTML='<div style="font-weight:800;margin-bottom:6px">📍 Завод</div><div style="font-size:14px">'+g.lat.toFixed(5)+', '+g.lng.toFixed(5)+' · <a href="https://maps.google.com/?q='+g.lat+','+g.lng+'" target="_blank" rel="noopener">на карте</a></div>'+
@@ -2088,6 +2094,7 @@ let ME_GEO=null;
 function meKey(){return dKey(new Date())}
 function meRec(){return UID&&TK[UID]?TK[UID][meKey()]:null}
 function renderMe(){if(UID)watchTk(UID);$('meDate').textContent=dRu(new Date());$('meClock').textContent=nowT();const r=meRec()||{};
+  if(r.rep&&!r.in){$('meState').innerHTML='Вы сообщили: <b>'+(r.rep=='s'?'🤒 заболел':'📝 отпрашиваетесь')+'</b> в '+esc(r.repT||'');$('meIn').disabled=false;$('meOut').disabled=true;return}
   $('meState').innerHTML=r.in?'Пришёл: <b>'+esc(r.in)+'</b>'+(r.out?' · Ушёл: <b>'+esc(r.out)+'</b>':''):'Сегодня ещё не отмечались';
   $('meIn').disabled=!!r.in;$('meOut').disabled=!r.in||!!r.out}
 setInterval(()=>{if(curTab=='me')$('meClock').textContent=nowT()},15000);
@@ -2111,6 +2118,11 @@ async function autoMark(){askPos();if(!UID||!DB)return;watchTk(UID);
   for(let i=0;i<30&&!TK[UID];i++)await new Promise(r=>setTimeout(r,200));
   const r=meRec()||{};if(r.in){$('meMsg').textContent='Сегодня вы уже отметились. Когда уходите — нажмите «Я ушёл».';return}
   $('meMsg').textContent='📍 Отмечаю приход автоматически…';await meMark('in')}
+function meReport(kind){const r0=meRec()||{};if(r0.in&&!r0.out&&kind=='o'){}
+  skOpen(kind=='s'?'🤒 Я заболел':'📝 Отпроситься','<div style="font-size:14px">Руководитель увидит ваше сообщение в табеле.</div><label>Причина (по желанию)<input id="fRep" placeholder="'+(kind=='s'?'температура, врач…':'семейные дела, до 12:00…')+'"></label>',
+    async()=>{if(!DB||!UID){toast('Нет связи с программой');return}const k=meKey(),r={...(meRec()||{}),rep:kind,repN:skVal('fRep').trim(),repT:nowT(),repTs:Date.now()};
+      try{await DB.doc('um/'+UID+'/tk/'+k).set(r);TK[UID]={...(TK[UID]||{}),[k]:r};$('mSk').classList.remove('show');renderMe();$('meMsg').innerHTML='<b style="color:#16a34a">✓ Сообщение отправлено руководителю</b>'}catch(_){toast('Не сохранилось')}})}
+$('meSick').onclick=()=>meReport('s');$('meOff').onclick=()=>meReport('o');
 $('meIn').onclick=()=>meMark('in');
 document.addEventListener('click',e=>{if(e.target.id=='meAllow'){askPos();meMark('in')}});$('meOut').onclick=()=>meMark('out');
 async function tdSet(k,wid,patch){const recs={...(TD[k]||{})};recs[wid]={...(recs[wid]||{}),...patch};TD[k]=recs;renderTab();
@@ -2120,13 +2132,14 @@ function renderTab(){if(!IS_OWNER)return;tbStartDb();$('tbImpBox').hidden=CEX2.e
   const k=dKey(TB_DAY),recs=TD[k]||{};
   if(!typing($('tbList')))
   $('tbList').innerHTML=TW.list.length?TW.list.map(w=>{const r=recOf(w,k),h=hrs(r);
-    return '<div class="card tw" data-w="'+w.id+'"><div class="tn">👤 '+esc(w.name)+(w.pos?'<span style="font-weight:500;font-size:12px;color:var(--mut)">'+esc(w.pos)+'</span>':'')+(isLate(r)?' <span class="late">опоздал</span>':'')+'<span class="h">'+(h?hText(h):'')+'</span><button class="x" data-wdel title="Удалить">✕</button></div>'+
+    return '<div class="card tw" data-w="'+w.id+'"><div class="tn">👤 '+esc(w.name)+(w.pos?'<span style="font-weight:500;font-size:12px;color:var(--mut)">'+esc(w.pos)+'</span>':'')+(isLate(r)?' <span class="late">опоздал</span>':'')+(noMark(w,k)?' <span class="late">⚠ не отметился</span>':'')+'<span class="h">'+(h?hText(h):'')+'</span><button class="x" data-wdel title="Удалить">✕</button></div>'+
     '<div class="st">'+Object.keys(ST).map(c=>'<button class="'+c+(r.st==c?' on':'')+'" data-st="'+c+'">'+ST[c][0]+'</button>').join('')+'</div>'+
-    (r.ph?'<div style="margin-bottom:6px"><span class="ph">📱 отметился с телефона'+(r.ph.inD!=null?' · '+r.ph.inD+' м от завода':r.ph.inPh?' · по фото':'')+'</span>'+['in','out'].filter(f=>r.ph[f+'Ph']).map(f=>' <img data-tz src="'+r.ph[f+'Ph']+'" title="'+(f=='in'?'пришёл':'ушёл')+'" style="width:40px;height:40px;object-fit:cover;border-radius:8px;vertical-align:middle;cursor:zoom-in">').join('')+'</div>':'')+(r.st=='w'||!r.st?'<div class="tm"><label>Пришёл<span class="r"><input type="time" data-t="in" value="'+esc(r.in||'')+'"><button data-now="in">сейчас</button></span></label><label>Ушёл<span class="r"><input type="time" data-t="out" value="'+esc(r.out||'')+'"><button data-now="out">сейчас</button></span></label></div>':'')+
+    (r.ph&&r.ph.rep?'<div class="repn">📱 сообщил в '+esc(r.ph.repT||'')+': <b>'+(r.ph.rep=='s'?'🤒 заболел':'📝 отпрашивается')+'</b>'+(r.ph.repN?' — «'+esc(r.ph.repN)+'»':'')+'</div>':'')+
+    (r.ph&&!r.ph.rep?'<div style="margin-bottom:6px"><span class="ph">📱 отметился с телефона'+(r.ph.inD!=null?' · '+r.ph.inD+' м от завода':r.ph.inPh?' · по фото':'')+'</span>'+['in','out'].filter(f=>r.ph[f+'Ph']).map(f=>' <img data-tz src="'+r.ph[f+'Ph']+'" title="'+(f=='in'?'пришёл':'ушёл')+'" style="width:40px;height:40px;object-fit:cover;border-radius:8px;vertical-align:middle;cursor:zoom-in">').join('')+'</div>':'')+(r.st=='w'||!r.st?'<div class="tm"><label>Пришёл<span class="r"><input type="time" data-t="in" value="'+esc(r.in||'')+'"><button data-now="in">сейчас</button></span></label><label>Ушёл<span class="r"><input type="time" data-t="out" value="'+esc(r.out||'')+'"><button data-now="out">сейчас</button></span></label></div>':'')+
     (w.conf?'<div style="margin-top:6px;font-size:12px;color:#dc2626;font-weight:700">⚠ Эту личную ссылку открыл ещё один телефон ('+esc(uName(w.conf))+'). Возможно, ссылку переслали.</div>':'')+
     '<div class="plk"><input data-wph="'+w.id+'" inputmode="tel" placeholder="Телефон +998…" value="'+esc(w.phone||'')+'">'+(w.phone?'<a class="chip" target="_blank" rel="noopener" href="'+esc(smsHref(w))+'">💬 SMS</a><a class="chip" target="_blank" rel="noopener" data-tg="'+w.id+'" href="'+esc(tgHref(w))+'">✈️ Telegram</a>':'')+'</div>'+
     (window.__FB?'<div style="margin-top:8px">'+(w.uid?'<span class="ph">🔑 вход создан'+(w.pin?' · PIN '+esc(w.pin):'')+'</span>':'<button class="chip on" data-mkpin="'+w.id+'">🔑 Создать вход (телефон + PIN)</button>')+'</div>':'')+
-    '<div style="margin-top:8px;font-size:12px;color:var(--mut)"><button class="chip" data-plink="'+w.id+'" style="margin-right:6px">🔗 Скопировать ссылку</button>'+(w.uid?'<span class="ph">📱 привязан</span>':'<span style="color:#b45309">ещё не открывал ссылку</span>')+'<br>📱 Телефон: <select data-link="'+w.id+'" style="font-size:13px;max-width:70%"><option value="">не связан</option>'+[[UID,'Мой телефон (проверка)'],...Object.keys(STAFF).map(u=>[u,uName(u)])].filter(x=>x[0]).map(x=>'<option value="'+x[0]+'"'+(w.uid==x[0]?' selected':'')+'>'+esc(x[1])+'</option>').join('')+'</select></div>'+
+    '<div style="margin-top:8px;font-size:12px;color:var(--mut)"><button class="chip" data-plink="'+w.id+'" style="margin-right:6px">🔗 Скопировать ссылку</button>'+(w.uid?'<span class="ph">📱 привязан</span>':'<span style="color:#b45309">ещё не открывал ссылку</span>')+'<br>📱 Телефон: <select data-link="'+w.id+'" style="font-size:13px;max-width:70%"><option value="">не связан</option>'+[[UID,'Мой телефон (проверка)'],...Object.keys(STAFF).map(u=>[u,uName(u)]),...(w.uid&&w.uid!=UID&&!STAFF[w.uid]?[[w.uid,w.name+' (вход создан)']]:[])].filter(x=>x[0]).map(x=>'<option value="'+x[0]+'"'+(w.uid==x[0]?' selected':'')+'>'+esc(x[1])+'</option>').join('')+'</select></div>'+
     '</div>'}).join(''):'<div class="card empty">Добавьте персонал кнопкой «+ Сотрудник».</div>';
   renderMon()}
 function monData(){const y=TB_MON.getFullYear(),m=TB_MON.getMonth(),n=new Date(y,m+1,0).getDate();const days=[];for(let i=1;i<=n;i++)days.push(new Date(y,m,i));
@@ -2307,6 +2320,8 @@ function renderHome(){if(!IS_OWNER||!$('homeBody'))return;expStart();tbStartDb()
   const tile=(ic,l,v,sub,go,c)=>'<button class="htile'+(c?' '+c:'')+'" data-hgo="'+go+'"><span>'+ic+' '+l+'</span><b>'+v+'</b>'+(sub?'<i>'+sub+'</i>':'')+'</button>';
   const al=[];if(ib.length)al.push(['📦','Ждут подтверждения рулонов: <b>'+ib.length+'</b>','sk']);if(!USD||!USD.rate)al.push(['💲','Курс доллара не загрузился — впишите вручную','usd']);
   if(cashDue>0.5)al.push(['🧾','Персонал ещё не сдал наличные: <b>'+money(cashDue)+' сум</b>','log']);low.forEach(it=>al.push(['⚠️','Мало на складе: <b>'+esc(skName(it))+'</b> — '+fmt(Math.round(skBal(it.id)))+' '+skUnit(it),'sk']));
+  {const nm=TW.list.filter(w=>noMark(w,dKey(new Date())));if(nm.length)al.push(['⚠️','Не отметились на работе: <b>'+nm.length+'</b> — '+esc(nm.slice(0,4).map(w=>w.name.split(' ')[0]).join(', '))+(nm.length>4?'…':''),'tab'])}
+  {const rp=TW.list.map(w=>recOf(w,dKey(new Date()))).filter(r=>r&&r.ph&&r.ph.rep&&!r.ph.in).length;if(rp)al.push(['🤒','Сообщили о болезни / отгуле: <b>'+rp+'</b>','tab'])}
   if(M.unk>0.5)al.push(['💲','У части металла нет цены закупки — прибыль неточная','pl']);
   const h=new Date().getHours(),hi=h<12?'Доброе утро':h<18?'Добрый день':'Добрый вечер';
   $('homeBody').innerHTML='<div class="hhead"><div><b>'+hi+'!</b><div>'+td+' · '+['воскресенье','понедельник','вторник','среда','четверг','пятница','суббота'][d0.getDay()]+'</div></div>'+(USD&&USD.rate?'<div class="hus">$1 = <b>'+money(USD.rate)+'</b>'+(USD.buy?'<div style="font-size:11px;opacity:.85">покупка '+money(USD.buy)+' · продажа '+money(USD.sell)+'</div>':'')+'</div>':'')+'</div>'+
