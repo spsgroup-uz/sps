@@ -1062,6 +1062,7 @@ function alikHtml(){const A=ALIK,g=alikPlan(),inp=(k,v,ph,w)=>'<input data-af="'
     g.pb.map(x=>'<tr><td>'+x.nm+' <span class="who">'+esc(x.col)+'</span><div style="font-size:11px;color:var(--mut)">столько же, сколько кассет 1 · '+x.div+' из ширины</div></td><td><b>'+x.n+' шт</b><div style="font-size:11px;color:var(--mut)">рулона '+fmt(Math.round(x.n*x.len/x.div*10)/10)+' м</div></td></tr>').join('')+
 
     '<tr class="grp"><td colspan="2">Рулон: '+Object.entries(g.col).map(([c,m])=>esc(c)+' — <b>'+fmt(Math.round(m*10)/10)+' м</b>').join(' · ')+'</td></tr></table>'+autoNote(9)}
+  if(g&&g.pa.some(x=>x.len>MAXSHEET))h+='<div class="skcalc" style="color:#b91c1c;font-weight:700">⚠ Кассета длиннее 4 м ('+g.pa.filter(x=>x.len>MAXSHEET).map(x=>fmt(x.len)+' м').join(', ')+') — гибочный станок 4 м её не согнёт. Разделите полосу на две.</div>';
   return h+'</div>'}
 function alikRerender(focusKey){document.querySelectorAll('[data-alik]').forEach(c=>{c.outerHTML=alikHtml()});if(focusKey){const n=document.querySelector('[data-alik] [data-af="'+focusKey+'"]');if(n){n.focus();try{n.setSelectionRange(n.value.length,n.value.length)}catch(_){}}}}
 document.addEventListener('input',e=>{const t=e.target.closest('[data-alik] [data-af]');if(!t)return;const k=t.dataset.af,m=k.match(/^([wln])(\d+)$/);
@@ -2276,10 +2277,10 @@ document.addEventListener('input',e=>{if(e.target.id=='dxfW'||e.target.id=='dxfE
 // ---------- заказ → чертёж DXF развёрток для лазера ----------
 function ordParts(){const P=[];
   order.forEach(l=>{const nm=l.name||'';
-    if(l.unit=='face'){const f=faceCalc(l);if(f)P.push({nm,w:Math.round(f.bw*1000),L:Math.round(f.bh*1000),n:f.n,seg:[]});return}
+    if(l.unit=='face'){const f=faceCalc(l);if(f)P.push({nm,w:Math.round(f.bw*1000),L:Math.round(f.bh*1000),n:f.n,seg:[],over:Math.max(f.bw,f.bh)>MAXSHEET});return}
     if(l.unit!='m'||!razv(l))return;const w=Math.round(razv(l)*10);let L=realLen(l),n=num(l.qty)*noteNum(l);
-    if(divOf(l)<=1&&L>MAXSHEET){const c=cutPlan(l);if(c&&c.pieces){L=c.each;n=c.n}}
-    if(!L||!n)return;P.push({nm,icon:l.icon,w,L:Math.round(L*1000),n:Math.round(n),seg:(l.seg||[]).map(v=>num(v)*10)})});
+    let over=false;if(L>MAXSHEET+1e-9){if(/^alPl[AB]$/.test(l.icon))over=true;else{const k=Math.ceil(L/MAXSHEET-1e-9);L=Math.ceil(L/k*100-1e-6)/100;n=n*k}}
+    if(!L||!n)return;P.push({nm,icon:l.icon,w,L:Math.round(L*1000),n:Math.round(n),over,seg:(l.seg||[]).map(v=>num(v)*10)})});
   // одинаковые детали складываем
   const M={};P.forEach(p=>{const k=p.nm+'|'+p.w+'|'+p.L+'|'+p.seg.join(',');if(M[k])M[k].n+=p.n;else M[k]={...p}});return Object.values(M)}
 function nestM(p,W){let best=null;[[p.w,p.L],[p.L,p.w]].forEach(([w,l])=>{if(w>W+0.5)return;const k=Math.floor((W+0.5)/w),m=Math.ceil(p.n/k)*l/1000;if(!best||m<best.m)best={k,m}});return best}
@@ -2294,7 +2295,7 @@ function dxfWrite(parts,head){const o=[];const a=(...x)=>o.push(...x.map(String)
   const tx=(x,y,h,s,ly)=>a(0,'TEXT',8,ly||'TEXT',10,x.toFixed(2),20,y.toFixed(2),30,0,40,h,1,lat(String(s).replace(/[—–]/g,'-')));
   a(0,'SECTION',2,'HEADER',9,'$ACADVER',1,'AC1009',9,'$DWGCODEPAGE',3,'ANSI_1251',9,'$INSUNITS',70,4,0,'ENDSEC');
   a(0,'SECTION',2,'TABLES',0,'TABLE',2,'LAYER',70,3);
-  [['CUT',7],['GIB',1],['TEXT',3],['FORMA',4]].forEach(([n,c])=>a(0,'LAYER',2,n,70,0,62,c,6,'CONTINUOUS'));a(0,'ENDTAB',0,'ENDSEC');
+  [['CUT',7],['TEXT',3],['FORMA',4]].forEach(([n,c])=>a(0,'LAYER',2,n,70,0,62,c,6,'CONTINUOUS'));a(0,'ENDTAB',0,'ENDSEC');
   a(0,'SECTION',2,'ENTITIES');
   const maxL=Math.max(...parts.map(p=>p.L));let x=0;const y0=0;
   // форма после гиба над каждой деталью
@@ -2312,7 +2313,7 @@ function dxfWrite(parts,head){const o=[];const a=(...x)=>o.push(...x.map(String)
       const V=[[x,y0]];bs.forEach(b=>V.push([x+b,y0],[x+b,y0+7],[x+b,y0]));V.push([x+w,y0],[x+w,y0+L]);
       bs.slice().reverse().forEach(b=>V.push([x+b,y0+L],[x+b,y0+L-7],[x+b,y0+L]));V.push([x,y0+L]);
       a(0,'POLYLINE',8,'CUT',66,1,10,0,20,0,30,0,70,1);V.forEach(([vx,vy])=>a(0,'VERTEX',8,'CUT',10,vx.toFixed(2),20,vy.toFixed(2),30,0));a(0,'SEQEND',8,'CUT');
-      if(head.gib)bs.forEach(b=>ln(x+b,y0+7,x+b,y0+L-7,'GIB'))}
+      }
     tx(x,y0+L+60,90,String(p.n));
     {const q=head.forma&&shp(p);if(q){const by=y0+L+260,X=v=>x+(v-q.minx)*q.sc,Y=v=>by+(v-q.miny)*q.sc,P=q.P.map(t=>[X(t[0]),Y(t[1])]);
       const cx=P.reduce((a,t)=>a+t[0],0)/P.length,cy=P.reduce((a,t)=>a+t[1],0)/P.length,boxes=[],th=36;
@@ -2332,9 +2333,9 @@ function ordDxfOpen(){const parts=ordParts();if(!parts.length){toast('В зак�
   const W=num(store.get('rz_dxfw','1250'))||1250;let tot=0;
   const rows=parts.map(p=>{const b=nestM(p,W);tot+=b?b.m:0;return '<tr style="border-top:1px solid var(--line)"><td>'+esc(p.nm)+'</td><td>'+p.w+' × '+p.L+'</td><td>'+p.n+'</td><td><b>'+(b?fmt(Math.round(b.m*100)/100):'шире листа')+'</b></td></tr>'}).join('');
   const kg=tot*W/1000*num(th)*7.85;
-  skOpen('📐 Чертёж DXF для лазера','<div class="skcalc">'+esc(h.hClient||'Без имени')+' · металл <b>'+esc(th)+'/'+esc(col||'—')+'</b> · рулон '+fmt(W/1000)+' м</div><div style="overflow:auto;max-height:48vh"><table style="width:100%;border-collapse:collapse;font-size:13px"><tr style="font-weight:700"><td>Деталь</td><td>Развёртка, мм</td><td>Шт</td><td>Пог. м</td></tr>'+rows+'</table></div><div class="skcalc" style="font-size:16px">Итого: <b>'+fmt(Math.round(tot*100)/100)+' пог. м</b> · ≈ <b>'+fmt(Math.round(kg))+' кг</b></div><label style="flex-direction:row;align-items:center;gap:8px"><input type="checkbox" id="dxfGib" style="width:22px;height:22px"> линии гиба по всей длине (отдельный слой GIB; надрезы 7 мм на концах есть всегда)</label><div style="font-size:12px;color:var(--mut)">Скачаются 2 файла: <b>_lazer</b> — только контуры для резки (без форм), <b>_tsex</b> — то же + форма каждой детали после гиба с размерами, для гибщика.</div>',async()=>{
+  skOpen('📐 Чертёж DXF для лазера','<div class="skcalc">'+esc(h.hClient||'Без имени')+' · металл <b>'+esc(th)+'/'+esc(col||'—')+'</b> · рулон '+fmt(W/1000)+' м</div><div style="overflow:auto;max-height:48vh"><table style="width:100%;border-collapse:collapse;font-size:13px"><tr style="font-weight:700"><td>Деталь</td><td>Развёртка, мм</td><td>Шт</td><td>Пог. м</td></tr>'+rows+'</table></div>'+(parts.some(p=>p.over)?'<div class="skcalc" style="color:#b91c1c;font-weight:700">⚠ Длиннее 4 м: '+parts.filter(p=>p.over).map(p=>esc(p.nm)+' ('+fmt(p.L/1000)+' м)').join(', ')+' — гибочный станок 4 м не согнёт. Уменьшите ширину полосы или разделите её.</div>':'')+'<div class="skcalc" style="font-size:16px">Итого: <b>'+fmt(Math.round(tot*100)/100)+' пог. м</b> · ≈ <b>'+fmt(Math.round(kg))+' кг</b></div><div style="font-size:12px;color:var(--mut)">Скачаются 2 файла: <b>_lazer</b> — только контуры для резки (без форм), <b>_tsex</b> — то же + форма каждой детали после гиба с размерами, для гибщика.</div>',async()=>{
     const name=lat((h.hClient||'Заказ')+' '+(h.hDate||today())).replace(/[\\/:*?"<>|]+/g,'_').trim().replace(/\s+/g,'_');
-    const hd={title:(h.hClient||'Заказ')+' '+(h.hDate||today()),mat:th+'/'+(col||''),gib:!!($('dxfGib')&&$('dxfGib').checked)};
+    const hd={title:(h.hClient||'Заказ')+' '+(h.hDate||today()),mat:th+'/'+(col||'')};
     const f1=dxfWrite(parts,{...hd,forma:false}),f2=dxfWrite(parts,{...hd,forma:true});
     try{if(!dl){try{dl=await window.claude.use('downloads')}catch(_){}}
       if(dl){await dl.save({filename:name+'_lazer.dxf',data:new Blob([cp1251(f1)],{type:'application/dxf'})});await new Promise(r=>setTimeout(r,700));
