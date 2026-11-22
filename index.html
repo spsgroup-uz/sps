@@ -454,6 +454,7 @@ input[readonly]{color:#000!important}
   <button class="dl own-only" data-dtab="sk">📦 Склад и отчёт</button>
   <button class="dl own-only" data-dtab="pl">📈 Прибыль и расходы</button>
   <button class="dl own-only" data-dtab="cl">📇 Клиенты и должники</button>
+  <button class="dl own-only" data-dtab="bak">💾 Копия / перенос данных</button>
   <button class="dl own-only" data-dtab="tab">🕒 Табель персонала</button>
   <button class="dl" data-dtab="me">📍 Я пришёл / ушёл</button>
 </nav>
@@ -1367,7 +1368,8 @@ function drawerSync(){document.querySelectorAll('[data-dtab]').forEach(b=>b.clas
 function drawer(o){$('drawer').classList.toggle('open',o);$('drawerBg').classList.toggle('show',o)}
 $('menuBtn').onclick=()=>{if(innerWidth>=900){const h=!document.body.classList.contains('navhide');document.body.classList.toggle('navhide',h);store.set('rz_navhide',h?1:0)}else drawer(true)};
 if(store.get('rz_navhide',0))document.body.classList.add('navhide'); $('drawerBg').onclick=()=>drawer(false);
-$('drawer').addEventListener('click',e=>{const b=e.target.closest('[data-dtab]');if(b&&['tab','me','cl','pl','home'].includes(b.dataset.dtab)){tab(b.dataset.dtab);drawer(false);return}if(b){({cat:'tCat',ord:'tOrd',cli:'tCli',log:'tLog',sk:'tSk'})[b.dataset.dtab]&&$(({cat:'tCat',ord:'tOrd',cli:'tCli',log:'tLog',sk:'tSk'})[b.dataset.dtab]).click();drawer(false)} if(e.target.closest('[data-dmode]'))drawer(false)});
+$('drawer').addEventListener('click',e=>{const b=e.target.closest('[data-dtab]');if(b&&b.dataset.dtab=='bak'){drawer(false);bakOpen();return}
+  if(b&&['tab','me','cl','pl','home'].includes(b.dataset.dtab)){tab(b.dataset.dtab);drawer(false);return}if(b){({cat:'tCat',ord:'tOrd',cli:'tCli',log:'tLog',sk:'tSk'})[b.dataset.dtab]&&$(({cat:'tCat',ord:'tOrd',cli:'tCli',log:'tLog',sk:'tSk'})[b.dataset.dtab]).click();drawer(false)} if(e.target.closest('[data-dmode]'))drawer(false)});
 function tab(w){if(typeof IS_OWNER!='undefined'&&!IS_OWNER){const ok=document.body.classList.contains('sales')?['me','cat','ord','cli','log']:['me'];if(!ok.includes(w))w='me'}curTab=w;$('vTab').hidden=w!='tab';if(w=='tab')renderTab();$('vMe').hidden=w!='me';if(w=='me')renderMe();$('vCl').hidden=w!='cl';if(w=='cl')renderCl();$('vPl').hidden=w!='pl';if(w=='pl')renderPl();$('vHome').hidden=w!='home';if(w=='home')renderHome();setTimeout(drawerSync,0);$('vSk').hidden=w!='sk';$('tSk').classList.toggle('on',w=='sk');$('vCat').hidden=w!='cat';$('vOrd').hidden=w!='ord';$('vLog').hidden=w!='log';$('vCli').hidden=w!='cli';$('tCat').classList.toggle('on',w=='cat');$('tOrd').classList.toggle('on',w=='ord');$('tLog').classList.toggle('on',w=='log');$('tCli').classList.toggle('on',w=='cli');document.querySelector('.bar').hidden=['log','sk','tab','me','cl','pl','home'].includes(w);window.scrollTo(0,0)}
 $('tLog').onclick=()=>{renderLog();tab('log')};
 $('tSk').onclick=()=>{renderSk();tab('sk')};
@@ -2271,6 +2273,27 @@ $('clPdf').onclick=async()=>{const L=debtList();$('sheet').innerHTML='<div class
   '<tr class="ptot"><td colspan="6">ИТОГО</td><td><b>'+money(L.reduce((a,x)=>a+x.debt,0))+'</b></td><td></td></tr></table>';
   try{const {jsPDF}=window.jspdf;const pdf=new jsPDF('p','mm','a4');onePage(pdf,await snap(),true);const blob=pdf.output('blob');
     if(!dl){try{dl=await window.claude.use('downloads')}catch(_){}} if(dl){await dl.save({filename:'Должники_'+today().replace(/\./g,'-')+'.pdf',data:blob});toast('PDF готов')} else toast('Печать недоступна в этом окне')}catch(e){if(!(e&&e.code=='declined'))toast('Ошибка: '+(e&&e.message||e))}};
+// ---------- копия всех данных и перенос на свой сайт ----------
+async function bakCollect(prog){const out={},cols=['orders','sk_items','sk_moves','sk_cfg','sk_pub','pub','staff','own','own/tab/days','own/tags/list','own/exp/list','own/cash/list','own/clients/list'];
+  const us=[...new Set(Object.keys(STAFF).concat(UID?[UID]:[]))];us.forEach(u=>{cols.push('uo/'+u+'/orders');['moves','tk','cash','inbox'].forEach(c=>cols.push('um/'+u+'/'+c))});
+  let n=0;for(const c of cols){try{const sn=await DB.collection(c).get();sn.docs.forEach(d=>{out[c+'/'+d.id]=d.data();n++})}catch(_){}prog&&prog(n)}
+  return out}
+async function bakExport(){const m=$('bakMsg');m.textContent='Собираю данные…';try{const data=await bakCollect(n=>m.textContent='Собрано записей: '+n);
+  const blob=new Blob([JSON.stringify({app:'SPS Group',ts:Date.now(),date:today(),data})],{type:'application/json'});
+  if(!dl){try{dl=await window.claude.use('downloads')}catch(_){}}if(!dl){m.textContent='Скачивание недоступно в этом окне';return}
+  await dl.save({filename:'SPS_копия_'+today().replace(/\./g,'-')+'.json',data:blob});m.textContent='✓ Готово: '+Object.keys(data).length+' записей. Файл скачан.'}catch(e){m.textContent='Ошибка: '+(e&&e.message||e)}}
+async function bakImport(file){const m=$('bakMsg');let J;try{J=JSON.parse(await file.text())}catch(_){m.textContent='Это не файл копии SPS';return}
+  const D=J&&J.data;if(!D){m.textContent='Это не файл копии SPS';return}const keys=Object.keys(D);let n=0,er=0;
+  for(const k of keys){let v=D[k];if(k=='sk_cfg/roles')continue;if(k.startsWith('staff/')||k.startsWith('uo/')||k.startsWith('um/')){continue}
+    if(k=='own/workers'&&v&&v.list)v={...v,list:v.list.map(w=>{const x={...w};delete x.uid;delete x.conf;return x})};
+    if(k=='own/staff')continue;
+    try{await DB.doc(k).set(v);n++}catch(_){er++}if(n%20==0)m.textContent='Загружено: '+n+' из '+keys.length}
+  m.textContent='✓ Перенесено записей: '+n+(er?' · ошибок: '+er:'')+'. Обновите страницу.'}
+function bakOpen(){skOpen('💾 Копия и перенос данных','<div style="font-size:14px;line-height:1.45">'+
+  '<b>Скачать копию</b> — все заказы, склад, рулоны, деньги, расходы, клиенты, табель и бирки в одном файле. Храните его как резервную копию.</div><button type="button" class="mebtn in" id="bakEx" style="font-size:17px">⬇️ Скачать копию всех данных</button>'+
+  (window.__FB?'<div style="font-size:14px;margin-top:14px;line-height:1.45"><b>Загрузить копию</b> — перенести данные из файла копии в эту программу (например, с claude.ai). Существующие записи с теми же номерами заменятся.</div><label class="mebtn out" style="text-align:center;cursor:pointer;font-size:17px">⬆️ Загрузить файл копии<input type="file" accept=".json,application/json" id="bakIn" class="fileHid"></label>':'')+
+  '<div id="bakMsg" class="skcalc" style="margin-top:10px"></div>',()=>$('mSk').classList.remove('show'));
+  $('bakEx').onclick=bakExport;const i=$('bakIn');if(i)i.onchange=()=>{const f=i.files&&i.files[0];if(f)ask('Загрузить данные из копии?','Данные из файла будут записаны в эту программу.',()=>bakImport(f))}}
 // ---------- главный экран руководителя ----------
 function renderHome(){if(!IS_OWNER||!$('homeBody'))return;expStart();tbStartDb();
   const td=today(),d0=new Date(),t0=new Date(d0.getFullYear(),d0.getMonth(),d0.getDate()).getTime();
