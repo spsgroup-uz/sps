@@ -720,7 +720,8 @@ function wrapCol(ref){const q=wrapQuery(ref,ref);return Object.assign(q,{path:re
 const db={doc:p=>wrapDoc(doc(fs,p)),collection:p=>wrapCol(collection(fs,p))};
 
 // ---------- кто вошёл ----------
-const isOwner=()=>!!(auth.currentUser&&auth.currentUser.email===OWNER_EMAIL);
+const isBoss=()=>!!(auth.currentUser&&auth.currentUser.email===OWNER_EMAIL);let BUH=false;
+const isOwner=()=>isBoss()||BUH;
 const user={isOwner:()=>isOwner(),canEdit:()=>isOwner(),can:()=>true,
   id:async()=>auth.currentUser?auth.currentUser.uid:null,
   me:async()=>({id:auth.currentUser&&auth.currentUser.uid,name:''}),
@@ -752,9 +753,10 @@ document.getElementById('fbForm').onsubmit=async e=>{e.preventDefault();err.text
     err.textContent=''}
   catch(x){err.textContent=/invalid-credential|wrong-password|user-not-found|invalid-email/.test(x&&x.code||'')?'Неверный телефон/email или PIN/пароль':'Ошибка входа: '+(x&&x.code||x)}};
 let started=false;
-onAuthStateChanged(auth,u=>{
+onAuthStateChanged(auth,async u=>{
   if(!u){L.hidden=false;if(started)location.reload();return}
   L.hidden=true;
+  if(!started&&!isBoss()){try{const r=await getDoc(doc(fs,'sk_cfg/roles'));BUH=!!(r.exists()&&r.data()[u.uid]=='buh')}catch(_){BUH=false}window.__BUH=BUH}
   if(!started){started=true;window.__fbResolve({db,user,downloads,sample:null});
     const o=document.createElement('button');o.id='fbOut';o.textContent='Выйти';o.onclick=()=>{if(confirm('Выйти из программы?'))signOut(auth)};document.body.appendChild(o)}
 });
@@ -1655,9 +1657,9 @@ function pubBal(){if(!IS_OWNER||!DB)return;clearTimeout(window.__pb);window.__pb
   try{DB=window.claude?await window.claude.use('db'):null}catch(e){DB=null}
   try{USR=window.claude?await window.claude.use('user'):null}catch(e){USR=null}
   if(USR){try{IS_OWNER=(await USR.isOwner())===true}catch(_){IS_OWNER=false} try{UID=await USR.id()}catch(_){}}
-  document.body.classList.toggle('worker',!IS_OWNER);
+  document.body.classList.toggle('worker',!IS_OWNER);document.body.classList.toggle('buh',!!window.__BUH);
   usdStart();usdShow();
-  DB.doc('sk_cfg/roles').onSnapshot(sn=>{ROLES=sn.exists?(sn.data()||{}):{};if(!IS_OWNER){const sk=ROLES[UID]=='sklad',sl=ROLES[UID]=='sales',ks=ROLES[UID]=='cash'||ROLES[UID]=='buh';document.body.classList.toggle('kassa',ks);if(ks)kasStart();document.body.classList.toggle('sklad',sk);document.body.classList.toggle('sales',sl);if(sk)rcvStart();if(!sl&&curTab!='me')tab('me')}renderUsers()},()=>{});
+  DB.doc('sk_cfg/roles').onSnapshot(sn=>{ROLES=sn.exists?(sn.data()||{}):{};if(window.__FB&&UID&&((!IS_OWNER&&ROLES[UID]=='buh')||(window.__BUH&&ROLES[UID]!='buh'))){location.reload();return}if(!IS_OWNER){const sk=ROLES[UID]=='sklad',sl=ROLES[UID]=='sales',ks=ROLES[UID]=='cash'||ROLES[UID]=='buh';document.body.classList.toggle('kassa',ks);if(ks)kasStart();document.body.classList.toggle('sklad',sk);document.body.classList.toggle('sales',sl);if(sk)rcvStart();if(!sl&&curTab!='me')tab('me')}renderUsers()},()=>{});
   if(!IS_OWNER||location.hash=='#me'){tab('me');autoMark()}
   else if(store.get('rz_after','')){const a=store.get('rz_after','');store.set('rz_after','');tab(a)}
   else if(!location.hash||location.hash=='#home'){tab('home');setTimeout(()=>{if(curTab=='home')renderHome()},2500)}
@@ -1805,7 +1807,7 @@ function debtHtml(){const L=saved.filter(o=>(o.mode||'roof')==MODE&&oDebt(o)>0).
 function payForm(o){const lm=store.get('rz_lastpm','cash');skOpen('Оплата: '+(o.client||'без имени'),'<div class="skcalc">Заказ '+money(o.total)+' сум · оплачено '+money(oPaid(o))+' · <b>долг '+money(oDebt(o))+' сум</b></div><label>Сумма оплаты, сум<input id="fPay" inputmode="numeric" value="'+oDebt(o)+'"></label><div class="pmw" id="fPm" data-v="'+lm+'"><span style="font-size:12px;color:var(--mut)">Как оплатил:</span>'+pmChips(lm,'data-paym')+'</div><label>Примечание<input id="fPn" placeholder="№ счёта, кто платил"></label>'+
   ((o.pays||[]).length?'<div style="font-size:13px;color:var(--mut)">Оплаты: '+(o.pays||[]).map(p=>esc(p.date)+' — '+PM_I(pmGuess(p))+' '+money(p.sum)).join('; ')+'</div>':''),
   async()=>{const v=num(String(skVal('fPay')).replace(/\s/g,''));if(!v){toast('Впишите сумму');return}
-    try{await DB.doc(o._col+'/'+o.id).update({pays:(o.pays||[]).concat([{sum:v,m:$('fPm').dataset.v||'',date:today(),ts:Date.now(),note:skVal('fPn'),by:IS_OWNER?'':(UID||'')}])});store.set('rz_lastpm',$('fPm').dataset.v||'cash');$('mSk').classList.remove('show');toast('Оплата записана')}catch(e){toast('Не сохранилось')}})}
+    try{await DB.doc(o._col+'/'+o.id).update({pays:(o.pays||[]).concat([{sum:v,m:$('fPm').dataset.v||'',date:today(),ts:Date.now(),note:skVal('fPn'),by:(IS_OWNER&&!window.__BUH)?'':(UID||'')}])});store.set('rz_lastpm',$('fPm').dataset.v||'cash');$('mSk').classList.remove('show');toast('Оплата записана')}catch(e){toast('Не сохранилось')}})}
 document.addEventListener('click',e=>{const b=e.target.closest('[data-pay]');if(!b)return;e.stopPropagation();const o=saved.find(x=>x.id==b.dataset.pay);if(o)payForm(o)},true);
 function renderLog(){
   if($('logDebt'))$('logDebt').innerHTML=debtHtml();

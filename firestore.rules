@@ -1,0 +1,25 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signedIn() { return request.auth != null; }
+    function owner() { return signedIn() && request.auth.token.email == 'raxim6233@gmail.com'; }
+    function staff() { return signedIn() && exists(/databases/$(database)/documents/people/$(request.auth.uid)); }
+    function me(u) { return signedIn() && request.auth.uid == u; }
+    function buh() { return staff() && get(/databases/$(database)/documents/sk_cfg/roles).data.get(request.auth.uid, '') == 'buh'; }
+
+    // Руководитель и бухгалтер видят и меняют всё
+    match /{document=**} { allow read, write: if owner() || buh(); }
+
+    // Общие справочники: персонал только читает
+    match /sk_items/{d} { allow read: if staff(); }
+    match /sk_cfg/{d}   { allow read: if staff(); }
+    match /sk_pub/{d}   { allow read: if staff(); }
+    match /pub/{d}      { allow read: if staff(); }
+
+    // Свои данные сотрудника: только он сам (и руководитель)
+    match /people/{u}          { allow read: if me(u); }
+    match /staff/{u}           { allow read, write: if me(u) && staff(); }
+    match /uo/{u}/{rest=**}    { allow read, write: if me(u) && staff(); }
+    match /um/{u}/{rest=**}    { allow read, write: if me(u) && staff(); }
+  }
+}
