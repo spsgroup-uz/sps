@@ -298,6 +298,7 @@ header{position:relative}
 .rep td{padding:6px 4px;border-bottom:1px solid var(--line)}
 .rep .grp td{background:#f1f5f9;font-weight:700;font-size:13px}
 #sheet .rep{font-size:15px}
+#sheet.land .mg td.nm{position:static}#sheet.land .mg table{font-size:13px;width:100%}#sheet.land .mg td,#sheet.land .mg th{border-color:#000;padding:4px 3px}
 #sheet .rep td{border:1px solid #000;padding:6px 8px}
 #sheet .rep .grp td{background:#eee}
 .hrow{display:flex;justify-content:space-between;gap:8px;font-size:13px;padding:7px 2px;border-bottom:1px solid var(--line)}
@@ -426,6 +427,68 @@ label:not(.mebtn):not(.drwbtn),.m,.b div,.q div,.pml,.cashr .m,.plt span,.plt i,
 select option{color:#000;background:#fff}
 input[readonly]{color:#000!important}
 .nmi,.line .name{color:#1e3a8a!important;-webkit-text-fill-color:#1e3a8a}
+
+/* ---- персонал: компактный табель ---- */
+.seg{display:flex;gap:4px;background:#eef2f7;border-radius:14px;padding:4px;margin-bottom:12px;overflow-x:auto}
+.seg button{flex:1;border:0;background:none;border-radius:10px;padding:9px 10px;font-weight:700;font-size:14px;color:#334155;white-space:nowrap}
+.seg button.on{background:#fff;color:#0f172a;box-shadow:0 1px 3px rgba(15,23,42,.12)}
+.tbsum{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}.tbsum .b{font-size:13px;font-weight:700;border-radius:999px;padding:4px 10px;background:#f1f5f9}
+.tbsum .w{background:#dcfce7;color:#166534}.tbsum .n{background:#fef3c7;color:#92400e}.tbsum .s{background:#fee2e2;color:#991b1b}.tbsum .a{background:#fee2e2;color:#991b1b}.tbsum .o{background:#dbeafe;color:#1e40af}
+.tbl{padding:4px 12px}
+.twr{display:grid;grid-template-columns:minmax(150px,1.3fr) auto minmax(220px,1fr) 64px;gap:6px 12px;align-items:center;padding:9px 0;border-bottom:1px solid var(--line)}
+.twr:last-child,.twp:last-child{border-bottom:0}
+.twn b{font-size:15px}.twn small,.twp small{display:block;font-size:12px;color:var(--mut)}
+.twr .st{display:flex;gap:4px}.twr .st button{border:1px solid var(--line);background:#fff;border-radius:10px;width:38px;height:36px;font-size:17px;padding:0}
+.twr .st button.on{border-color:transparent}.twr .st button.on.w{background:#dcfce7;box-shadow:inset 0 0 0 2px #16a34a}.twr .st button.on.o{background:#dbeafe;box-shadow:inset 0 0 0 2px #2563eb}.twr .st button.on.a{background:#fee2e2;box-shadow:inset 0 0 0 2px #dc2626}.twr .st button.on.s{background:#fef3c7;box-shadow:inset 0 0 0 2px #d97706}
+.tmx{display:flex;align-items:center;gap:4px}.tmx input{width:100px;padding:6px 6px;border:1px solid var(--line)!important;border-radius:9px}.tmx button{border:0;background:#eef2ff;border-radius:8px;height:34px;width:34px;font-size:15px;padding:0}.tmx span{color:var(--mut)}.tmx .mut{font-size:13px}
+.twh{text-align:right;font-weight:700;font-size:13px;color:var(--mut)}
+.twr .repn{grid-column:1/-1;margin:0}
+.tg{display:inline-block;font-size:11px;font-weight:700;border-radius:999px;padding:2px 8px;margin:3px 4px 0 0;background:#f1f5f9;color:#475569}.tg.red{background:#fee2e2;color:#b91c1c}.tg.ok{background:#dcfce7;color:#166534}
+.twp{border-bottom:1px solid var(--line);padding:4px 0}.twp summary{display:flex;align-items:center;flex-wrap:wrap;gap:4px 8px;padding:8px 0;cursor:pointer;list-style:none}.twp summary::-webkit-details-marker{display:none}
+.twp summary small{display:inline;margin-right:auto}.twp summary .tg{margin:0}.twp[open]{padding-bottom:12px}
+@media(max-width:700px){.twr{grid-template-columns:1fr auto}.twr .tmx{grid-column:1/2}.twr .twh{grid-column:2/3}}
+.rk{border:1px solid var(--line);border-radius:14px;padding:12px;margin-bottom:10px}
+.rkh{display:flex;align-items:center;gap:8px;flex-wrap:wrap}.rkh b{font-size:16px}.rkn{font-size:20px;width:30px}
+.rkk{margin-left:auto;color:#fff;font-weight:800;border-radius:10px;padding:3px 10px;font-size:16px}
+.rkbar{height:6px;background:#eef2f7;border-radius:6px;margin:8px 0 10px;overflow:hidden}.rkbar i{display:block;height:100%;border-radius:6px}
+.rkg{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:8px}.rkg>div{background:#f8fafc;border-radius:10px;padding:7px 9px}.rkg small{display:block;font-size:11px;color:var(--mut)}.rkg b{font-size:15px}
+
+/* ===================== ТЕМА «КОСМОС» — спокойно, коротко, ясно ===================== */
+:root{--bg:#f4f6fb;--ink:#0b1220;--mut:#5b6478;--line:#e6e9f2;--acc:#4f46e5;--acc2:#eef2ff;--glow:0 8px 24px rgba(79,70,229,.28);--sh:0 1px 2px rgba(11,18,32,.04),0 8px 28px rgba(11,18,32,.06)}
+body{font-family:Inter,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;-webkit-font-smoothing:antialiased;letter-spacing:-.005em;font-variant-numeric:tabular-nums}
+header{background:radial-gradient(1200px 300px at 85% -40%,rgba(56,189,248,.35),transparent 60%),radial-gradient(800px 260px at 10% -30%,rgba(168,85,247,.35),transparent 60%),linear-gradient(135deg,#060a1a 0%,#111842 50%,#1e1b4b 100%);box-shadow:0 10px 30px rgba(6,10,26,.35);border-bottom:1px solid rgba(255,255,255,.06)}
+header .brand{letter-spacing:.04em}
+.modesw a{border-color:rgba(255,255,255,.18);color:#c7d2fe;backdrop-filter:blur(6px)}
+.modesw a.on{background:linear-gradient(135deg,#fff,#e0e7ff);color:#1e1b4b}
+#menuBtn{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.12)}
+/* боковое меню — тёмное, как ночное небо */
+#drawer{background:linear-gradient(180deg,#070b1d 0%,#0e1433 55%,#141a40 100%);color:#e2e8f0;box-shadow:1px 0 0 rgba(255,255,255,.04),8px 0 30px rgba(6,10,26,.25);padding:16px 12px}
+.dhead{color:#fff;font-size:19px;letter-spacing:.06em;padding:6px 10px 12px;background:linear-gradient(90deg,#a5b4fc,#67e8f9);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+.dsec{color:#6b76a8;font-size:10.5px;letter-spacing:.14em;margin:16px 10px 6px}
+.dl{color:#cbd5f5;font-size:14.5px;font-weight:600;padding:10px 12px;border-radius:12px;transition:background .15s,color .15s}
+.dl:hover{background:rgba(255,255,255,.06);color:#fff}
+.dl.on{background:linear-gradient(135deg,rgba(99,102,241,.95),rgba(56,189,248,.85));color:#fff;box-shadow:0 6px 18px rgba(79,70,229,.45)}
+.dl[data-dmode].on{background:rgba(129,140,248,.18);color:#fff;box-shadow:inset 3px 0 0 #818cf8}
+/* карточки */
+.card{border:1px solid var(--line);border-radius:18px;box-shadow:var(--sh)}
+.htile{border:1px solid var(--line);border-radius:18px;box-shadow:var(--sh);transition:transform .15s,box-shadow .15s}
+.htile:hover{transform:translateY(-1px);box-shadow:0 2px 4px rgba(11,18,32,.05),0 14px 34px rgba(11,18,32,.09)}
+.htile span{color:var(--mut);font-weight:600}.htile b{font-size:22px;letter-spacing:-.02em}.htile i{color:var(--mut)}
+.hsec{color:#7c86a2;font-size:11.5px;letter-spacing:.14em;margin:18px 4px 8px}
+/* кнопки */
+.pri,.addrow .pri,.bar .pri,.chip.on,.seg button.on.pri{background:linear-gradient(135deg,#4f46e5,#7c3aed)!important;border-color:transparent!important;color:#fff!important}
+.addrow .pri,.bar .pri{box-shadow:var(--glow)}
+.addrow button{border:1px dashed #c7cdf0;color:#4338ca;border-radius:14px}
+.chip{border-color:var(--line);color:#1e293b}
+.hact button{background:linear-gradient(135deg,#4f46e5,#7c3aed)!important;box-shadow:0 6px 18px rgba(79,70,229,.25);border-radius:14px!important}
+.seg{background:#e9ecf6}.seg button.on{box-shadow:0 1px 2px rgba(11,18,32,.08),0 4px 12px rgba(11,18,32,.06)}
+input,select,textarea{border-radius:10px}
+input:focus,select:focus,textarea:focus{outline:none;box-shadow:0 0 0 3px rgba(99,102,241,.22);border-color:#818cf8!important}
+.rkk{box-shadow:0 4px 12px rgba(11,18,32,.15)}
+.nv.on{background:linear-gradient(135deg,#4f46e5,#7c3aed)!important;border-color:transparent!important;box-shadow:0 6px 16px rgba(79,70,229,.28)}
+.tabs button.on{color:#1e1b4b}
+.bar{gap:6px}.bar button{flex:1 1 0;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:13px;padding:12px 2px}
+@media(max-width:480px){.bar button{font-size:12.5px}.bar #bClear,.bar #bCopy{flex:0 0 48px}.bar .bt{display:none}}
 </style>
 </head>
 <body class="worker">
@@ -448,20 +511,24 @@ input[readonly]{color:#000!important}
   <div class="dsec">Программа</div>
   <a href="#roof" class="dl" data-dmode="roof">🏗 Кровля</a>
   <a href="#tun" class="dl" data-dmode="tun">🧩 Тунукабонд</a>
-  <div class="dsec">Разделы</div>
+  <div class="dsec">Работа</div>
   <button class="dl own-only" data-dtab="home">🏠 Главная</button>
   <button class="dl" data-dtab="cat">📚 Каталог</button>
   <button class="dl" data-dtab="ord">🛠 Заказ (цех)</button>
   <button class="dl" data-dtab="cli">👤 Клиент</button>
   <button class="dl" data-dtab="log">📒 Журнал и долги</button>
   <button class="dl" data-dtab="dxf">📐 Расчёт по DXF</button>
+  <div class="dsec own-only">Деньги и склад</div>
   <button class="dl own-only" data-dtab="sk">📦 Склад и отчёт</button>
   <button class="dl own-only" data-dtab="pl">📈 Прибыль и расходы</button>
   <button class="dl own-only" data-dtab="cl">📇 Клиенты и должники</button>
-  <button class="dl own-only" data-dtab="bak">💾 Копия / перенос данных</button>
+  <div class="dsec">Команда</div>
   <button class="dl own-only" data-dtab="tab">🕒 Табель персонала</button>
+  <button class="dl own-only" data-dtab="rate">🏆 Рейтинг продавцов</button>
   <button class="dl own-only" data-dtab="usr">👥 Пользователи и роли</button>
   <button class="dl" data-dtab="me">📍 Я пришёл / ушёл</button>
+  <div class="dsec own-only">Сервис</div>
+  <button class="dl own-only" data-dtab="bak">💾 Копия / перенос данных</button>
 </nav>
 
 <main>
@@ -551,17 +618,26 @@ input[readonly]{color:#000!important}
     <div id="clList"></div>
   </section>
   <section id="vTab" hidden>
-    <div class="card" id="geoBox"></div>
-    <div class="card"><div style="font-weight:800;font-size:17px;margin-bottom:8px">🕒 Табель за день</div>
-      <div class="rw2"><button class="chip" id="tbPrev">‹</button><input id="tbDate" style="width:120px;text-align:center"><button class="chip" id="tbNext">›</button><button class="chip" id="tbToday">Сегодня</button>
-      <span style="margin-left:auto;font-size:13px;color:var(--mut)">начало работы <input id="tbStart" type="time" style="width:96px"></span></div></div>
-    <div id="tbList"></div>
-    <div class="addrow" id="tbImpBox"><button class="pri" id="tbImp" style="flex:1">📥 Добавить сотрудников Цеха № 2 (25 человек)</button></div>
-    <div class="addrow"><button id="tbLinks">🔗 Ссылки всех (для Telegram)</button></div>
-    <div class="addrow"><button class="pri" id="tbAdd">+ Сотрудник</button><button id="tbAll">✅ Все пришли сейчас</button></div>
-    <div class="card"><div style="font-weight:800;font-size:17px;margin-bottom:8px">📅 Отчёт за месяц</div>
+    <div class="seg" id="tbSeg"><button data-tseg="day" class="on">🕒 День</button><button data-tseg="mon">📅 Месяц</button><button data-tseg="ppl">👥 Сотрудники</button><button data-tseg="rate">🏆 Продавцы</button><button data-tseg="set">📍 Завод</button></div>
+    <div data-tpane="day">
+      <div class="card"><div class="rw2"><button class="chip" id="tbPrev">‹</button><input id="tbDate" style="width:120px;text-align:center"><button class="chip" id="tbNext">›</button><button class="chip" id="tbToday">Сегодня</button>
+        <span style="margin-left:auto;font-size:13px;color:var(--mut)">начало <input id="tbStart" type="time" style="width:96px"></span></div>
+        <div id="tbSum" class="tbsum"></div></div>
+      <div class="card tbl" id="tbList"></div>
+      <div class="addrow"><button id="tbAll">✅ Отметить всех: пришли сейчас</button></div>
+    </div>
+    <div data-tpane="mon" hidden>
+      <div class="card"><div style="font-weight:800;font-size:17px;margin-bottom:8px">📅 Табель за месяц</div>
       <div class="rw2"><button class="chip" id="tmPrev">‹</button><b id="tmLbl" style="min-width:130px;text-align:center"></b><button class="chip" id="tmNext">›</button><button class="chip" id="tmCopy">Копировать</button><button class="chip on" id="tmPdf">🖨 PDF</button></div>
       <div id="tmBody"></div></div>
+    </div>
+    <div data-tpane="ppl" hidden>
+      <div class="card tbl" id="tbPeople"></div>
+      <div class="addrow"><button class="pri" id="tbAdd">+ Сотрудник</button><button id="tbLinks">🔗 Ссылки всех</button></div>
+      <div class="addrow" id="tbImpBox"><button id="tbImp" style="flex:1">📥 Добавить сотрудников Цеха № 2</button></div>
+    </div>
+    <div data-tpane="rate" hidden><div class="card" id="rateBox"></div></div>
+    <div data-tpane="set" hidden><div class="card" id="geoBox"></div></div>
   </section>
   <section id="vLog" hidden>
     <div class="card" id="logNote" hidden></div>
@@ -582,9 +658,9 @@ input[readonly]{color:#000!important}
 </main>
 
 <div class="bar">
-  <button id="bClear">Очистить</button>
+  <button id="bClear" title="Очистить">🗑<span class="bt"> Очистить</span></button>
   <button id="bDxf">📐 DXF</button>
-  <button id="bCopy">Копировать</button>
+  <button id="bCopy" title="Копировать">📋<span class="bt"> Копировать</span></button>
   <button id="bSave">Сохранить</button>
   <button id="bPrint" class="pri">🖨 Печать</button>
 </div>
@@ -1384,7 +1460,7 @@ function drawerSync(){document.querySelectorAll('[data-dtab]').forEach(b=>b.clas
 function drawer(o){$('drawer').classList.toggle('open',o);$('drawerBg').classList.toggle('show',o)}
 $('menuBtn').onclick=()=>{if(innerWidth>=900){const h=!document.body.classList.contains('navhide');document.body.classList.toggle('navhide',h);store.set('rz_navhide',h?1:0)}else drawer(true)};
 if(store.get('rz_navhide',0))document.body.classList.add('navhide'); $('drawerBg').onclick=()=>drawer(false);
-$('drawer').addEventListener('click',e=>{const b=e.target.closest('[data-dtab]');if(b&&b.dataset.dtab=='dxf'){drawer(false);dxfOpen();return}if(b&&b.dataset.dtab=='bak'){drawer(false);bakOpen();return}if(b&&b.dataset.dtab=='usr'){drawer(false);renderSk();tab('sk');renderUsers();setTimeout(()=>{const u=$('usrBox');if(u){u.scrollIntoView({behavior:'smooth',block:'start'});u.style.outline='3px solid #2563eb';setTimeout(()=>u.style.outline='',2500)}},120);return}
+$('drawer').addEventListener('click',e=>{const b=e.target.closest('[data-dtab]');if(b&&b.dataset.dtab=='dxf'){drawer(false);dxfOpen();return}if(b&&b.dataset.dtab=='bak'){drawer(false);bakOpen();return}if(b&&b.dataset.dtab=='rate'){drawer(false);TB_SEG='rate';tab('tab');renderTab();return}if(b&&b.dataset.dtab=='usr'){drawer(false);USR_OPEN=true;renderSk();tab('sk');renderUsers();setTimeout(()=>{const u=$('usrBox');if(u){u.scrollIntoView({behavior:'smooth',block:'start'});u.style.outline='3px solid #2563eb';setTimeout(()=>u.style.outline='',2500)}},120);return}
   if(b&&['tab','me','cl','pl','home'].includes(b.dataset.dtab)){tab(b.dataset.dtab);drawer(false);return}if(b){({cat:'tCat',ord:'tOrd',cli:'tCli',log:'tLog',sk:'tSk'})[b.dataset.dtab]&&$(({cat:'tCat',ord:'tOrd',cli:'tCli',log:'tLog',sk:'tSk'})[b.dataset.dtab]).click();drawer(false)} if(e.target.closest('[data-dmode]'))drawer(false)});
 function tab(w){if(typeof IS_OWNER!='undefined'&&!IS_OWNER){const ok=document.body.classList.contains('sales')?['me','cat','ord','cli','log']:['me'];if(!ok.includes(w))w='me'}curTab=w;$('vTab').hidden=w!='tab';if(w=='tab')renderTab();$('vMe').hidden=w!='me';if(w=='me')renderMe();$('vCl').hidden=w!='cl';if(w=='cl')renderCl();$('vPl').hidden=w!='pl';if(w=='pl')renderPl();$('vHome').hidden=w!='home';if(w=='home')renderHome();setTimeout(drawerSync,0);$('vSk').hidden=w!='sk';$('tSk').classList.toggle('on',w=='sk');$('vCat').hidden=w!='cat';$('vOrd').hidden=w!='ord';$('vLog').hidden=w!='log';$('vCli').hidden=w!='cli';$('tCat').classList.toggle('on',w=='cat');$('tOrd').classList.toggle('on',w=='ord');$('tLog').classList.toggle('on',w=='log');$('tCli').classList.toggle('on',w=='cli');document.querySelector('.bar').hidden=['log','sk','tab','me','cl','pl','home'].includes(w);window.scrollTo(0,0)}
 $('tLog').onclick=()=>{renderLog();tab('log')};
@@ -2058,7 +2134,7 @@ async function skSync(oid){ if(!DB||!oid) return 0;
   if(miss.length) setTimeout(()=>toast('Нет на складе: '+miss.slice(0,3).join(', ')+(miss.length>3?'…':'')),1800);
   return n }
 // ---------- табель рабочих (видит только руководитель) ----------
-let TW_OK=false,TW={list:[],start:'08:00',geo:null},TD={},TK={},TB_DAY=new Date(),TB_MON=new Date(),TB_ON=false;
+let TB_OPEN='',TB_SEG=store.get('rz_tseg','day'),TW_OK=false,TW={list:[],start:'08:00',geo:null},TD={},TK={},TB_DAY=new Date(),TB_MON=new Date(),TB_ON=false;
 const ST={w:['✅ Работал','W'],o:['🏖 Выходной','O'],a:['❌ Не вышел','A'],s:['🤒 Болел','S']};
 function dKey(d){return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')}
 function dRu(d){return String(d.getDate()).padStart(2,'0')+'.'+String(d.getMonth()+1).padStart(2,'0')+'.'+d.getFullYear()}
@@ -2139,27 +2215,35 @@ $('meIn').onclick=()=>meMark('in');
 document.addEventListener('click',e=>{if(e.target.id=='meAllow'){askPos();meMark('in')}});$('meOut').onclick=()=>meMark('out');
 async function tdSet(k,wid,patch){const recs={...(TD[k]||{})};recs[wid]={...(recs[wid]||{}),...patch};TD[k]=recs;renderTab();
   try{await DB.doc('own/tab/days/'+k).set({recs})}catch(_){toast('Не сохранилось')}}
-function renderTab(){if(!IS_OWNER)return;tbStartDb();$('tbImpBox').hidden=CEX2.every(w=>TW.list.some(x=>x.id==w.id));renderGeo();TW.list.forEach(w=>{if(w.uid)watchTk(w.uid)});
+function renderTab(){if(!IS_OWNER)return;tbSegShow();tbStartDb();$('tbImpBox').hidden=CEX2.every(w=>TW.list.some(x=>x.id==w.id));renderGeo();TW.list.forEach(w=>{if(w.uid)watchTk(w.uid)});
   if(!$('vTab').contains(document.activeElement)||document.activeElement.type!='time'){$('tbDate').value=dRu(TB_DAY);$('tbStart').value=TW.start||'08:00'}
   const k=dKey(TB_DAY),recs=TD[k]||{};
+  const L=TW.list,cnt={w:0,o:0,a:0,s:0,n:0};L.forEach(w=>{const r=recOf(w,k);if(r&&r.st)cnt[r.st]++;else cnt.n++});
+  $('tbSum').innerHTML=L.length?'<span class="b w">✅ '+cnt.w+' на работе</span><span class="b n">⏳ '+cnt.n+' без отметки</span>'+(cnt.s?'<span class="b s">🤒 '+cnt.s+'</span>':'')+(cnt.a?'<span class="b a">❌ '+cnt.a+'</span>':'')+(cnt.o?'<span class="b o">🏖 '+cnt.o+'</span>':''):'';
   if(!typing($('tbList')))
-  $('tbList').innerHTML=TW.list.length?TW.list.map(w=>{const r=recOf(w,k),h=hrs(r);
-    return '<div class="card tw" data-w="'+w.id+'"><div class="tn">👤 '+esc(w.name)+(w.pos?'<span style="font-weight:500;font-size:12px;color:var(--mut)">'+esc(w.pos)+'</span>':'')+(isLate(r)?' <span class="late">опоздал</span>':'')+(noMark(w,k)?' <span class="late">⚠ не отметился</span>':'')+'<span class="h">'+(h?hText(h):'')+'</span><button class="x" data-wdel title="Удалить">✕</button></div>'+
-    '<div class="st">'+Object.keys(ST).map(c=>'<button class="'+c+(r.st==c?' on':'')+'" data-st="'+c+'">'+ST[c][0]+'</button>').join('')+'</div>'+
-    (r.ph&&r.ph.rep?'<div class="repn">📱 сообщил в '+esc(r.ph.repT||'')+': <b>'+(r.ph.rep=='s'?'🤒 заболел':'📝 отпрашивается')+'</b>'+(r.ph.repN?' — «'+esc(r.ph.repN)+'»':'')+'</div>':'')+
-    (r.ph&&!r.ph.rep?'<div style="margin-bottom:6px"><span class="ph">📱 отметился с телефона'+(r.ph.inD!=null?' · '+r.ph.inD+' м от завода':r.ph.inPh?' · по фото':'')+'</span>'+['in','out'].filter(f=>r.ph[f+'Ph']).map(f=>' <img data-tz src="'+r.ph[f+'Ph']+'" title="'+(f=='in'?'пришёл':'ушёл')+'" style="width:40px;height:40px;object-fit:cover;border-radius:8px;vertical-align:middle;cursor:zoom-in">').join('')+'</div>':'')+(r.st=='w'||!r.st?'<div class="tm"><label>Пришёл<span class="r"><input type="time" data-t="in" value="'+esc(r.in||'')+'"><button data-now="in">сейчас</button></span></label><label>Ушёл<span class="r"><input type="time" data-t="out" value="'+esc(r.out||'')+'"><button data-now="out">сейчас</button></span></label></div>':'')+
-    (w.conf?'<div style="margin-top:6px;font-size:12px;color:#dc2626;font-weight:700">⚠ Эту личную ссылку открыл ещё один телефон ('+esc(uName(w.conf))+'). Возможно, ссылку переслали.</div>':'')+
+  $('tbList').innerHTML=L.length?L.map(w=>{const r=recOf(w,k),h=hrs(r),wk=r.st=='w'||!r.st;
+    const tags=(isLate(r)?'<span class="tg red">опоздал</span>':'')+(noMark(w,k)?'<span class="tg red">не отметился</span>':'')+(r.ph&&!r.ph.rep?'<span class="tg ok">📱'+(r.ph.inD!=null?' '+r.ph.inD+' м':'')+'</span>':'');
+    return '<div class="twr" data-w="'+w.id+'"><div class="twn"><b>'+esc(w.name)+'</b>'+(w.pos?'<small>'+esc(w.pos)+'</small>':'')+(tags?'<div>'+tags+'</div>':'')+'</div>'+
+    '<div class="st">'+Object.keys(ST).map(c=>'<button class="'+c+(r.st==c?' on':'')+'" data-st="'+c+'" title="'+ST[c][0].replace(/^\S+\s/,'')+'">'+ST[c][0].split(' ')[0]+'</button>').join('')+'</div>'+
+    '<div class="tmx">'+(wk?'<input type="time" data-t="in" value="'+esc(r.in||'')+'"><button data-now="in" title="сейчас">⏱</button><span>–</span><input type="time" data-t="out" value="'+esc(r.out||'')+'"><button data-now="out" title="сейчас">⏱</button>':'<span class="mut">'+ST[r.st][0]+'</span>')+'</div>'+
+    '<div class="twh">'+(h?hText(h):'')+'</div>'+
+    (r.ph&&r.ph.rep?'<div class="repn">📱 '+esc(r.ph.repT||'')+': <b>'+(r.ph.rep=='s'?'🤒 заболел':'📝 отпрашивается')+'</b>'+(r.ph.repN?' — «'+esc(r.ph.repN)+'»':'')+'</div>':'')+
+    (r.ph&&!r.ph.rep&&(r.ph.inPh||r.ph.outPh)?'<div class="repn" style="background:none;padding:0">'+['in','out'].filter(f=>r.ph[f+'Ph']).map(f=>'<img data-tz src="'+r.ph[f+'Ph']+'" title="'+(f=='in'?'пришёл':'ушёл')+'" style="width:36px;height:36px;object-fit:cover;border-radius:8px;cursor:zoom-in">').join(' ')+'</div>':'')+
+    '</div>'}).join(''):'<div class="empty">Добавьте персонал во вкладке «👥 Сотрудники».</div>';
+  if(!typing($('tbPeople')))
+  $('tbPeople').innerHTML=L.length?L.map(w=>'<details class="twp" data-w="'+w.id+'"'+(TB_OPEN==w.id?' open':'')+'><summary><b>'+esc(w.name)+'</b>'+(w.pos?'<small>'+esc(w.pos)+'</small>':'')+'<span class="tg '+(w.uid?'ok':'')+'">'+(w.uid?'🔑 вход есть':'нет входа')+'</span>'+(ROLES[w.uid]?'<span class="tg">'+({sales:'продавец',sklad:'склад',cash:'кассир',buh:'бухгалтер'}[ROLES[w.uid]]||'')+'</span>':'')+'</summary>'+
+    (w.conf?'<div style="font-size:12px;color:#dc2626;font-weight:700">⚠ Ссылку открыл ещё один телефон ('+esc(uName(w.conf))+').</div>':'')+
     '<div class="plk"><input data-wph="'+w.id+'" inputmode="tel" placeholder="Телефон +998…" value="'+esc(w.phone||'')+'">'+(w.phone?'<a class="chip" target="_blank" rel="noopener" href="'+esc(smsHref(w))+'">💬 SMS</a><a class="chip" target="_blank" rel="noopener" data-tg="'+w.id+'" href="'+esc(tgHref(w))+'">✈️ Telegram</a>':'')+'</div>'+
     (window.__FB?'<div style="margin-top:8px">'+(w.uid?'<span class="ph">🔑 вход создан'+(w.pin?' · PIN '+esc(w.pin):'')+'</span>':'<button class="chip on" data-mkpin="'+w.id+'">🔑 Создать вход (телефон + PIN)</button>')+'</div>':'')+
-    '<div style="margin-top:8px;font-size:12px;color:var(--mut)"><button class="chip" data-plink="'+w.id+'" style="margin-right:6px">🔗 Скопировать ссылку</button>'+(w.uid?'<span class="ph">📱 привязан</span>':'<span style="color:#b45309">ещё не открывал ссылку</span>')+'<br>📱 Телефон: <select data-link="'+w.id+'" style="font-size:13px;max-width:70%"><option value="">не связан</option>'+[[UID,'Мой телефон (проверка)'],...Object.keys(STAFF).map(u=>[u,uName(u)]),...(w.uid&&w.uid!=UID&&!STAFF[w.uid]?[[w.uid,w.name+' (вход создан)']]:[])].filter(x=>x[0]).map(x=>'<option value="'+x[0]+'"'+(w.uid==x[0]?' selected':'')+'>'+esc(x[1])+'</option>').join('')+'</select></div>'+
-    '</div>'}).join(''):'<div class="card empty">Добавьте персонал кнопкой «+ Сотрудник».</div>';
+    '<div style="margin-top:8px;font-size:12px;color:var(--mut)"><button class="chip" data-plink="'+w.id+'" style="margin-right:6px">🔗 Ссылка</button>📱 Телефон: <select data-link="'+w.id+'" style="font-size:13px;max-width:60%"><option value="">не связан</option>'+[[UID,'Мой телефон (проверка)'],...Object.keys(STAFF).map(u=>[u,uName(u)]),...(w.uid&&w.uid!=UID&&!STAFF[w.uid]?[[w.uid,w.name+' (вход создан)']]:[])].filter(x=>x[0]).map(x=>'<option value="'+x[0]+'"'+(w.uid==x[0]?' selected':'')+'>'+esc(x[1])+'</option>').join('')+'</select></div>'+
+    '<div style="margin-top:8px;text-align:right"><button class="chip" data-wdel style="color:#b91c1c">🗑 Удалить</button></div></details>').join(''):'<div class="empty">Нет сотрудников. Нажмите «+ Сотрудник».</div>';
   renderMon()}
 function monData(){const y=TB_MON.getFullYear(),m=TB_MON.getMonth(),n=new Date(y,m+1,0).getDate();const days=[];for(let i=1;i<=n;i++)days.push(new Date(y,m,i));
   const rows=TW.list.map(w=>{const t={w:0,o:0,a:0,s:0,h:0,l:0};const cells=days.map(d=>{const r=recOf(w,dKey(d));if(!r||!r.st)return '';t[r.st]++;if(r.st=='w'){t.h+=hrs(r);if(isLate(r))t.l++}return r.st});return {w,t,cells}});
   return {days,rows,lbl:['Январь','Февраль','Март','Апрель','Май','Июнь','Июль','Август','Сентябрь','Октябрь','Ноябрь','Декабрь'][m]+' '+y}}
-function monHtml(M){let h='<div class="mg"><table class="rep" style="font-size:13px"><tr class="grp"><td>Сотрудник</td><td>Работал</td><td>Часов</td><td>Выходных</td><td>Не вышел</td><td>Болел</td><td>Опозд.</td></tr>'+
+function monHtml(M,part){let h=part=='grid'?'':'<div class="mg"><table class="rep" style="font-size:13px"><tr class="grp"><td>Сотрудник</td><td>Работал</td><td>Часов</td><td>Выходных</td><td>Не вышел</td><td>Болел</td><td>Опозд.</td></tr>'+
   M.rows.map(r=>'<tr><td><b>'+esc(r.w.name)+'</b></td><td><b>'+r.t.w+'</b> дн</td><td>'+fmt(Math.round(r.t.h*10)/10)+'</td><td>'+r.t.o+'</td><td style="color:'+(r.t.a?'#dc2626':'inherit')+'">'+r.t.a+'</td><td>'+r.t.s+'</td><td style="color:'+(r.t.l?'#dc2626':'inherit')+'">'+r.t.l+'</td></tr>').join('')+'</table></div>';
-  h+='<div class="mg" style="margin-top:10px"><table><tr><th></th>'+M.days.map(d=>'<th'+(d.getDay()==0?' style="color:#dc2626"':'')+'>'+d.getDate()+'</th>').join('')+'</tr>'+
+  if(part=='sum')return h;h+='<div class="mg" style="margin-top:10px"><table><tr><th></th>'+M.days.map(d=>'<th'+(d.getDay()==0?' style="color:#dc2626"':'')+'>'+d.getDate()+'</th>').join('')+'</tr>'+
   M.rows.map(r=>'<tr><td class="nm">'+esc(r.w.name)+'</td>'+r.cells.map(c=>'<td class="'+(c?ST[c][1]:'')+'">'+(c=='w'?'✓':c=='o'?'В':c=='a'?'Н':c=='s'?'Б':'')+'</td>').join('')+'</tr>').join('')+'</table></div>'+
   '<div style="font-size:12px;color:var(--mut);margin-top:6px">✓ работал · В выходной · Н не вышел · Б болел</div>';return h}
 function renderMon(){const M=monData();$('tmLbl').textContent=M.lbl;$('tmBody').innerHTML=TW.list.length?monHtml(M):'<div class="empty" style="padding:10px">Нет персонала</div>'}
@@ -2168,6 +2252,10 @@ $('tbList').addEventListener('click',e=>{const c=e.target.closest('[data-w]');if
   const s=e.target.closest('[data-st]');if(s){const st=s.dataset.st;tdSet(k,wid,st=='w'?{st,in:r.in||(dKey(new Date())==k?nowT():TW.start)}:{st,in:'',out:''});return}
   const n=e.target.closest('[data-now]');if(n){tdSet(k,wid,{st:'w',[n.dataset.now]:nowT()});return}
   if(e.target.closest('[data-wdel]')){const w=TW.list.find(x=>x.id==wid);ask('Удалить сотрудника?',(w&&w.name||'')+' — его старые отметки останутся в табеле.',()=>{TW.list=TW.list.filter(x=>x.id!=wid);twSave();renderTab()})}});
+$('tbPeople').addEventListener('click',e=>{const c=e.target.closest('[data-w]');if(!c)return;const wid=c.dataset.w;if(e.target.closest('summary'))TB_OPEN=c.open?'':wid;
+  if(e.target.closest('[data-wdel]')){const w=TW.list.find(x=>x.id==wid);ask('Удалить сотрудника?',(w&&w.name||'')+' — его старые отметки останутся в табеле.',()=>{TW.list=TW.list.filter(x=>x.id!=wid);twSave();renderTab()})}});
+document.addEventListener('click',e=>{const b=e.target.closest('[data-tseg]');if(!b)return;TB_SEG=b.dataset.tseg;store.set('rz_tseg',TB_SEG);tbSegShow()});
+function tbSegShow(){if(TB_SEG=='rate')setTimeout(renderRate,0);document.querySelectorAll('[data-tseg]').forEach(b=>b.classList.toggle('on',b.dataset.tseg==TB_SEG));document.querySelectorAll('[data-tpane]').forEach(d=>d.hidden=d.dataset.tpane!=TB_SEG)}
 $('tbList').addEventListener('change',e=>{const t=e.target.closest('[data-t]');if(!t)return;const wid=t.closest('[data-w]').dataset.w;tdSet(dKey(TB_DAY),wid,{st:'w',[t.dataset.t]:t.value})});
 const CEX2=[{"id": "c2_48", "name": "Салоев Раҳим", "pos": "Руководитель цеха, продаёт", "cex": "Цех № 2"}, {"id": "c2_49", "name": "Тохиров Дамир", "pos": "Продавец", "cex": "Цех № 2"}, {"id": "c2_50", "name": "Музаффаров Шамсиддин", "pos": "Продавец", "cex": "Цех № 2"}, {"id": "c2_51", "name": "Асадов Иззат", "pos": "Продавец", "cex": "Цех № 2"}, {"id": "c2_52", "name": "Каримов Зафар", "pos": "Брокер", "cex": "Цех № 2"}, {"id": "c2_53", "name": "Холиқов Раббимқул", "pos": "Бухгалтер (финансист цеха)", "cex": "Цех № 2"}, {"id": "c2_54", "name": "Акрамов Шоҳрух", "pos": "", "cex": "Цех № 2"}, {"id": "c2_55", "name": "Сайфуллоев Азиз", "pos": "", "cex": "Цех № 2"}, {"id": "c2_56", "name": "Джалилов Жаҳонгир", "pos": "", "cex": "Цех № 2"}, {"id": "c2_57", "name": "Турсунов Санжар", "pos": "", "cex": "Цех № 2"}, {"id": "c2_58", "name": "Гаффоров Бобур", "pos": "", "cex": "Цех № 2"}, {"id": "c2_59", "name": "Курбонов Фаррух", "pos": "", "cex": "Цех № 2"}, {"id": "c2_60", "name": "Хайруллаев Умед", "pos": "", "cex": "Цех № 2"}, {"id": "c2_61", "name": "Шодиқулов Олим", "pos": "", "cex": "Цех № 2"}, {"id": "c2_62", "name": "Ашурбоев Қобил", "pos": "", "cex": "Цех № 2"}, {"id": "c2_63", "name": "Истамқулов Парвиз", "pos": "", "cex": "Цех № 2"}, {"id": "c2_64", "name": "Шомуродов Шомурод", "pos": "", "cex": "Цех № 2"}, {"id": "c2_65", "name": "Яздонов Амир", "pos": "", "cex": "Цех № 2"}, {"id": "c2_66", "name": "Жалилов Умед", "pos": "", "cex": "Цех № 2"}, {"id": "c2_67", "name": "Сайфиддинов Раҳматжон", "pos": "", "cex": "Цех № 2"}, {"id": "c2_68", "name": "Хайруллоев Суҳроб", "pos": "", "cex": "Цех № 2"}, {"id": "c2_69", "name": "Тешаев Азиз", "pos": "", "cex": "Цех № 2"}, {"id": "c2_70", "name": "Аҳмадов Беҳбуд", "pos": "", "cex": "Цех № 2"}, {"id": "c2_71", "name": "Илхомов Лазиз", "pos": "", "cex": "Цех № 2"}, {"id": "c2_72", "name": "Аҳмадов Шоҳжаҳон", "pos": "", "cex": "Цех № 2"}];
 $('tbImp').onclick=async()=>{const have=new Set(TW.list.map(w=>w.id));const add=CEX2.filter(w=>!have.has(w.id));if(!add.length){toast('Уже добавлены');return}TW.list=TW.list.concat(add);await twSave();renderTab();toast('Добавлено: '+add.length)};
@@ -2194,9 +2282,13 @@ $('tbStart').addEventListener('change',()=>{TW.start=$('tbStart').value||'08:00'
 $('tmPrev').onclick=()=>{TB_MON=new Date(TB_MON.getFullYear(),TB_MON.getMonth()-1,1);renderMon()};
 $('tmNext').onclick=()=>{TB_MON=new Date(TB_MON.getFullYear(),TB_MON.getMonth()+1,1);renderMon()};
 $('tmCopy').onclick=async()=>{try{await navigator.clipboard.writeText(monText());toast('Скопировано')}catch(_){toast('Не удалось скопировать')}};
-$('tmPdf').onclick=async()=>{const M=monData();$('sheet').innerHTML='<div class="pbrand"><img src="'+LOGO_B+'" alt=""><span>SPS Group</span></div><h2>ТАБЕЛЬ ПЕРСОНАЛА: '+esc(M.lbl)+'</h2>'+monHtml(M).replace(/class="mg"/g,'class="mg" style="overflow:visible"')+'<div class="sign"><span>Руководитель: ____________</span></div>';
-  try{const {jsPDF}=window.jspdf;const pdf=new jsPDF('l','mm','a4');onePage(pdf,await snap(),true);const blob=pdf.output('blob');
-    if(!dl){try{dl=await window.claude.use('downloads')}catch(_){}} if(dl){await dl.save({filename:'Табель_'+M.lbl.replace(' ','_')+'.pdf',data:blob});toast('PDF табеля готов')} else toast('Печать недоступна в этом окне')}catch(e){if(!(e&&e.code=='declined'))toast('Ошибка: '+(e&&e.message||e))}};
+$('tmPdf').onclick=async()=>{const M=monData();const head=t=>'<div class="pbrand"><img src="'+LOGO_B+'" alt=""><span>SPS Group</span></div><h2>'+t+': '+esc(M.lbl)+'</h2>';
+  const fit=(pdf,cv,first)=>{const pw=297,ph=210,r=cv.height/cv.width;if(!first)pdf.addPage('a4','l');let w=pw-16,h=w*r;if(h>ph-12){h=ph-12;w=h/r}pdf.addImage(cv.toDataURL('image/jpeg',0.92),'JPEG',(pw-w)/2,6,w,h)};
+  const sh=$('sheet'),ow=sh.style.width;sh.style.width='1123px';sh.classList.add('land');
+  try{const {jsPDF}=window.jspdf;const pdf=new jsPDF('l','mm','a4');
+    $('sheet').innerHTML=head('ТАБЕЛЬ — ИТОГИ МЕСЯЦА')+monHtml(M,'sum').replace(/class="mg"/g,'class="mg" style="overflow:visible"')+'<div class="sign"><span>Руководитель: ____________</span></div>';fit(pdf,await snap(),true);
+    $('sheet').innerHTML=head('ТАБЕЛЬ ПО ДНЯМ')+monHtml(M,'grid').replace(/class="mg"/g,'class="mg" style="overflow:visible"')+'<div class="sign"><span>Руководитель: ____________</span></div>';fit(pdf,await snap(),false);
+    const blob=pdf.output('blob');if(!dl){try{dl=await window.claude.use('downloads')}catch(_){}} if(dl){await dl.save({filename:'Табель_'+M.lbl.replace(' ','_')+'.pdf',data:blob});toast('PDF табеля: 2 листа')} else toast('Печать недоступна в этом окне')}catch(e){if(!(e&&e.code=='declined'))toast('Ошибка: '+(e&&e.message||e))}finally{sh.style.width=ow;sh.classList.remove('land')}};
 
 // ---------- очистка склада (начать с нуля) ----------
 $('skWipe').onclick=()=>{if(!IS_OWNER||!DB)return;
@@ -2342,7 +2434,32 @@ function ordDxfOpen(){const parts=ordParts();if(!parts.length){toast('В зак�
       toast('Готово файлов: '+nf);$('mSk').classList.remove('show')}
     catch(e){if(!(e&&e.code=='declined'))toast('Ошибка: '+(e&&e.message||e))}},'⬇ Скачать DXF')}
 $('bDxf').onclick=ordDxfOpen;
+
+// ---------- рейтинг продавцов (KPI) ----------
+let RATE_PER='m0';
+const KPIW={rev:40,col:25,cnt:15,avg:10,dis:10};
+function perDays(per){const n=new Date(),a=[];let d0,d1=new Date(n.getFullYear(),n.getMonth(),n.getDate());
+  if(per=='m1'){d0=new Date(n.getFullYear(),n.getMonth()-1,1);d1=new Date(n.getFullYear(),n.getMonth(),0)}else if(per=='y')d0=new Date(n.getFullYear(),0,1);else d0=new Date(n.getFullYear(),n.getMonth(),1);
+  for(let d=new Date(d0);d<=d1;d.setDate(d.getDate()+1))a.push(dKey(d));return a}
+function rateData(per){const sel=new Set(Object.keys(ROLES).filter(u=>ROLES[u]=='sales'));saved.forEach(o=>{if(o._by&&inPeriod(o,per))sel.add(o._by)});
+  const days=perDays(per);
+  const R=[...sel].map(u=>{const os=saved.filter(o=>(o._by||'')==u&&inPeriod(o,per));const rev=os.reduce((a,o)=>a+(o.total||0),0),paid=os.reduce((a,o)=>a+Math.min(o.total||0,oPaid(o)),0),debt=os.reduce((a,o)=>a+oDebt(o),0);
+    const w=TW.list.find(x=>x.uid==u);let wd=0,ab=0,late=0;if(w)days.forEach(k=>{const r=recOf(w,k);if(!r||!r.st)return;if(r.st=='w'){wd++;if(isLate(r))late++}if(r.st=='a')ab++});
+    const dis=w&&(wd+ab)?Math.max(0,wd/(wd+ab)-(wd?late/wd*0.5:0)):null;
+    return {u,name:w?w.name:uName(u),n:os.length,rev,paid,debt,avg:os.length?rev/os.length:0,col:rev?paid/rev:0,wd,ab,late,dis}});
+  const mx=k=>Math.max(1,...R.map(r=>r[k]));const mR=mx('rev'),mN=mx('n'),mA=mx('avg');
+  R.forEach(r=>{const parts={rev:r.rev/mR,col:r.col,cnt:r.n/mN,avg:r.avg/mA,dis:r.dis==null?1:r.dis};r.parts=parts;r.k=Object.keys(KPIW).reduce((a,k)=>a+parts[k]*KPIW[k],0)/100;if(!r.n)r.k=0});
+  return R.sort((a,b)=>b.k-a.k||b.rev-a.rev)}
+function kpiBand(k){return k>=0.9?['Отлично','#16a34a']:k>=0.75?['Хорошо','#2563eb']:k>=0.6?['Норма','#d97706']:['Слабо','#dc2626']}
+function renderRate(){const box=$('rateBox');if(!box||!IS_OWNER)return;const R=rateData(RATE_PER);const pc=x=>Math.round(x*100)+'%';
+  box.innerHTML='<div style="display:flex;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:10px"><div style="font-weight:800;font-size:17px">🏆 Рейтинг продавцов</div><div class="rw2" style="margin-left:auto">'+[['m0','Этот месяц'],['m1','Прошлый'],['y','Год']].map(p=>'<button class="chip'+(p[0]==RATE_PER?' on':'')+'" data-rper="'+p[0]+'">'+p[1]+'</button>').join('')+'</div></div>'+
+  (R.length?R.map((r,i)=>{const b=kpiBand(r.k);return '<div class="rk"><div class="rkh"><span class="rkn">'+(['🥇','🥈','🥉'][i]||(i+1)+'.')+'</span><b>'+esc(r.name)+'</b><span class="rkk" style="background:'+b[1]+'">'+r.k.toFixed(2)+'</span><span style="color:'+b[1]+';font-weight:700;font-size:13px">'+b[0]+'</span></div>'+
+    '<div class="rkbar"><i style="width:'+Math.min(100,Math.round(r.k*100))+'%;background:'+b[1]+'"></i></div>'+
+    '<div class="rkg"><div><small>Продажи</small><b>'+money(r.rev)+'</b></div><div><small>Заказов</small><b>'+r.n+'</b></div><div><small>Средний чек</small><b>'+money(Math.round(r.avg))+'</b></div><div><small>Собрано</small><b>'+pc(r.col)+'</b></div><div><small>Долг клиентов</small><b style="color:'+(r.debt?'#dc2626':'inherit')+'">'+money(r.debt)+'</b></div><div><small>Дисциплина</small><b>'+(r.dis==null?'—':pc(r.dis))+'</b>'+(r.dis!=null?'<small>'+r.wd+' дн'+(r.late?' · опозд. '+r.late:'')+(r.ab?' · прогул '+r.ab:'')+'</small>':'')+'</div></div></div>'}).join(''):'<div class="empty">Продавцов пока нет. Назначьте роль «Продавец» в «Пользователи и роли».</div>')+
+  '<details style="margin-top:10px;font-size:13px;color:var(--mut)"><summary style="cursor:pointer">Как считается коэффициент</summary><div style="margin-top:6px;line-height:1.6">Коэффициент KPI = сумма баллов (от 0 до 1):<br>• <b>продажи</b> — 40% (сравнение с лучшим продавцом)<br>• <b>собрано денег</b> из суммы заказов — 25%<br>• <b>количество заказов</b> — 15%<br>• <b>средний чек</b> — 10%<br>• <b>дисциплина</b> по табелю (явка, опоздания) — 10%<br>0.90 и выше — отлично · 0.75 — хорошо · 0.60 — норма · ниже — слабо.<br>Коэффициент удобно умножать на премию: премия × KPI.</div></details>'}
+document.addEventListener('click',e=>{const b=e.target.closest('[data-rper]');if(!b)return;RATE_PER=b.dataset.rper;renderRate()});
 // ---------- пользователи (видит только руководитель) ----------
+let USR_OPEN=false;
 function renderUsers(){const box=$('usrBox');if(!box||!IS_OWNER)return;if(typing(box))return;
   const per=box.dataset.per||'m0',its=Object.fromEntries(SK_ITEMS.map(i=>[i.id,i]));const us=['',...Object.keys(STAFF)];
   const rows=us.map(u=>{const os=saved.filter(o=>(o._by||'')==u&&inPeriod(o,per));const sum=os.reduce((a,o)=>a+(o.total||0),0),debt=os.reduce((a,o)=>a+oDebt(o),0);
@@ -2350,10 +2467,10 @@ function renderUsers(){const box=$('usrBox');if(!box||!IS_OWNER)return;if(typing
     const ul=Object.keys(used).filter(k=>its[k]).map(k=>esc(skName(its[k]))+': <b>'+fmt(Math.round(used[k]*100)/100)+' '+skUnit(its[k])+'</b>').join('<br>')||'<span style="color:var(--mut)">ничего</span>';
     const st=STAFF[u];
     return '<tr><td class="n">'+(u?'<input data-alias="'+u+'" value="'+esc(ALIAS[u]||'')+'" placeholder="'+esc(PNAMES[u]||'Имя')+'"><select data-role="'+u+'" style="margin-top:4px;width:100%;font-size:13px"><option value="">Сотрудник (только отметка)</option><option value="sales"'+(ROLES[u]=='sales'?' selected':'')+'>🧾 Продавец (заказы)</option><option value="sklad"'+(ROLES[u]=='sklad'?' selected':'')+'>📦 Начальник склада</option><option value="cash"'+(ROLES[u]=='cash'?' selected':'')+'>💵 Кассир</option><option value="buh"'+(ROLES[u]=='buh'?' selected':'')+'>📒 Бухгалтер</option></select>':'Руководитель (вы)')+(st&&st.last?'<div style="font-size:12px;color:var(--mut);font-weight:400">заходил: '+new Date(st.last).toLocaleDateString('ru-RU')+'</div>':'')+'</td><td>Заказов: <b>'+os.length+'</b><br>Сумма: <b>'+money(sum)+'</b>'+(debt?'<br><span style="color:#dc2626">долги: '+money(debt)+'</span>':'')+'</td><td>'+ul+'</td></tr>'}).join('');
-  box.innerHTML='<div style="font-weight:800;font-size:16px;margin-bottom:6px">👥 Пользователи и их расход <span style="font-size:12px;color:var(--mut);font-weight:500">· видите только вы</span></div>'+
+  box.innerHTML='<details id="usrDet"'+(USR_OPEN?' open':'')+'><summary style="font-weight:800;font-size:16px;cursor:pointer;list-style:none;display:flex;align-items:center;gap:8px">👥 Пользователи и роли <span class="tg">'+Object.keys(STAFF).length+'</span><span style="margin-left:auto;font-size:13px;color:var(--mut);font-weight:600">'+(USR_OPEN?'свернуть ▲':'открыть ▼')+'</span></summary><div style="margin-top:8px">'+
    '<div class="rw2" style="margin-bottom:8px">'+[['m0','Этот месяц'],['m1','Прошлый'],['y','Год'],['all','Всё']].map(p=>'<button class="chip'+(p[0]==per?' on':'')+'" data-uper="'+p[0]+'">'+p[1]+'</button>').join('')+'</div>'+
    '<table class="ub" style="width:100%;border-collapse:collapse"><tr style="color:var(--mut);font-size:12px"><td>Кто</td><td>Заказы</td><td>Израсходовал со склада</td></tr>'+rows+'</table>'+
-   (Object.keys(STAFF).length?'':'<div style="font-size:13px;color:var(--mut);margin-top:8px">Пока никто, кроме вас, не заходил. Когда работник откроет программу по вашей ссылке, он появится здесь.</div>')}
+   (Object.keys(STAFF).length?'':'<div style="font-size:13px;color:var(--mut);margin-top:8px">Пока никто, кроме вас, не заходил. Когда работник откроет программу по вашей ссылке, он появится здесь.</div>')+'</div></details>';const d=$('usrDet');if(d)d.addEventListener('toggle',()=>{USR_OPEN=d.open;renderUsers()})}
 document.addEventListener('click',e=>{const b=e.target.closest('[data-uper]');if(!b)return;$('usrBox').dataset.per=b.dataset.uper;renderUsers()});
 document.addEventListener('change',async e=>{const a=e.target.closest('[data-alias]');if(!a||!DB)return;const names={...ALIAS,[a.dataset.alias]:a.value.trim()};ALIAS=names;
   try{await DB.doc('own/staff').set({names});toast('Имя сохранено')}catch(_){toast('Не сохранилось')}renderLog()});
