@@ -1666,8 +1666,8 @@ document.addEventListener('click',e=>{const b=e.target.closest('[data-cdes]');if
 function renderCli(){
   renderCliCoils();
   {const ri=$('cliRoomInfo');if(ri){const t=roomInfo();ri.hidden=!t;ri.textContent='📐 '+t}}
-  if($('cliDes'))$('cliDes').innerHTML=[[7,'Дизайн Скат'],[9,'Аликафон шапка']].map(([c,n])=>'<button class="chip'+(CLI_DES==c?' on':'')+'" data-cdes="'+c+'">'+n+(order.some(l=>l.auto==c)?' ✓':'')+'</button>').join('')+'<button class="chip" disabled title="расчёт ещё не готов">Дизайн Дила</button>';
-  if($('cliRoom')&&!$('cliRoom').querySelector('input:focus')) $('cliRoom').innerHTML=CLI_DES==9?alikHtml():roomHtml(7);
+  if($('cliDes'))$('cliDes').innerHTML=[[7,'Дизайн Скат'],[8,'Дизайн Дила'],[9,'Аликафон шапка']].map(([c,n])=>'<button class="chip'+(CLI_DES==c?' on':'')+'" data-cdes="'+c+'">'+n+(order.some(l=>l.auto==c)?' ✓':'')+'</button>').join('');
+  if($('cliRoom')&&!$('cliRoom').querySelector('input:focus')) $('cliRoom').innerHTML=CLI_DES==9?alikHtml():CLI_DES==8?dilaHtml():roomHtml(7);
   for(const k in CMAP) $(k).value=$(CMAP[k]).value;
   if(!order.length){$('cliList').innerHTML='<div class="card empty">Нажмите «+ Добавить строку» и выберите деталь.</div>';renderCliTot();return}
   const idx=order.map((l,i)=>i), A=idx.filter(i=>isSheet(order[i])), B=idx.filter(i=>isGroup(order[i])), C=idx.filter(i=>!isSheet(order[i])&&!isGroup(order[i])&&order[i].unit!='face'), F=idx.filter(i=>order[i].unit=='face');
@@ -2533,6 +2533,94 @@ document.addEventListener('change',e=>{const t=e.target;if(t.id=='mstDef'){MST.d
   const c=t.closest('[data-mst]');if(!c)return;const n=c.dataset.mst;MST.m[n]=MST.m[n]||{};
   if(t.hasAttribute('data-mpct')){MST.m[n].pct=t.value.trim()==''?'':String(Math.max(0,num(t.value)));mstSave();renderMst()}
   if(t.hasAttribute('data-mph')){MST.m[n].phone=t.value.trim();mstSave()}});
+
+// ===================== ДИЗАЙН ДИЛА (потолок): рамка из Дил по периметру + поле кессонов =====================
+// Правила взяты из проекта «Golibaka 19.11.2026»: отступ от стены 200, Дила 485, зазоры 100,
+// длинная Дила в ряду ≤ 3000, боковая — пока заготовка ≤ 4 м, поле: две рамки по 100, кессоны с шагом ~930 × 720.
+const DTPL={"sq":[624.4,624.4,[[55.2,0.0],[55.2,15.0],[50.1,15.0],[45.2,19.9],[45.2,30.3],[50.1,35.2],[55.2,35.2],[125.1,105.1],[125.1,122.7],[175.1,175.1],[177.6,175.1],[177.6,175.2],[175.2,175.2],[175.2,177.6],[175.1,177.6],[175.1,175.1],[122.9,137.8],[126.0,133.2],[125.2,127.8],[122.0,125.3],[116.2,126.1],[112.9,130.7],[105.1,125.1],[105.1,105.1],[55.2,55.2],[35.2,55.2],[35.2,60.2],[35.0,60.2],[35.0,55.2],[15.2,55.2],[15.2,60.2],[15.0,60.2],[15.0,55.2],[0.0,55.2],[0.0,569.2],[15.0,569.2],[15.0,564.2],[15.2,564.2],[15.2,569.2],[35.0,569.2],[35.0,564.2],[35.2,564.2],[35.2,569.2],[55.2,569.2],[105.1,519.3],[105.1,499.3],[112.9,493.7],[116.2,498.3],[122.0,499.1],[125.2,496.6],[126.0,491.2],[122.9,486.6],[175.1,449.3],[175.1,446.8],[175.2,446.8],[175.2,449.2],[177.6,449.2],[177.6,449.3],[175.1,449.3],[125.1,501.7],[125.1,519.3],[55.2,589.2],[50.1,589.2],[45.2,594.1],[45.2,604.5],[50.1,609.4],[55.2,609.4],[55.2,624.4],[569.2,624.4],[569.2,609.4],[574.3,609.4],[579.2,604.5],[579.2,594.1],[574.3,589.2],[569.2,589.2],[499.3,519.3],[499.3,501.7],[449.3,449.3],[446.8,449.3],[446.8,449.2],[449.2,449.2],[449.2,446.8],[449.3,446.8],[449.3,449.3],[501.5,486.6],[498.4,491.2],[499.2,496.6],[502.4,499.1],[508.2,498.3],[511.5,493.7],[519.3,499.3],[519.3,519.3],[569.2,569.2],[589.2,569.2],[589.2,564.2],[589.4,564.2],[589.4,569.2],[609.2,569.2],[609.2,564.2],[609.4,564.2],[609.4,569.2],[624.4,569.2],[624.4,55.2],[609.4,55.2],[609.4,60.2],[609.2,60.2],[609.2,55.2],[589.4,55.2],[589.4,60.2],[589.2,60.2],[589.2,55.2],[569.2,55.2],[519.3,105.1],[519.3,125.1],[511.5,130.7],[508.2,126.1],[502.4,125.3],[499.2,127.8],[498.4,133.2],[501.5,137.8],[449.3,175.1],[449.3,177.6],[449.2,177.6],[449.2,175.2],[446.8,175.2],[446.8,175.1],[449.3,175.1],[499.3,122.7],[499.3,105.1],[569.2,35.2],[574.3,35.2],[579.2,30.3],[579.2,19.9],[574.3,15.0],[569.2,15.0],[569.2,0.0]]],"cell":[760.4,978.4,[[55.2,0.0],[55.2,15.0],[50.1,15.0],[45.2,19.9],[45.2,30.3],[50.1,35.2],[55.2,35.2],[125.1,105.1],[125.1,122.7],[175.1,175.1],[177.6,175.1],[177.6,175.2],[175.2,175.2],[175.2,177.6],[175.1,177.6],[175.1,175.1],[122.9,137.8],[126.0,133.2],[125.2,127.8],[122.0,125.3],[116.2,126.1],[112.9,130.7],[105.1,125.1],[105.1,105.1],[55.2,55.2],[35.2,55.2],[35.2,60.2],[35.0,60.2],[35.0,55.2],[15.2,55.2],[15.2,60.2],[15.0,60.2],[15.0,55.2],[0.0,55.2],[0.0,923.2],[15.0,923.2],[15.0,918.2],[15.2,918.2],[15.2,923.2],[35.0,923.2],[35.0,918.2],[35.2,918.2],[35.2,923.2],[55.2,923.2],[105.1,873.3],[105.1,853.3],[112.9,847.7],[116.2,852.3],[122.0,853.1],[125.2,850.6],[126.0,845.2],[122.9,840.6],[175.1,803.3],[175.1,800.8],[175.2,800.8],[175.2,803.2],[177.6,803.2],[177.6,803.3],[175.1,803.3],[125.1,855.7],[125.1,873.3],[55.2,943.2],[50.1,943.2],[45.2,948.1],[45.2,958.5],[50.1,963.4],[55.2,963.4],[55.2,978.4],[705.2,978.4],[705.2,963.4],[710.3,963.4],[715.2,958.5],[715.2,948.1],[710.3,943.2],[705.2,943.2],[635.3,873.3],[635.3,855.7],[585.3,803.3],[582.8,803.3],[582.8,803.2],[585.2,803.2],[585.2,800.8],[585.3,800.8],[585.3,803.3],[637.5,840.6],[634.4,845.2],[635.2,850.6],[638.4,853.1],[644.2,852.3],[647.5,847.7],[655.3,853.3],[655.3,873.3],[705.2,923.2],[725.2,923.2],[725.2,918.2],[725.4,918.2],[725.4,923.2],[745.2,923.2],[745.2,918.2],[745.4,918.2],[745.4,923.2],[760.4,923.2],[760.4,55.2],[745.4,55.2],[745.4,60.2],[745.2,60.2],[745.2,55.2],[725.4,55.2],[725.4,60.2],[725.2,60.2],[725.2,55.2],[705.2,55.2],[655.3,105.1],[655.3,125.1],[647.5,130.7],[644.2,126.1],[638.4,125.3],[635.2,127.8],[634.4,133.2],[637.5,137.8],[585.3,175.1],[585.3,177.6],[585.2,177.6],[585.2,175.2],[582.8,175.2],[582.8,175.1],[585.3,175.1],[635.3,122.7],[635.3,105.1],[705.2,35.2],[710.3,35.2],[715.2,30.3],[715.2,19.9],[710.3,15.0],[705.2,15.0],[705.2,0.0]]],"long":[2910.4,624.4,[[2910.4,55.2],[2895.4,55.2],[2895.4,50.1],[2890.5,45.2],[2880.1,45.2],[2875.2,50.1],[2875.2,55.2],[2805.3,125.1],[2787.7,125.1],[2735.3,175.1],[2735.3,177.6],[2735.2,177.6],[2735.2,175.2],[2732.8,175.2],[2732.8,175.1],[2735.3,175.1],[2772.6,122.9],[2777.2,126.0],[2782.6,125.2],[2785.1,122.0],[2784.3,116.2],[2779.7,112.9],[2785.3,105.1],[2805.3,105.1],[2855.2,55.2],[2855.2,35.2],[2850.2,35.2],[2850.2,35.0],[2855.2,35.0],[2855.2,15.2],[2850.2,15.2],[2850.2,15.0],[2855.2,15.0],[2855.2,0.0],[55.2,0.0],[55.2,15.0],[60.2,15.0],[60.2,15.2],[55.2,15.2],[55.2,35.0],[60.2,35.0],[60.2,35.2],[55.2,35.2],[55.2,55.2],[105.1,105.1],[125.1,105.1],[130.7,112.9],[126.1,116.2],[125.3,122.0],[127.8,125.2],[133.2,126.0],[137.8,122.9],[175.1,175.1],[177.6,175.1],[177.6,175.2],[175.2,175.2],[175.2,177.6],[175.1,177.6],[175.1,175.1],[122.7,125.1],[105.1,125.1],[35.2,55.2],[35.2,50.1],[30.3,45.2],[19.9,45.2],[15.0,50.1],[15.0,55.2],[0.0,55.2],[0.0,569.2],[15.0,569.2],[15.0,574.3],[19.9,579.2],[30.3,579.2],[35.2,574.3],[35.2,569.2],[105.1,499.3],[122.7,499.3],[175.1,449.3],[175.1,446.8],[175.2,446.8],[175.2,449.2],[177.6,449.2],[177.6,449.3],[175.1,449.3],[137.8,501.5],[133.2,498.4],[127.8,499.2],[125.3,502.4],[126.1,508.2],[130.7,511.5],[125.1,519.3],[105.1,519.3],[55.2,569.2],[55.2,589.2],[60.2,589.2],[60.2,589.4],[55.2,589.4],[55.2,609.2],[60.2,609.2],[60.2,609.4],[55.2,609.4],[55.2,624.4],[2855.2,624.4],[2855.2,609.4],[2850.2,609.4],[2850.2,609.2],[2855.2,609.2],[2855.2,589.4],[2850.2,589.4],[2850.2,589.2],[2855.2,589.2],[2855.2,569.2],[2805.3,519.3],[2785.3,519.3],[2779.7,511.5],[2784.3,508.2],[2785.1,502.4],[2782.6,499.2],[2777.2,498.4],[2772.6,501.5],[2735.3,449.3],[2732.8,449.3],[2732.8,449.2],[2735.2,449.2],[2735.2,446.8],[2735.3,446.8],[2735.3,449.3],[2787.7,499.3],[2805.3,499.3],[2875.2,569.2],[2875.2,574.3],[2880.1,579.2],[2890.5,579.2],[2895.4,574.3],[2895.4,569.2],[2910.4,569.2]]],"sep":[220.8,698.6,[[160.4,22.0],[60.4,22.1],[60.4,40.1],[40.4,40.1],[40.4,45.1],[40.2,45.1],[40.2,0.1],[20.2,0.1],[20.2,45.1],[20.0,45.1],[20.0,40.1],[0.0,40.1],[0.0,658.6],[20.0,658.6],[20.0,653.6],[20.2,653.6],[20.2,698.6],[40.2,698.6],[40.2,653.6],[40.4,653.6],[40.4,658.6],[60.4,658.6],[60.4,676.6],[160.4,676.6],[160.4,658.6],[180.4,658.6],[180.4,653.6],[180.6,653.6],[180.6,698.6],[200.6,698.6],[200.6,653.6],[200.8,653.6],[200.8,658.6],[220.8,658.6],[220.8,40.0],[200.8,40.0],[200.8,45.0],[200.6,45.0],[200.6,0.0],[180.6,0.0],[180.6,45.0],[180.4,45.0],[180.4,40.0],[160.4,40.0]]]};
+const DPAR=[['o','отступ от стены, мм',200],['d','Дила (ширина), мм',485],['g','зазор, мм',100],['mxH','длинная Дила в ряду не больше, мм',3000],['ff','рамки поля, мм',200],['cx','кессон, примерно, мм (по длине)',830],['cy','кессон, примерно, мм (по ширине)',620],['add','заготовка больше видимого, мм',140.4],['sep','перемычка длиннее, мм',80],['zap','запас кессонов, шт',0]];
+let DILA=store.get('rz_dila',null)||{rooms:[{l:'',w:''}]};DPAR.forEach(p=>{if(DILA[p[0]]==null)DILA[p[0]]=String(p[2])});
+function dilaSave(){store.set('rz_dila',DILA)}
+function dilaGeo(Lm,Wm){const L=num(Lm)*1000,W=num(Wm)*1000;if(!L||!W)return null;const D=k=>num(DILA[k]);
+  const o=D('o'),d=D('d'),g=D('g'),mxH=D('mxH')||3000,ff=D('ff'),add=D('add');
+  const span=L-2*o;let n=1,lx=0;for(n=1;n<100;n++){lx=(span-(n+1)*d-2*n*g)/n;if(lx<=mxH)break}
+  const spanV=W-2*(o+d+g);let m=1,ly=0;for(m=1;m<100;m++){ly=(spanV-(m-1)*(d+2*g))/m;if(ly+add<=MAXSHEET*1000)break}
+  const x0=o+d+g,gin=x0+ff,gw=L-2*gin,gh=W-2*gin;
+  if(lx<=0||ly<=0||gw<=0||gh<=0)return {err:'Помещение слишком маленькое для Дилы'};
+  const cols=Math.max(1,Math.round((gw+g)/(D('cx')+g))),rows=Math.max(1,Math.round((gh+g)/(D('cy')+g)));
+  const cw=(gw-(cols-1)*g)/cols,ch=(gh-(rows-1)*g)/rows;
+  return {L,W,o,d,g,n,lx,m,ly,x0,gin,gw,gh,cols,rows,cw,ch}}
+// детали (заготовки) по всем помещениям
+function dilaParts(){const D=k=>num(DILA[k]),add=D('add'),sp=D('sep'),B=v=>Math.round((v+add)*10)/10,BL=v=>Math.round((Math.ceil(v/10-1e-6)*10+add)*10)/10;const M={};
+  const put=(k,nm,tp,w,h,c)=>{if(!c)return;const key=k+'|'+Math.round(w)+'|'+Math.round(h);(M[key]=M[key]||{k,nm,tp,w,h,n:0}).n+=c};
+  (DILA.rooms||[]).forEach(r=>{const G=dilaGeo(r.l,r.w);if(!G||G.err)return;
+    put('sq','Дила квадрат','sq',B(G.d-1),B(G.d-1),2*(G.n+1)+2*(G.m-1));
+    put('lx','Дила длинная (в ряду)','long',BL(G.lx),B(G.d-1),2*G.n);
+    put('ly','Дила длинная (боковая)','long',BL(G.ly),B(G.d-1),2*G.m);
+    put('cell','Кессон','cell',B(Math.min(G.cw,G.ch)),B(Math.max(G.cw,G.ch)),G.cols*G.rows);
+    put('sepD','Перемычка у Дил','sep',DTPL.sep[0],G.d+sp,4*G.n+4*G.m);
+    put('sepC','Перемычка кессонов','sep',DTPL.sep[0],Math.min(G.cw,G.ch)+sp,(G.cols+1)*G.rows)});
+  const z=D('zap');const L=Object.values(M);if(z)L.filter(p=>p.k=='cell').forEach(p=>p.n+=z);
+  return L.map(p=>({...p,w:Math.round(p.w*10)/10,h:Math.round(p.h*10)/10}))}
+function dilaHtml(){const A=DILA,W=num(store.get('rz_dxfw','1250'))||1250;let h='<div class="card room" data-dila><div class="rt">📐 Дизайн Дила (потолок): рамка из Дил + кессоны</div>';
+  h+=(A.rooms||[]).map((r,i)=>'<div class="rw2" style="margin:4px 0"><b style="width:22px">'+(i+1)+'.</b> длина <input data-df="l'+i+'" inputmode="decimal" value="'+esc(r.l||'')+'" placeholder="11.25" style="width:80px"> × ширина <input data-df="w'+i+'" inputmode="decimal" value="'+esc(r.w||'')+'" placeholder="6.9" style="width:80px"> м'+(A.rooms.length>1?' <button class="chip" data-ddel="'+i+'">✕</button>':'')+'</div>').join('')+
+    '<div class="rw2"><button class="chip" data-dadd>+ помещение</button></div>'+
+    '<details class="rpar"><summary>Размеры дизайна (мм)</summary>'+DPAR.map(p=>'<label>'+p[1]+' <input data-df="'+p[0]+'" inputmode="decimal" value="'+esc(A[p[0]])+'" style="width:80px"></label>').join('')+'</details>';
+  const G=(A.rooms||[]).map(r=>dilaGeo(r.l,r.w));
+  h+=G.map((g,i)=>!g?'':g.err?'<div class="hint">'+(i+1)+'. '+g.err+'</div>':'<div class="geo"><b>'+(i+1)+'. '+fmt(g.L/1000)+' × '+fmt(g.W/1000)+' м</b> — ряды сверху/снизу: '+(g.n+1)+' квадр. + '+g.n+' длинных по '+fmt(Math.round(g.lx)/10)+' см · бока: '+g.m+' × '+fmt(Math.round(g.ly)/10)+' см'+(g.m>1?' (+ квадрат)':'')+' · кессоны <b>'+g.cols+' × '+g.rows+'</b> по '+fmt(Math.round(g.cw)/10)+' × '+fmt(Math.round(g.ch)/10)+' см</div>').join('');
+  const P=dilaParts();if(P.length){let tot=0;
+    h+='<table class="rtab">'+P.map(p=>{const b=nestM({w:p.w,L:p.h,n:p.n},W);tot+=b?b.m:0;return '<tr><td>'+esc(p.nm)+'<div style="font-size:11px;color:var(--mut)">заготовка '+fmt(p.w)+' × '+fmt(p.h)+' мм</div></td><td><b>'+p.n+' шт</b><div style="font-size:11px;color:var(--mut)">'+(b?fmt(Math.round(b.m*100)/100)+' пог. м':'')+'</div></td></tr>'}).join('')+'<tr><td><b>Металл (рулон '+fmt(W/1000)+' м)</b></td><td><b>'+fmt(Math.round(tot*100)/100)+' пог. м</b></td></tr></table>'+
+    '<div class="rw2" style="margin-top:8px"><button class="pri" data-dgo>+ В заказ</button><button class="chip on" data-ddxf>📐 DXF: план + детали</button></div>'+
+    '<div style="font-size:12px;color:var(--mut);margin-top:6px">Кош, карниз, стыковки и полосы 4 м пока добавляйте из каталога — уточню их по вашему ответу.</div>'}
+  return h+'</div>'}
+function dilaRerender(){document.querySelectorAll('[data-dila]').forEach(c=>{const op=!!c.querySelector('details[open]');c.outerHTML=dilaHtml();if(op)document.querySelectorAll('[data-dila] details').forEach(d=>d.open=true)})}
+let DILA_DIRTY=false;
+document.addEventListener('input',e=>{const t=e.target.closest('[data-dila] [data-df]');if(!t)return;const k=t.dataset.df,m=k.match(/^([lw])(\d+)$/);if(m)DILA.rooms[+m[2]][m[1]]=t.value;else DILA[k]=t.value;dilaSave()});
+document.addEventListener('change',e=>{if(e.target.closest('[data-dila] [data-df]')){DILA_DIRTY=true;setTimeout(dilaFlush,0)}});
+function dilaFlush(){if(!DILA_DIRTY)return;const ae=document.activeElement;if(ae&&ae.closest&&ae.closest('[data-dila]')&&ae.matches('input'))return;DILA_DIRTY=false;dilaRerender()}
+document.addEventListener('focusout',()=>setTimeout(dilaFlush,30));
+document.addEventListener('click',e=>{if(e.target.closest('[data-dadd]')){DILA.rooms.push({l:'',w:''});dilaSave();dilaRerender();return}
+  const x=e.target.closest('[data-ddel]');if(x){DILA.rooms.splice(+x.dataset.ddel,1);dilaSave();dilaRerender();return}
+  if(e.target.closest('[data-dgo]')){dilaAdd();return}
+  if(e.target.closest('[data-ddxf]')){dilaDxf();return}});
+function dilaItem(nm){const A=allItems();return A.find(i=>i.cat==8&&i.name==nm)||A.find(i=>i.cat==8&&i.unit=='face')||A.find(i=>i.cat==8)}
+function dilaAdd(){const P=dilaParts();if(!P.length){toast('Впишите размеры помещения');return}order=order.filter(l=>l.auto!=8);
+  P.forEach(p=>{const it=dilaItem(p.nm);if(!it)return;order.push({uid:Date.now()+Math.random(),itemId:it.id+':'+p.nm+p.w+'x'+p.h,icon:it.icon,name:p.nm+' '+fmt(p.w)+' × '+fmt(p.h)+' мм',unit:'pcs',len:'',qty:String(p.n),note:'',auto:8,dila:{w:p.w,h:p.h,tp:p.tp}})});
+  save();renderCat();renderOrd();badge();if(curTab=='cli')renderCli();toast('Дила добавлена в заказ: '+P.length+' строк')}
+// растянуть образец заготовки на нужный размер (вырезы у углов остаются как в образце)
+function dtplPts(tp,w,h){const t=DTPL[tp];if(!t)return [[0,0],[w,0],[w,h],[0,h]];const [tw,th,P]=t;
+  const flip=tp=='long';const W_=flip?w:w,H_=flip?h:h;return P.map(([px,py])=>[px<=tw/2?px:W_-(tw-px),py<=th/2?py:H_-(th-py)])}
+function dilaDxf(){const P=dilaParts();if(!P.length){toast('Впишите размеры помещения');return}
+  const o=[];const a=(...x)=>o.push(...x.map(String));
+  const ln=(x1,y1,x2,y2,ly)=>a(0,'LINE',8,ly||'PLAN',10,x1.toFixed(2),20,y1.toFixed(2),30,0,11,x2.toFixed(2),21,y2.toFixed(2),31,0);
+  const rc=(x,y,w,h,ly)=>{ln(x,y,x+w,y,ly);ln(x+w,y,x+w,y+h,ly);ln(x+w,y+h,x,y+h,ly);ln(x,y+h,x,y,ly)};
+  const tx=(x,y,h,s,ly)=>a(0,'TEXT',8,ly||'TEXT',10,x.toFixed(2),20,y.toFixed(2),30,0,40,h,1,lat(String(s)));
+  const pl=(pts,x,y,ly)=>{a(0,'POLYLINE',8,ly||'CUT',66,1,10,0,20,0,30,0,70,1);pts.forEach(([vx,vy])=>a(0,'VERTEX',8,ly||'CUT',10,(x+vx).toFixed(2),20,(y+vy).toFixed(2),30,0));a(0,'SEQEND',8,ly||'CUT')};
+  a(0,'SECTION',2,'HEADER',9,'$ACADVER',1,'AC1009',9,'$DWGCODEPAGE',3,'ANSI_1251',9,'$INSUNITS',70,4,0,'ENDSEC');
+  a(0,'SECTION',2,'TABLES',0,'TABLE',2,'LAYER',70,3);[['CUT',7],['TEXT',3],['PLAN',8]].forEach(([n,c])=>a(0,'LAYER',2,n,70,0,62,c,6,'CONTINUOUS'));a(0,'ENDTAB',0,'ENDSEC');
+  a(0,'SECTION',2,'ENTITIES');
+  // 1) детали (лазер) — внизу, в ряд
+  const h0=readHead(),th=curTh()||'0.40',c=curCol(),col=c?c[0]:'';let x=0,top=0;
+  P.forEach((p,i)=>{const pts=dtplPts(p.tp,p.tp=='cell'||p.tp=='sep'?p.w:p.w,p.tp=='long'?p.h:p.h);
+    const w=p.tp=='long'?p.w:p.w,hh=p.h;pl(pts,x,0);tx(x,hh+60,120,String(p.n));tx(x,-200,70,(i+1)+')');top=Math.max(top,hh);x+=w+Math.max(300,w*0.15)});
+  P.forEach((p,i)=>tx(0,-420-i*110,70,(i+1)+') '+p.nm+' - '+fmt(p.w)+' x '+fmt(p.h)+' mm - '+p.n+' sht'));
+  tx(0,top+400,120,th+'*'+(col||'')+'  '+((h0.hClient||'Zakaz')+' '+(h0.hDate||today())));
+  // 2) планы помещений — сверху (слой PLAN, для проверки — лазер его не режет)
+  let py=top+1200;(DILA.rooms||[]).map(r=>dilaGeo(r.l,r.w)).filter(g=>g&&!g.err).forEach((G,ri)=>{const X=0,Y=py,L=G.L,W=G.W,d=G.d,g=G.g,o=G.o;
+    rc(X,Y,L,W);rc(X+100,Y+100,L-200,W-200);
+    const box=(x,y,w,h)=>{rc(x,y,w,h);if(w>100&&h>100){rc(x+50,y+50,w-100,h-100);if(w>200&&h>200)rc(x+100,y+100,w-200,h-200)}};
+    for(const yy of [Y+o,Y+W-o-d]){let xx=X+o;for(let k=0;k<=G.n;k++){box(xx,yy,d,d);xx+=d+g;if(k<G.n){box(xx,yy,G.lx,d);xx+=G.lx+g}}}
+    for(const xx of [X+o,X+L-o-d]){let yy=Y+o+d+g;for(let k=0;k<G.m;k++){box(xx,yy,d,G.ly);yy+=G.ly+g;if(k<G.m-1){box(xx,yy,d,d);yy+=d+g}}}
+    rc(X+G.x0,Y+G.x0,L-2*G.x0,W-2*G.x0);rc(X+G.x0+100,Y+G.x0+100,L-2*G.x0-200,W-2*G.x0-200);
+    for(let r=0;r<G.rows;r++)for(let k=0;k<G.cols;k++)box(X+G.gin+k*(G.cw+g),Y+G.gin+r*(G.ch+g),G.cw,G.ch);
+    // размеры
+    ln(X,Y+W+250,X+L,Y+W+250,'TEXT');tx(X+L/2-400,Y+W+300,160,fmt(L)+' mm');ln(X+L+250,Y,X+L+250,Y+W,'TEXT');tx(X+L+330,Y+W/2,160,fmt(W)+' mm');
+    tx(X,Y-260,140,(ri+1)+') '+fmt(L/1000)+' x '+fmt(W/1000)+' m');
+    py=Y+W+1400});
+  a(0,'ENDSEC',0,'EOF');
+  const name=lat('Dila_'+((h0.hClient||'Zakaz')+'_'+(h0.hDate||today()))).replace(/[\\/:*?"<>|\s]+/g,'_');
+  (async()=>{try{if(!dl){try{dl=await window.claude.use('downloads')}catch(_){}}if(!dl){toast('Скачивание недоступно');return}
+    await dl.save({filename:name+'.dxf',data:new Blob([cp1251(o.join('\r\n')+'\r\n')],{type:'application/dxf'})});toast('DXF Дилы готов')}catch(e){if(!(e&&e.code=='declined'))toast('Ошибка: '+(e&&e.message||e))}})()}
 // ---------- пользователи (видит только руководитель) ----------
 let USR_OPEN=false;
 function renderUsers(){const box=$('usrBox');if(!box||!IS_OWNER)return;if(typing(box))return;
