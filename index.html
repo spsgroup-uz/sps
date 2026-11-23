@@ -1350,10 +1350,17 @@ function faceText(l){const f=faceCalc(l);if(!f)return '';return 'Фасад '+fm
 // раскрой: результат деления режем на равные листы не длиннее 4 м
 const MAXSHEET=4;
 function cutPlan(l){ if(!(l.unit=='m'&&isGroup(l))) return null; const len=num(l.len),q=num(l.qty); if(!len||!q) return null; const d=divOf(l);
-  if(d<=1){ if(len<=MAXSHEET) return null; const t=meters(l),n=Math.ceil(t/MAXSHEET-1e-9);return {n,each:Math.ceil(t/n*100-1e-6)/100,pieces:true} }
-  // листы режем на длину детали; длиннее 4 м — делим деталь на части
-  const k=Math.ceil(len/MAXSHEET-1e-9),each=Math.ceil(len/k*100-1e-6)/100,pcs=q*k; return {n:Math.ceil(pcs/d-1e-9),each,div:d,pcs} }
-function cutText(l){const c=cutPlan(l);return c?'✂ '+c.n+' × '+fmt(c.each)+' м':''}
+  if(d<=1){ if(len<=MAXSHEET) return null; const t=meters(l),n=Math.ceil(t/MAXSHEET-1e-9);return {n,each:Math.ceil(t/n*100-1e-6)/100,pieces:true,parts:[[n,Math.ceil(t/n*100-1e-6)/100]]} }
+  // расход листа = общий метраж ÷ сколько полос из листа; листы не длиннее 4 м
+  const m=Math.ceil(meters(l)/d*100-1e-6)/100; let parts;
+  if(m<=MAXSHEET+1e-9) parts=[[1,m]];
+  else{const n=Math.ceil(m/MAXSHEET-1e-9);
+    // 2 листа — делим поровну; больше — сначала по 4 м, потом остаток
+    if(n==2) parts=[[2,Math.ceil(m/2*100-1e-6)/100]];
+    else{const full=Math.floor(m/MAXSHEET+1e-9),rem=Math.round((m-full*MAXSHEET)*100)/100;parts=rem<0.01?[[full,MAXSHEET]]:[[full,MAXSHEET],[1,rem]]}}
+  return {n:parts.reduce((a,p)=>a+p[0],0),each:parts[0][1],div:d,parts,m} }
+function partsText(c,sep){return c.parts.map(p=>p[0]+' × '+fmt(p[1])+' м').join(sep||'<br>')}
+function cutText(l){const c=cutPlan(l);return c?'✂ '+partsText(c):''}
 function lineTotal(l){
   if(l.unit=='face') return faceText(l);
   if(l.unit=='m'){const t=meters(l);if(!t)return '';
@@ -1417,8 +1424,8 @@ function sumHtml(){
 function polos(n){n=Math.abs(n)%100;const k=n%10;return n>10&&n<20?'полос':k==1?'полоса':k>=2&&k<=4?'полосы':'полос'}
 // сколько листов резать на доборные элементы (лист шириной 1.25 м, длина = длине детали)
 function cutListHtml(){const L=order.map(l=>[l,cutPlan(l)]).filter(x=>x[1]&&!x[1].pieces);if(!L.length)return '';
-  const by={};L.forEach(([l,c])=>{by[c.each]=(by[c.each]||0)+c.n});const tot=L.reduce((a,x)=>a+x[1].n,0),tm=L.reduce((a,x)=>a+x[1].n*x[1].each,0);
-  return '<h4 style="margin-top:12px">✂ 1.25 м</h4><table>'+L.map(([l,c])=>'<tr><td>'+esc(l.name)+' <span style="color:#64748b;font-size:13px">'+fmt(num(l.len))+' × '+fmt(num(l.qty))+' ÷ '+c.div+'</span></td><td><b>'+c.n+' × '+fmt(c.each)+' м</b></td></tr>').join('')+
+  const by={};L.forEach(([l,c])=>c.parts.forEach(p=>{by[p[1]]=(by[p[1]]||0)+p[0]}));const tot=L.reduce((a,x)=>a+x[1].n,0),tm=L.reduce((a,x)=>a+x[1].parts.reduce((b,p)=>b+p[0]*p[1],0),0);
+  return '<h4 style="margin-top:12px">✂ 1.25 м</h4><table>'+L.map(([l,c])=>'<tr><td>'+esc(l.name)+' <span style="color:#64748b;font-size:13px">'+fmt(num(l.len))+' × '+fmt(num(l.qty))+' ÷ '+c.div+'</span></td><td><b>'+partsText(c)+'</b></td></tr>').join('')+
   '<tr class="grp"><td colspan="2">Σ</td></tr>'+Object.keys(by).sort((a,b)=>b-a).map(k=>'<tr><td>1.25 × '+fmt(+k)+' м</td><td><b>'+by[k]+'</b></td></tr>').join('')+
   '<tr class="big"><td>Σ</td><td>'+tot+' · '+fmt(Math.round(tm*100)/100)+' м</td></tr></table>'}
 function renderSum(){const h=sumHtml();$('sumBox').innerHTML=h;$('sumBox').hidden=!h}
@@ -1504,7 +1511,7 @@ function buildSheet(){
   const h=readHead();
   let rows=order.map((l,i)=>{
     let size=(l.unit=='face'?'<span style="font-weight:normal;font-size:13px">'+esc(faceText(l))+'</span>':l.unit=='m'?(fmt(num(l.len))+' м × '+fmt(num(l.qty))+' шт'+(isTile(l)?'<div class="rz" style="font-weight:normal">с расходом: '+fmt(realLen(l))+' м<br>('+tileSteps(l)+' шаг. × '+fmt(num(l.extra))+' см)</div>':'')):(fmt(num(l.qty))+(l.unit=='kg'?' кг':' шт')))+(cutPlan(l)?'<div class="rz" style="font-weight:bold;font-size:14px">'+esc(cutText(l).replace('✂ ',''))+'</div>':'');
-    {const c=cutPlan(l);if(c&&!c.pieces&&!isTile(l))size='<div style="font-size:22px;font-weight:800">'+c.n+' × '+fmt(c.each)+' м</div><div style="font-size:16px;font-weight:700;margin-top:2px">÷ '+c.div+'</div>'}
+    {const c=cutPlan(l);if(c&&!c.pieces&&!isTile(l))size='<div style="font-size:22px;font-weight:800">'+partsText(c)+'</div><div style="font-size:16px;font-weight:700;margin-top:2px">÷ '+c.div+'</div>'}
     const tot=l.unit=='face'?(faceCalc(l)?fmt(Math.round(faceCalc(l).metal*100)/100)+' м² мет.':''):l.unit=='m'?fmt(meters(l))+' м':'';
     return '<tr><td class="c">'+(i+1)+'</td><td>'+(nSeg(l)?'<div class="pp">'+profSvg(l.icon,l.seg,true)+'</div>':isPlain(l)?'':svg(l.icon))+'</td><td class="nm">'+esc(l.name)+(segText(l)?'<div class="rz">Развёртка: '+fmt(razv(l))+' см<br>'+esc(segText(l).split(' = ')[0])+'</div>':'')+'</td><td class="big">'+size+'</td><td class="c big">'+(l.note?'('+esc(l.note)+')':'')+'</td><td class="c">'+tot+'</td></tr>';
   }).join('');
