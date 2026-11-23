@@ -1349,9 +1349,11 @@ function faceCalc(l){ faceFix(l);
 function faceText(l){const f=faceCalc(l);if(!f)return '';return 'Фасад '+fmt(num(l.fw))+' × '+fmt(num(l.fh))+' = '+fmt(f.area)+' м² · кассет: '+f.nx+' × '+f.ny+' = '+f.n+' шт по '+fmt(Math.round(f.a*1000)/10)+' × '+fmt(Math.round(f.b*1000)/10)+' см · заготовка '+fmt(Math.round(f.bw*1000)/10)+' × '+fmt(Math.round(f.bh*1000)/10)+' см · металл '+fmt(Math.round(f.metal*100)/100)+' м² (рулон 1.25 м: '+fmt(Math.round(f.coil*100)/100)+' м)'}
 // раскрой: результат деления режем на равные листы не длиннее 4 м
 const MAXSHEET=4;
-function cutPlan(l){ if(!(l.unit=='m'&&isGroup(l))) return null; if(divOf(l)<=1){ if(num(l.len)<=MAXSHEET) return null; const t=meters(l),n=Math.ceil(t/MAXSHEET-1e-9);return {n,each:Math.ceil(t/n*100-1e-6)/100,pieces:true} } const m=lmat(l); if(!m) return null;
-  const n=Math.ceil(m/MAXSHEET-1e-9), each=Math.ceil(m/n*100-1e-6)/100; return {n,each} }
-function cutText(l){const c=cutPlan(l);return c?(c.pieces?'✂ Детали: '+c.n+' шт по '+fmt(c.each)+' м':'✂ Резать: '+c.n+' лист. по '+fmt(c.each)+' м'):''}
+function cutPlan(l){ if(!(l.unit=='m'&&isGroup(l))) return null; const len=num(l.len),q=num(l.qty); if(!len||!q) return null; const d=divOf(l);
+  if(d<=1){ if(len<=MAXSHEET) return null; const t=meters(l),n=Math.ceil(t/MAXSHEET-1e-9);return {n,each:Math.ceil(t/n*100-1e-6)/100,pieces:true} }
+  // листы режем на длину детали; длиннее 4 м — делим деталь на части
+  const k=Math.ceil(len/MAXSHEET-1e-9),each=Math.ceil(len/k*100-1e-6)/100,pcs=q*k; return {n:Math.ceil(pcs/d-1e-9),each,div:d,pcs} }
+function cutText(l){const c=cutPlan(l);return c?(c.pieces?'✂ Детали: '+c.n+' шт по '+fmt(c.each)+' м':'✂ Резать: '+c.n+' лист. по '+fmt(c.each)+' м ('+c.div+' '+polos(c.div)+' из листа)'):''}
 function lineTotal(l){
   if(l.unit=='face') return faceText(l);
   if(l.unit=='m'){const t=meters(l);if(!t)return '';
@@ -1410,8 +1412,15 @@ function sumRows(){
 }
 function sumHtml(){
   const r=sumRows(); if(!r.length) return '';
-  return '<h4>Общий расход материала</h4><table>'+r.map(x=>x[0]=='g'?'<tr class="grp"><td colspan="2">'+esc(x[1])+'</td></tr>':x[0]=='b'?'<tr class="big"><td>'+esc(x[1])+'</td><td>'+x[2]+'</td></tr>':'<tr><td>'+esc(x[0])+'</td><td>'+x[1]+'</td></tr>').join('')+'</table>';
+  return '<h4>Общий расход материала</h4><table>'+r.map(x=>x[0]=='g'?'<tr class="grp"><td colspan="2">'+esc(x[1])+'</td></tr>':x[0]=='b'?'<tr class="big"><td>'+esc(x[1])+'</td><td>'+x[2]+'</td></tr>':'<tr><td>'+esc(x[0])+'</td><td>'+x[1]+'</td></tr>').join('')+'</table>'+cutListHtml();
 }
+function polos(n){n=Math.abs(n)%100;const k=n%10;return n>10&&n<20?'полос':k==1?'полоса':k>=2&&k<=4?'полосы':'полос'}
+// сколько листов резать на доборные элементы (лист шириной 1.25 м, длина = длине детали)
+function cutListHtml(){const L=order.map(l=>[l,cutPlan(l)]).filter(x=>x[1]&&!x[1].pieces);if(!L.length)return '';
+  const by={};L.forEach(([l,c])=>{by[c.each]=(by[c.each]||0)+c.n});const tot=L.reduce((a,x)=>a+x[1].n,0),tm=L.reduce((a,x)=>a+x[1].n*x[1].each,0);
+  return '<h4 style="margin-top:12px">✂ Резать листов (ширина 1.25 м)</h4><table>'+L.map(([l,c])=>'<tr><td>'+esc(l.name)+' <span style="color:#64748b;font-size:13px">('+fmt(num(l.len))+' м × '+fmt(num(l.qty))+' шт, '+c.div+' '+polos(c.div)+' из листа)</span></td><td><b>'+c.n+' лист. по '+fmt(c.each)+' м</b></td></tr>').join('')+
+  '<tr class="grp"><td colspan="2">Итого по длине листа</td></tr>'+Object.keys(by).sort((a,b)=>b-a).map(k=>'<tr><td>Лист 1.25 × '+fmt(+k)+' м</td><td><b>'+by[k]+' шт</b></td></tr>').join('')+
+  '<tr class="big"><td>Всего листов</td><td>'+tot+' шт · '+fmt(Math.round(tm*100)/100)+' м</td></tr></table>'}
 function renderSum(){const h=sumHtml();$('sumBox').innerHTML=h;$('sumBox').hidden=!h}
 function razText(l){const r=razv(l);return 'Развёртка: <b>'+(r?fmt(r)+' см':'—')+'</b> · сгибов: '+Math.max(0,(l.seg||[]).length-1)}
 $('ordList').addEventListener('input',e=>{
@@ -1579,7 +1588,7 @@ function isSheet(l){const it=allItems().find(x=>x.id==l.itemId);return !!it&&(it
 function isGroup(l){return l.unit=='m'&&!isSheet(l)}
 function grpMeters(){return order.filter(isGroup).reduce((a,l)=>a+meters(l),0)}
 let DIVS=store.get('rz_divs',{}), GS=store.get('rz_gs','');
-function divOf(l){ if(l.div==null&&DIVS[l.itemId]!=null) l.div=DIVS[l.itemId]; return num(l.div)||1 }
+function divOf(l){ if(l.div==null&&DIVS[l.itemId]!=null) l.div=DIVS[l.itemId]; let d=num(l.div); if(!d&&l.unit=='m'&&isGroup(l)){const r=razv(l);if(r>0)d=Math.max(1,Math.floor(125/r+1e-9))} return d||1 }
 function lmat(l){return Math.round(meters(l)/divOf(l)*100)/100}
 let PERPC=store.get('rz_perpc',{});
 function pcOf(l){ if(l.unit!='pcs') return 0; if(l.pc==null&&PERPC[l.itemId]!=null) l.pc=PERPC[l.itemId]; return num(l.pc) }
