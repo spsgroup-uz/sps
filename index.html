@@ -2460,12 +2460,15 @@ const KPIW={rev:40,col:25,cnt:15,avg:10,dis:10};
 function perDays(per){const n=new Date(),a=[];let d0,d1=new Date(n.getFullYear(),n.getMonth(),n.getDate());
   if(per=='m1'){d0=new Date(n.getFullYear(),n.getMonth()-1,1);d1=new Date(n.getFullYear(),n.getMonth(),0)}else if(per=='y')d0=new Date(n.getFullYear(),0,1);else d0=new Date(n.getFullYear(),n.getMonth(),1);
   for(let d=new Date(d0);d<=d1;d.setDate(d.getDate()+1))a.push(dKey(d));return a}
-function rateData(per){const sel=new Set(Object.keys(ROLES).filter(u=>ROLES[u]=='sales'));saved.forEach(o=>{if(o._by&&inPeriod(o,per))sel.add(o._by)});
+// владелец сам тоже продаёт: его строка в табеле (по телефону или по имени «Салоев Рахим») = он сам
+function meWorker(){return TW.list.find(x=>x.uid&&x.uid==UID)||TW.list.find(x=>/салоев/i.test(x.name||'')&&/рахим/i.test(x.name||''))}
+function rateData(per){const mw=meWorker(),myU=new Set(['',UID,mw&&mw.uid].filter(x=>x!=null));const key=u=>myU.has(u||'')?'':u;
+  const sel=new Set(['',...Object.keys(ROLES).filter(u=>ROLES[u]=='sales').map(key)]);saved.forEach(o=>{if(o._by&&inPeriod(o,per))sel.add(key(o._by))});
   const days=perDays(per);
-  const R=[...sel].map(u=>{const os=saved.filter(o=>(o._by||'')==u&&inPeriod(o,per));const rev=os.reduce((a,o)=>a+(o.total||0),0),paid=os.reduce((a,o)=>a+Math.min(o.total||0,oPaid(o)),0),debt=os.reduce((a,o)=>a+oDebt(o),0);
-    const w=TW.list.find(x=>x.uid==u);let wd=0,ab=0,late=0;if(w)days.forEach(k=>{const r=recOf(w,k);if(!r||!r.st)return;if(r.st=='w'){wd++;if(isLate(r))late++}if(r.st=='a')ab++});
+  const R=[...sel].map(u=>{const os=saved.filter(o=>key(o._by)==u&&inPeriod(o,per));const rev=os.reduce((a,o)=>a+(o.total||0),0),paid=os.reduce((a,o)=>a+Math.min(o.total||0,oPaid(o)),0),debt=os.reduce((a,o)=>a+oDebt(o),0);
+    const w=u?TW.list.find(x=>x.uid==u):mw;let wd=0,ab=0,late=0;if(w)days.forEach(k=>{const r=recOf(w,k);if(!r||!r.st)return;if(r.st=='w'){wd++;if(isLate(r))late++}if(r.st=='a')ab++});
     const dis=w&&(wd+ab)?Math.max(0,wd/(wd+ab)-(wd?late/wd*0.5:0)):null;
-    return {u,name:w?w.name:uName(u),n:os.length,rev,paid,debt,avg:os.length?rev/os.length:0,col:rev?paid/rev:0,wd,ab,late,dis}});
+    return {u,name:u?(w?w.name:uName(u)):(mw?mw.name:'Рахим')+' (вы, владелец)',n:os.length,rev,paid,debt,avg:os.length?rev/os.length:0,col:rev?paid/rev:0,wd,ab,late,dis}});
   const mx=k=>Math.max(1,...R.map(r=>r[k]));const mR=mx('rev'),mN=mx('n'),mA=mx('avg');
   R.forEach(r=>{const parts={rev:r.rev/mR,col:r.col,cnt:r.n/mN,avg:r.avg/mA,dis:r.dis==null?1:r.dis};r.parts=parts;r.k=Object.keys(KPIW).reduce((a,k)=>a+parts[k]*KPIW[k],0)/100;if(!r.n)r.k=0});
   return R.sort((a,b)=>b.k-a.k||b.rev-a.rev)}
