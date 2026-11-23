@@ -525,6 +525,7 @@ input:focus,select:focus,textarea:focus{outline:none;box-shadow:0 0 0 3px rgba(9
   <div class="dsec">Команда</div>
   <button class="dl own-only" data-dtab="tab">🕒 Табель персонала</button>
   <button class="dl own-only" data-dtab="rate">🏆 Рейтинг продавцов</button>
+  <button class="dl own-only" data-dtab="mst">🧰 Мастера (усто)</button>
   <button class="dl own-only" data-dtab="usr">👥 Пользователи и роли</button>
   <button class="dl" data-dtab="me">📍 Я пришёл / ушёл</button>
   <div class="dsec own-only">Сервис</div>
@@ -620,7 +621,7 @@ input:focus,select:focus,textarea:focus{outline:none;box-shadow:0 0 0 3px rgba(9
     <div id="clList"></div>
   </section>
   <section id="vTab" hidden>
-    <div class="seg" id="tbSeg"><button data-tseg="day" class="on">🕒 День</button><button data-tseg="mon">📅 Месяц</button><button data-tseg="ppl">👥 Сотрудники</button><button data-tseg="rate">🏆 Продавцы</button><button data-tseg="set">📍 Завод</button></div>
+    <div class="seg" id="tbSeg"><button data-tseg="day" class="on">🕒 День</button><button data-tseg="mon">📅 Месяц</button><button data-tseg="ppl">👥 Сотрудники</button><button data-tseg="rate">🏆 Продавцы</button><button data-tseg="mst">🧰 Мастера</button><button data-tseg="set">📍 Завод</button></div>
     <div data-tpane="day">
       <div class="card"><div class="rw2"><button class="chip" id="tbPrev">‹</button><input id="tbDate" style="width:120px;text-align:center"><button class="chip" id="tbNext">›</button><button class="chip" id="tbToday">Сегодня</button>
         <span style="margin-left:auto;font-size:13px;color:var(--mut)">начало <input id="tbStart" type="time" style="width:96px"></span></div>
@@ -639,6 +640,7 @@ input:focus,select:focus,textarea:focus{outline:none;box-shadow:0 0 0 3px rgba(9
       <div class="addrow" id="tbImpBox"><button id="tbImp" style="flex:1">📥 Добавить сотрудников Цеха № 2</button></div>
     </div>
     <div data-tpane="rate" hidden><div class="card" id="rateBox"></div></div>
+    <div data-tpane="mst" hidden><div class="card" id="mstBox"></div></div>
     <div data-tpane="set" hidden><div class="card" id="geoBox"></div></div>
   </section>
   <section id="vLog" hidden>
@@ -1143,10 +1145,17 @@ function alikHtml(){const A=ALIK,g=alikPlan(),inp=(k,v,ph,w)=>'<input data-af="'
   if(g&&g.pa.some(x=>x.len>MAXSHEET))h+='<div class="skcalc" style="color:#b91c1c;font-weight:700">⚠ Кассета длиннее 4 м ('+g.pa.filter(x=>x.len>MAXSHEET).map(x=>fmt(x.len)+' м').join(', ')+') — гибочный станок 4 м её не согнёт. Разделите полосу на две.</div>';
   return h+'</div>'}
 function alikRerender(focusKey){document.querySelectorAll('[data-alik]').forEach(c=>{c.outerHTML=alikHtml()});if(focusKey){const n=document.querySelector('[data-alik] [data-af="'+focusKey+'"]');if(n){n.focus();try{n.setSelectionRange(n.value.length,n.value.length)}catch(_){}}}}
-document.addEventListener('input',e=>{const t=e.target.closest('[data-alik] [data-af]');if(!t)return;const k=t.dataset.af,m=k.match(/^([wln])(\d+)$/);
+// пока вводят число — только запоминаем; перерисовка — когда вышли из поля (иначе на телефоне сбрасывается ввод)
+document.addEventListener('input',e=>{const t=e.target.closest('[data-alik] [data-af]');if(!t)return;const k=t.dataset.af,m=k.match(/^([wln])(\d+)$/);if(m){ALIK.rows[+m[2]][m[1]]=t.value;if(m[1]!='n')ALIK.rows[+m[2]].n=''}else ALIK[k]=t.value;store.set('rz_alik',ALIK)});
+document.addEventListener('change',e=>{const t=e.target.closest('[data-alik] [data-af]');if(!t)return;const k=t.dataset.af,m=k.match(/^([wln])(\d+)$/);
   if(m){ALIK.rows[+m[2]][m[1]]=t.value;if(m[1]!='n')ALIK.rows[+m[2]].n=''}else ALIK[k]=t.value;alikSave();const op=!!t.closest('details');
-  document.querySelectorAll('[data-alik]').forEach(c=>{c.outerHTML=alikHtml()});if(op)document.querySelectorAll('[data-alik] details').forEach(d=>d.open=true);
-  const n=document.querySelector('[data-alik] [data-af="'+k+'"]');if(n){n.focus();try{n.setSelectionRange(n.value.length,n.value.length)}catch(_){}}});
+  ALIK_DIRTY=op?'op':'1';setTimeout(alikFlush,0);
+});
+// перерисовываем блок, только когда ушли из него совсем — переход между полями не закрывает клавиатуру
+let ALIK_DIRTY='';
+function alikFlush(){if(!ALIK_DIRTY)return;const ae=document.activeElement;if(ae&&ae.closest&&ae.closest('[data-alik]')&&ae.matches('input,select'))return;const op=ALIK_DIRTY=='op'||!!document.querySelector('[data-alik] details[open]');ALIK_DIRTY='';
+  document.querySelectorAll('[data-alik]').forEach(c=>{c.outerHTML=alikHtml()});if(op)document.querySelectorAll('[data-alik] details').forEach(d=>d.open=true)}
+document.addEventListener('focusout',()=>setTimeout(alikFlush,30));
 document.addEventListener('click',e=>{const av=e.target.closest('[data-av]');if(av){ALIK.v=av.dataset.av;ALIK.off=ALIK.v=='1'?String(koshReach()):String(koshReach()+karnReach());if(ALIK.v=='2')ALIK.plv='4';else if(ALIK.plv=='4')ALIK.plv='1';alikSave();alikRerender();return}if(e.target.closest('[data-arow-add]')){ALIK.rows.push({w:'',l:''});alikSave();alikRerender('w'+(ALIK.rows.length-1));return}
   const d=e.target.closest('[data-arow-del]');if(d){ALIK.rows.splice(+d.dataset.arowDel,1);alikSave();alikRerender()}});
 function alikAdd(quiet){const g=alikPlan();if(!g){if(!quiet)toast('Впишите ширину и длину полос');return}let n=0;const it=ic=>itByIcon(9,ic);order=order.filter(l=>l.auto!=9&&!emptyOf(l,9));
@@ -1241,17 +1250,20 @@ function sizeAsk(ci){CLI_DES=ci;try{store.set('rz_cdes',ci)}catch(_){}
 function emptyOf(l,ci){if(l.manual)return false;const it=allItems().find(i=>i.id==String(l.itemId).split(':')[0]);return it&&it.cat==ci&&!num(l.fw)&&(l.unit=='m'?!num(l.len):!num(l.qty))}
 function autoNote(ci){const n=order.filter(l=>l.auto==ci).length;return '<div data-anote="'+ci+'">'+(n?'<div class="autook">✓ Все детали уже в заказе ('+n+' строк) и обновляются сами, когда меняете размеры</div>':'<button class="rgo" data-rgo="'+ci+'">+ Добавить всё в заказ</button>')+'</div>'}
 function roomSave(){store.set('rz_room2',ROOM);autoRoom(7)}
-function autoRoom(ci){if(MODE!='tun')return;clearTimeout(window['__ar'+ci]);window['__ar'+ci]=setTimeout(()=>{const ae=document.activeElement,k=ae&&ae.dataset?(ae.dataset.rf||ae.dataset.af):'';const has=ci==9?alikPlan():roomPlan(ci);if(!has||has.err)return;roomAdd(ci,true);document.querySelectorAll('[data-anote="'+ci+'"]').forEach(x=>x.outerHTML=autoNote(ci));if($('cliDes')&&curTab=='cli'){const ri=$('cliRoomInfo');if(ri){const t=roomInfo();ri.hidden=!t;ri.textContent='📐 '+t}}
+function autoRoom(ci){if(MODE!='tun')return;clearTimeout(window['__ar'+ci]);window['__ar'+ci]=setTimeout(()=>{{const f=document.activeElement;if(f&&f.matches&&f.matches('[data-alik] input,[data-room] input')){autoRoom(ci);return}}const ae=document.activeElement,k=ae&&ae.dataset?(ae.dataset.rf||ae.dataset.af):'';const has=ci==9?alikPlan():roomPlan(ci);if(!has||has.err)return;roomAdd(ci,true);document.querySelectorAll('[data-anote="'+ci+'"]').forEach(x=>x.outerHTML=autoNote(ci));if($('cliDes')&&curTab=='cli'){const ri=$('cliRoomInfo');if(ri){const t=roomInfo();ri.hidden=!t;ri.textContent='📐 '+t}}
   const n=k&&document.querySelector((ci==9?'[data-alik] [data-af="':'[data-room="'+ci+'"] [data-rf="')+k+'"]');if(n){n.focus();try{n.setSelectionRange(n.value.length,n.value.length)}catch(_){}}},900)}
 function roomInfo(){if(MODE!='tun')return '';const parts=[];if(order.some(l=>l.auto==9)){const g=alikPlan();if(g)parts.push('Аликафон шапка — полосы: '+g.R.map(r=>fmt(r.w)+'×'+fmt(r.l)).join('; ')+' м · длина '+fmt(Math.round(g.SL*100)/100)+' м · кассет '+g.N+' шт')}
   const s7=roomInfo7();if(s7&&(order.some(l=>l.auto==7)||!parts.length))parts.unshift(s7);return parts.join(' | ')}
 function roomInfo7(){const c=ROOM[7];if(!c||!num(c.L)||!num(c.W))return '';return 'Помещение: '+fmt(num(c.L))+' × '+fmt(num(c.W))+' м = '+fmt(Math.round(num(c.L)*num(c.W)*100)/100)+' м² · '+CATS[7]}
-document.addEventListener('input',e=>{const card=e.target.closest('[data-room]');if(!card||!e.target.dataset.rf)return;const ci=+card.dataset.room,c=roomCfg(ci);
+document.addEventListener('input',e=>{const card=e.target.closest('[data-room]');if(!card||!e.target.dataset.rf)return;const c=roomCfg(+card.dataset.room);c[e.target.dataset.rf]=e.target.value;store.set('rz_room2',ROOM)});
+document.addEventListener('change',e=>{const card=e.target.closest('[data-room]');if(!card||!e.target.dataset.rf)return;const ci=+card.dataset.room,c=roomCfg(ci);
   c[e.target.dataset.rf]=e.target.value; if(e.target.dataset.rf=='L'||e.target.dataset.rf=='W'){['nL','lxo','lyo','co','ro'].forEach(k=>c[k]='')} roomSave(); const k=e.target.dataset.rf, open=card.querySelector('details')&&card.querySelector('details').open;
-  const par=card.parentElement; card.outerHTML=roomHtml(ci); const nc=par.querySelector('[data-room="'+ci+'"]'); if(open&&nc&&nc.querySelector('details'))nc.querySelector('details').open=true;
-  document.querySelectorAll('[data-room="'+ci+'"]').forEach(x=>{if(x!==nc)x.outerHTML=roomHtml(ci)});
-  const n=nc&&nc.querySelector('[data-rf="'+k+'"]'); if(n){n.focus();try{n.setSelectionRange(n.value.length,n.value.length)}catch(_){}}
+  ROOM_DIRTY[ci]=open?'op':'1';setTimeout(roomFlush,0);
 });
+const ROOM_DIRTY={};
+function roomFlush(){const ae=document.activeElement;Object.keys(ROOM_DIRTY).forEach(ci=>{if(!ROOM_DIRTY[ci])return;if(ae&&ae.closest&&ae.closest('[data-room="'+ci+'"]')&&ae.matches('input,select'))return;const op=ROOM_DIRTY[ci]=='op';ROOM_DIRTY[ci]='';
+  document.querySelectorAll('[data-room="'+ci+'"]').forEach(x=>{x.outerHTML=roomHtml(+ci)});if(op)document.querySelectorAll('[data-room="'+ci+'"] details').forEach(d=>d.open=true)})}
+document.addEventListener('focusout',()=>setTimeout(roomFlush,30));
 function roomAdd(ci,quiet){if(ci==9)return alikAdd(quiet);const g=roomPlan(ci);if(!g||g.err){if(!quiet)toast(g?g.err:'Впишите длину и ширину');return}let n=0;order=order.filter(l=>l.auto!=ci&&!emptyOf(l,ci));
   g.parts.forEach(p=>{const it=itByIcon(ci,p[0]);if(!it||!p[2])return;
     const l={uid:Date.now()+Math.random(),itemId:it.id+(p[0]=='dilaL'||p[5]?':'+p[1]:''),icon:it.icon,name:p[1],unit:it.unit,len:'',qty:'',note:'',auto:ci};
@@ -1478,7 +1490,7 @@ function drawerSync(){document.querySelectorAll('[data-dtab]').forEach(b=>b.clas
 function drawer(o){$('drawer').classList.toggle('open',o);$('drawerBg').classList.toggle('show',o)}
 $('menuBtn').onclick=()=>{if(innerWidth>=900){const h=!document.body.classList.contains('navhide');document.body.classList.toggle('navhide',h);store.set('rz_navhide',h?1:0)}else drawer(true)};
 if(store.get('rz_navhide',0))document.body.classList.add('navhide'); $('drawerBg').onclick=()=>drawer(false);
-$('drawer').addEventListener('click',e=>{const b=e.target.closest('[data-dtab]');if(b&&b.dataset.dtab=='dxf'){drawer(false);dxfOpen();return}if(b&&b.dataset.dtab=='bak'){drawer(false);bakOpen();return}if(b&&b.dataset.dtab=='rate'){drawer(false);TB_SEG='rate';tab('tab');renderTab();return}if(b&&b.dataset.dtab=='usr'){drawer(false);USR_OPEN=true;renderSk();tab('sk');renderUsers();setTimeout(()=>{const u=$('usrBox');if(u){u.scrollIntoView({behavior:'smooth',block:'start'});u.style.outline='3px solid #2563eb';setTimeout(()=>u.style.outline='',2500)}},120);return}
+$('drawer').addEventListener('click',e=>{const b=e.target.closest('[data-dtab]');if(b&&b.dataset.dtab=='dxf'){drawer(false);dxfOpen();return}if(b&&b.dataset.dtab=='bak'){drawer(false);bakOpen();return}if(b&&b.dataset.dtab=='rate'){drawer(false);TB_SEG='rate';tab('tab');renderTab();return}if(b&&b.dataset.dtab=='mst'){drawer(false);TB_SEG='mst';tab('tab');renderTab();return}if(b&&b.dataset.dtab=='usr'){drawer(false);USR_OPEN=true;renderSk();tab('sk');renderUsers();setTimeout(()=>{const u=$('usrBox');if(u){u.scrollIntoView({behavior:'smooth',block:'start'});u.style.outline='3px solid #2563eb';setTimeout(()=>u.style.outline='',2500)}},120);return}
   if(b&&['tab','me','cl','pl','home'].includes(b.dataset.dtab)){tab(b.dataset.dtab);drawer(false);return}if(b){({cat:'tCat',ord:'tOrd',cli:'tCli',log:'tLog',sk:'tSk'})[b.dataset.dtab]&&$(({cat:'tCat',ord:'tOrd',cli:'tCli',log:'tLog',sk:'tSk'})[b.dataset.dtab]).click();drawer(false)} if(e.target.closest('[data-dmode]'))drawer(false)});
 function tab(w){if(typeof IS_OWNER!='undefined'&&!IS_OWNER){const ok=document.body.classList.contains('sales')?['me','cat','ord','cli','log']:['me'];if(!ok.includes(w))w='me'}curTab=w;$('vTab').hidden=w!='tab';if(w=='tab')renderTab();$('vMe').hidden=w!='me';if(w=='me')renderMe();$('vCl').hidden=w!='cl';if(w=='cl')renderCl();$('vPl').hidden=w!='pl';if(w=='pl')renderPl();$('vHome').hidden=w!='home';if(w=='home')renderHome();setTimeout(drawerSync,0);$('vSk').hidden=w!='sk';$('tSk').classList.toggle('on',w=='sk');$('vCat').hidden=w!='cat';$('vOrd').hidden=w!='ord';$('vLog').hidden=w!='log';$('vCli').hidden=w!='cli';$('tCat').classList.toggle('on',w=='cat');$('tOrd').classList.toggle('on',w=='ord');$('tLog').classList.toggle('on',w=='log');$('tCli').classList.toggle('on',w=='cli');document.querySelector('.bar').hidden=['log','sk','tab','me','cl','pl','home'].includes(w);window.scrollTo(0,0)}
 $('tLog').onclick=()=>{renderLog();tab('log')};
@@ -1745,7 +1757,7 @@ function logMsg(t){$('logNote').hidden=!t;$('logNote').textContent=t||''}
 function ordCol(){return IS_OWNER?'orders':'uo/'+UID+'/orders'}
 function movColFor(col){const m=String(col||'').match(/^uo\/([^/]+)\/orders$/);return m?'um/'+m[1]+'/moves':(IS_OWNER?'sk_moves':'um/'+UID+'/moves')}
 function uName(u){if(!u)return 'Руководитель';return ALIAS[u]||PNAMES[u]||'Пользователь …'+String(u).slice(-4)}
-function mergeOrders(){if(curTab=='home')setTimeout(renderHome,0);setTimeout(()=>{if(IS_OWNER)kasPub()},0);saved=OWN_ORD.concat(...Object.values(STAFF_ORD)).sort((a,b)=>(b.ts||0)-(a.ts||0));renderLog();renderPayBox();if(curTab=='cl')renderCl();if(curTab=='sk')renderSk()}
+function mergeOrders(){if(curTab=='home')setTimeout(renderHome,0);setTimeout(()=>{if(IS_OWNER)kasPub()},0);saved=OWN_ORD.concat(...Object.values(STAFF_ORD)).sort((a,b)=>(b.ts||0)-(a.ts||0));renderLog();renderPayBox();if(curTab=='cl')renderCl();if(curTab=='sk')renderSk();setTimeout(mstSync,0);if(curTab=='tab'&&TB_SEG=='mst')setTimeout(renderMst,0)}
 function mergeMoves(){SK_MOVES=OWN_MOV.concat(...Object.values(STAFF_MOV));if(curTab=='pl')renderPl();if(curTab=='sk')renderSk();renderCliCoils();pubBal()}
 function watchStaff(u){const oc='uo/'+u+'/orders',mc='um/'+u+'/moves';
   DB.collection(oc).orderBy('ts','desc').limit(1000).onSnapshot(sn=>{STAFF_ORD[u]=sn.docs.map(d=>({...d.data(),id:d.id,_col:oc,_by:u}));mergeOrders()},()=>{});
@@ -2163,6 +2175,7 @@ function hText(h){const m=Math.round(h*60);return Math.floor(m/60)+' ч'+(m%60?'
 function nowT(){const d=new Date();return String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0')}
 function isLate(r){const a=tMin(r&&r.in),s=tMin(TW.start);return r&&r.st=='w'&&a!=null&&s!=null&&a>s+5}
 function tbStartDb(){if(TB_ON||!DB||!IS_OWNER)return;TB_ON=true;
+  DB.doc('own/masters').onSnapshot(sn=>{const d=sn.exists?sn.data():{};MST={def:d.def!=null?d.def:1,m:d.m||{},pays:d.pays||[]};MST_OK=true;mstSync();if(TB_SEG=='mst')renderMst()},()=>{});
   DB.doc('own/workers').onSnapshot(sn=>{const d=sn.exists?sn.data():{};TW={list:d.list||[],start:d.start||'08:00',geo:d.geo||null};TW_OK=true;autoLink();TW.list.forEach(w=>{if(w.uid)watchTk(w.uid)});if(curTab=='home')renderHome();if(curTab=='tab')renderTab()},()=>{});
   DB.collection('own/tab/days').onSnapshot(sn=>{TD={};sn.docs.forEach(x=>TD[x.id]=x.data().recs||{});if(curTab=='tab')renderTab()},()=>{});}
 const ART_URL=window.__FB?location.href.split('#')[0]:'https://claude.ai/artifact/ADizPCbFEdBNkqhqrry8YC';
@@ -2274,7 +2287,7 @@ $('tbList').addEventListener('click',e=>{const c=e.target.closest('[data-w]');if
 $('tbPeople').addEventListener('click',e=>{const c=e.target.closest('[data-w]');if(!c)return;const wid=c.dataset.w;if(e.target.closest('summary'))TB_OPEN=c.open?'':wid;
   if(e.target.closest('[data-wdel]')){const w=TW.list.find(x=>x.id==wid);ask('Удалить сотрудника?',(w&&w.name||'')+' — его старые отметки останутся в табеле.',()=>{TW.list=TW.list.filter(x=>x.id!=wid);twSave();renderTab()})}});
 document.addEventListener('click',e=>{const b=e.target.closest('[data-tseg]');if(!b)return;TB_SEG=b.dataset.tseg;store.set('rz_tseg',TB_SEG);tbSegShow()});
-function tbSegShow(){if(TB_SEG=='rate')setTimeout(renderRate,0);document.querySelectorAll('[data-tseg]').forEach(b=>b.classList.toggle('on',b.dataset.tseg==TB_SEG));document.querySelectorAll('[data-tpane]').forEach(d=>d.hidden=d.dataset.tpane!=TB_SEG)}
+function tbSegShow(){if(TB_SEG=='rate')setTimeout(renderRate,0);if(TB_SEG=='mst')setTimeout(renderMst,0);document.querySelectorAll('[data-tseg]').forEach(b=>b.classList.toggle('on',b.dataset.tseg==TB_SEG));document.querySelectorAll('[data-tpane]').forEach(d=>d.hidden=d.dataset.tpane!=TB_SEG)}
 $('tbList').addEventListener('change',e=>{const t=e.target.closest('[data-t]');if(!t)return;const wid=t.closest('[data-w]').dataset.w;tdSet(dKey(TB_DAY),wid,{st:'w',[t.dataset.t]:t.value})});
 const CEX2=[{"id": "c2_48", "name": "Салоев Раҳим", "pos": "Руководитель цеха, продаёт", "cex": "Цех № 2"}, {"id": "c2_49", "name": "Тохиров Дамир", "pos": "Продавец", "cex": "Цех № 2"}, {"id": "c2_50", "name": "Музаффаров Шамсиддин", "pos": "Продавец", "cex": "Цех № 2"}, {"id": "c2_51", "name": "Асадов Иззат", "pos": "Продавец", "cex": "Цех № 2"}, {"id": "c2_52", "name": "Каримов Зафар", "pos": "Брокер", "cex": "Цех № 2"}, {"id": "c2_53", "name": "Холиқов Раббимқул", "pos": "Бухгалтер (финансист цеха)", "cex": "Цех № 2"}, {"id": "c2_54", "name": "Акрамов Шоҳрух", "pos": "", "cex": "Цех № 2"}, {"id": "c2_55", "name": "Сайфуллоев Азиз", "pos": "", "cex": "Цех № 2"}, {"id": "c2_56", "name": "Джалилов Жаҳонгир", "pos": "", "cex": "Цех № 2"}, {"id": "c2_57", "name": "Турсунов Санжар", "pos": "", "cex": "Цех № 2"}, {"id": "c2_58", "name": "Гаффоров Бобур", "pos": "", "cex": "Цех № 2"}, {"id": "c2_59", "name": "Курбонов Фаррух", "pos": "", "cex": "Цех № 2"}, {"id": "c2_60", "name": "Хайруллаев Умед", "pos": "", "cex": "Цех № 2"}, {"id": "c2_61", "name": "Шодиқулов Олим", "pos": "", "cex": "Цех № 2"}, {"id": "c2_62", "name": "Ашурбоев Қобил", "pos": "", "cex": "Цех № 2"}, {"id": "c2_63", "name": "Истамқулов Парвиз", "pos": "", "cex": "Цех № 2"}, {"id": "c2_64", "name": "Шомуродов Шомурод", "pos": "", "cex": "Цех № 2"}, {"id": "c2_65", "name": "Яздонов Амир", "pos": "", "cex": "Цех № 2"}, {"id": "c2_66", "name": "Жалилов Умед", "pos": "", "cex": "Цех № 2"}, {"id": "c2_67", "name": "Сайфиддинов Раҳматжон", "pos": "", "cex": "Цех № 2"}, {"id": "c2_68", "name": "Хайруллоев Суҳроб", "pos": "", "cex": "Цех № 2"}, {"id": "c2_69", "name": "Тешаев Азиз", "pos": "", "cex": "Цех № 2"}, {"id": "c2_70", "name": "Аҳмадов Беҳбуд", "pos": "", "cex": "Цех № 2"}, {"id": "c2_71", "name": "Илхомов Лазиз", "pos": "", "cex": "Цех № 2"}, {"id": "c2_72", "name": "Аҳмадов Шоҳжаҳон", "pos": "", "cex": "Цех № 2"}];
 $('tbImp').onclick=async()=>{const have=new Set(TW.list.map(w=>w.id));const add=CEX2.filter(w=>!have.has(w.id));if(!add.length){toast('Уже добавлены');return}TW.list=TW.list.concat(add);await twSave();renderTab();toast('Добавлено: '+add.length)};
@@ -2405,51 +2418,62 @@ function dxfWrite(parts,head){const o=[];const a=(...x)=>o.push(...x.map(String)
   const ln=(x1,y1,x2,y2,ly)=>a(0,'LINE',8,ly,10,x1.toFixed(2),20,y1.toFixed(2),30,0,11,x2.toFixed(2),21,y2.toFixed(2),31,0);
   const tx=(x,y,h,s,ly)=>a(0,'TEXT',8,ly||'TEXT',10,x.toFixed(2),20,y.toFixed(2),30,0,40,h,1,lat(String(s).replace(/[—–]/g,'-')));
   a(0,'SECTION',2,'HEADER',9,'$ACADVER',1,'AC1009',9,'$DWGCODEPAGE',3,'ANSI_1251',9,'$INSUNITS',70,4,0,'ENDSEC');
-  a(0,'SECTION',2,'TABLES',0,'TABLE',2,'LAYER',70,3);
-  [['CUT',7],['TEXT',3],['FORMA',4]].forEach(([n,c])=>a(0,'LAYER',2,n,70,0,62,c,6,'CONTINUOUS'));a(0,'ENDTAB',0,'ENDSEC');
+  a(0,'SECTION',2,'TABLES',0,'TABLE',2,'LAYER',70,4);
+  [['CUT',7],['TEXT',3],['FORMA',4],['RAZDEL',8]].forEach(([n,c])=>a(0,'LAYER',2,n,70,0,62,c,6,'CONTINUOUS'));a(0,'ENDTAB',0,'ENDSEC');
   a(0,'SECTION',2,'ENTITIES');
-  const maxL=Math.max(...parts.map(p=>p.L));let x=0;const y0=0;
   // форма после гиба над каждой деталью
   // настоящая форма: направления из рисунка детали, длины — из размеров (мм)
   const shp=p=>{const S=PTS[p.icon];if(!S||S.length<2||!p.seg.length)return null;const P=[[0,0]];
     for(let i=0;i<S.length-1;i++){const dx=S[i+1][0]-S[i][0],dy=-(S[i+1][1]-S[i][1]),d=Math.hypot(dx,dy)||1,v=p.seg[i]||0,q=P[P.length-1];P.push([q[0]+dx/d*v,q[1]+dy/d*v])}
     const xs=P.map(q=>q[0]),ys=P.map(q=>q[1]),bw=Math.max(...xs)-Math.min(...xs)||1,bh=Math.max(...ys)-Math.min(...ys)||1;
     const sc=Math.min(Math.max(520,p.w)/bw,520/bh,8);return {P,sc,minx:Math.min(...xs),miny:Math.min(...ys),h:bh*sc,wd:bw*sc}};
-  const topH=head.forma?Math.max(0,...parts.map(p=>{const q=shp(p);return q?q.h+420:0})):0;
-  tx(0,maxL+topH+400,120,head.title);if(head.mat)tx(0,maxL+topH+220,100,head.mat);
-  parts.forEach((p,i)=>tx(0,-300-i*110,70,(i+1)+') '+(p.nm||'Деталь')+' - '+Math.round(p.w)+' x '+Math.round(p.L)+' мм - '+p.n+' шт'));
-  parts.forEach(p=>{const w=p.w,L=p.L;
-    const KP=ktplPts(p.icon,w,L);if(KP){a(0,'POLYLINE',8,'CUT',66,1,10,0,20,0,30,0,70,1);KP.forEach(([vx,vy])=>a(0,'VERTEX',8,'CUT',10,(x+vx).toFixed(2),20,(y0+vy).toFixed(2),30,0));a(0,'SEQEND',8,'CUT')}
-    else{const bs=[];let s=0;p.seg.slice(0,-1).forEach(v=>{s+=v;if(s>0.5&&s<w-0.5)bs.push(s)});
-      const V=[[x,y0]];bs.forEach(b=>V.push([x+b,y0],[x+b,y0+7],[x+b,y0]));V.push([x+w,y0],[x+w,y0+L]);
-      bs.slice().reverse().forEach(b=>V.push([x+b,y0+L],[x+b,y0+L-7],[x+b,y0+L]));V.push([x,y0+L]);
-      a(0,'POLYLINE',8,'CUT',66,1,10,0,20,0,30,0,70,1);V.forEach(([vx,vy])=>a(0,'VERTEX',8,'CUT',10,vx.toFixed(2),20,vy.toFixed(2),30,0));a(0,'SEQEND',8,'CUT');
-      }
-    tx(x,y0+L+60,90,String(p.n));
-    {const q=head.forma&&shp(p);if(q){const by=y0+L+260,X=v=>x+(v-q.minx)*q.sc,Y=v=>by+(v-q.miny)*q.sc,P=q.P.map(t=>[X(t[0]),Y(t[1])]);
-      const cx=P.reduce((a,t)=>a+t[0],0)/P.length,cy=P.reduce((a,t)=>a+t[1],0)/P.length,boxes=[],th=36;
-      const pts=[];for(let i=0;i<P.length-1;i++){ln(P[i][0],P[i][1],P[i+1][0],P[i+1][1],'FORMA');const d=Math.hypot(P[i+1][0]-P[i][0],P[i+1][1]-P[i][1]),n=Math.max(1,Math.ceil(d/4));for(let k=0;k<=n;k++)pts.push([P[i][0]+(P[i+1][0]-P[i][0])*k/n,P[i][1]+(P[i+1][1]-P[i][1])*k/n])}
-      const free=(bx,by,bw,bh)=>!boxes.some(b=>bx<b[0]+b[2]+10&&bx+bw+10>b[0]&&by<b[1]+b[3]+8&&by+bh+8>b[1])&&!pts.some(t=>t[0]>bx-8&&t[0]<bx+bw+8&&t[1]>by-8&&t[1]<by+bh+8);
-      for(let i=0;i<P.length-1;i++){const v=p.seg[i];if(!v)continue;const mx=(P[i][0]+P[i+1][0])/2,my=(P[i][1]+P[i+1][1])/2,dx=P[i+1][0]-P[i][0],dy=P[i+1][1]-P[i][1],d=Math.hypot(dx,dy)||1;
-        let nx=-dy/d,ny=dx/d;if(nx*(mx-cx)+ny*(my-cy)<0){nx=-nx;ny=-ny}
-        const lab=fmt(Math.round(v)/10),tw=lab.length*th*0.72,c0=[mx-tw/2,my-th/2];let best=null;
-        for(let r=14;r<=260&&!best;r+=10)for(const sg of[1,-1])for(const t of[0,-0.25,0.25,-0.5,0.5]){if(best)break;
-          const ox=mx+sg*nx*(r+tw/2*Math.abs(nx))+dx/d*t*Math.min(d,120)-tw/2,oy=my+sg*ny*(r+th/2*Math.abs(ny))+dy/d*t*Math.min(d,120)-th/2;if(free(ox,oy,tw,th))best=[ox,oy]}
-        if(!best)best=[mx+nx*40-tw/2,my+ny*40-th/2];boxes.push([best[0],best[1],tw,th]);tx(best[0],best[1],th,lab,'FORMA')}}}
-    tx(x,y0-140,60,String(parts.indexOf(p)+1)+')');
-    {const q=head.forma&&shp(p);x+=Math.max(w,q?q.wd+120:0)+Math.max(400,w*0.5)}});
+  // цвета: тёмные наверху, светлые внизу; между ними сплошная линия, в углу — код цвета
+  const lum=c=>{const r=RAL.find(x=>x[0]==String(c||''));const h=r&&r[2]||'';const m=h.match(/^#?([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/i);return m?(0.299*parseInt(m[1],16)+0.587*parseInt(m[2],16)+0.114*parseInt(m[3],16))/255:0.5};
+  const cols=[...new Set(parts.map(p=>p.col||''))].sort((a,b)=>lum(b)-lum(a));
+  const order_=[];cols.forEach(c=>parts.filter(p=>(p.col||'')==c).forEach(p=>order_.push(p)));
+  const rowW=ps=>ps.reduce((a,p)=>{const q=head.forma&&shp(p);return a+Math.max(p.w,q?q.wd+120:0)+Math.max(400,p.w*0.5)},0);
+  const W=Math.max(...cols.map(c=>rowW(parts.filter(p=>(p.col||'')==c))));
+  let base=0,top=0;
+  cols.forEach((c,bi)=>{const ps=parts.filter(p=>(p.col||'')==c);const maxL=Math.max(...ps.map(p=>p.L));
+    const topH=head.forma?Math.max(0,...ps.map(p=>{const q=shp(p);return q?q.h+420:0})):0;
+    let x=0;const y0=base;
+    if(cols.length>1||c)tx(-1100,y0+maxL/2,160,(c||'')+(head.th?' / '+head.th:''));
+    ps.forEach(p=>{const w=p.w,L=p.L;
+      const KP=ktplPts(p.icon,w,L);if(KP){a(0,'POLYLINE',8,'CUT',66,1,10,0,20,0,30,0,70,1);KP.forEach(([vx,vy])=>a(0,'VERTEX',8,'CUT',10,(x+vx).toFixed(2),20,(y0+vy).toFixed(2),30,0));a(0,'SEQEND',8,'CUT')}
+      else{const bs=[];let s=0;p.seg.slice(0,-1).forEach(v=>{s+=v;if(s>0.5&&s<w-0.5)bs.push(s)});
+        const V=[[x,y0]];bs.forEach(b=>V.push([x+b,y0],[x+b,y0+7],[x+b,y0]));V.push([x+w,y0],[x+w,y0+L]);
+        bs.slice().reverse().forEach(b=>V.push([x+b,y0+L],[x+b,y0+L-7],[x+b,y0+L]));V.push([x,y0+L]);
+        a(0,'POLYLINE',8,'CUT',66,1,10,0,20,0,30,0,70,1);V.forEach(([vx,vy])=>a(0,'VERTEX',8,'CUT',10,vx.toFixed(2),20,vy.toFixed(2),30,0));a(0,'SEQEND',8,'CUT');
+        }
+      tx(x,y0+L+60,90,String(p.n));
+      {const q=head.forma&&shp(p);if(q){const by=y0+L+260,X=v=>x+(v-q.minx)*q.sc,Y=v=>by+(v-q.miny)*q.sc,P=q.P.map(t=>[X(t[0]),Y(t[1])]);
+        const cx=P.reduce((a,t)=>a+t[0],0)/P.length,cy=P.reduce((a,t)=>a+t[1],0)/P.length,boxes=[],th=36;
+        const pts=[];for(let i=0;i<P.length-1;i++){ln(P[i][0],P[i][1],P[i+1][0],P[i+1][1],'FORMA');const d=Math.hypot(P[i+1][0]-P[i][0],P[i+1][1]-P[i][1]),n=Math.max(1,Math.ceil(d/4));for(let k=0;k<=n;k++)pts.push([P[i][0]+(P[i+1][0]-P[i][0])*k/n,P[i][1]+(P[i+1][1]-P[i][1])*k/n])}
+        const free=(bx,by,bw,bh)=>!boxes.some(b=>bx<b[0]+b[2]+10&&bx+bw+10>b[0]&&by<b[1]+b[3]+8&&by+bh+8>b[1])&&!pts.some(t=>t[0]>bx-8&&t[0]<bx+bw+8&&t[1]>by-8&&t[1]<by+bh+8);
+        for(let i=0;i<P.length-1;i++){const v=p.seg[i];if(!v)continue;const mx=(P[i][0]+P[i+1][0])/2,my=(P[i][1]+P[i+1][1])/2,dx=P[i+1][0]-P[i][0],dy=P[i+1][1]-P[i][1],d=Math.hypot(dx,dy)||1;
+          let nx=-dy/d,ny=dx/d;if(nx*(mx-cx)+ny*(my-cy)<0){nx=-nx;ny=-ny}
+          const lab=fmt(Math.round(v)/10),tw=lab.length*th*0.72,c0=[mx-tw/2,my-th/2];let best=null;
+          for(let r=14;r<=260&&!best;r+=10)for(const sg of[1,-1])for(const t of[0,-0.25,0.25,-0.5,0.5]){if(best)break;
+            const ox=mx+sg*nx*(r+tw/2*Math.abs(nx))+dx/d*t*Math.min(d,120)-tw/2,oy=my+sg*ny*(r+th/2*Math.abs(ny))+dy/d*t*Math.min(d,120)-th/2;if(free(ox,oy,tw,th))best=[ox,oy]}
+          if(!best)best=[mx+nx*40-tw/2,my+ny*40-th/2];boxes.push([best[0],best[1],tw,th]);tx(best[0],best[1],th,lab,'FORMA')}}}
+      tx(x,y0-140,60,String(order_.indexOf(p)+1)+')');
+      {const q=head.forma&&shp(p);x+=Math.max(w,q?q.wd+120:0)+Math.max(400,w*0.5)}});
+    top=y0+maxL+topH+300;
+    if(bi<cols.length-1){const yl=top+150;ln(-1300,yl,W+200,yl,'RAZDEL');base=yl+500}});
+  tx(0,top+400,120,head.title);if(head.mat)tx(0,top+220,100,head.mat);
+  order_.forEach((p,i)=>tx(0,-300-i*110,70,(i+1)+') '+(p.nm||'Деталь')+(p.col?' ['+p.col+']':'')+' - '+Math.round(p.w)+' x '+Math.round(p.L)+' мм - '+p.n+' шт'));
   a(0,'ENDSEC',0,'EOF');return o.join('\r\n')+'\r\n'}
 function ordDxfOpen(){const parts=ordParts();if(!parts.length){toast('В заказе нет деталей с развёрткой');return}
   const h=readHead(),th=curTh()||'0.40',c=curCol(),col0=c?c[0]:'';parts.forEach(p=>{if(!p.col)p.col=col0});
   const W=num(store.get('rz_dxfw','1250'))||1250;let tot=0;const cols=[...new Set(parts.map(p=>p.col))];const byC={};
   const rows=parts.map(p=>{const b=nestM(p,W);const m=b?b.m:0;tot+=m;byC[p.col]=(byC[p.col]||0)+m;return '<tr style="border-top:1px solid var(--line)"><td>'+esc(p.nm)+'</td><td>'+esc(p.col||'—')+'</td><td>'+p.w+' × '+p.L+'</td><td>'+p.n+'</td><td><b>'+(b?fmt(Math.round(m*100)/100):'шире листа')+'</b></td></tr>'}).join('');
   const kg=tot*W/1000*num(th)*7.85;
-  skOpen('📐 Чертёж DXF для лазера','<div class="skcalc">'+esc(h.hClient||'Без имени')+' · металл <b>'+esc(th)+'</b> · рулон '+fmt(W/1000)+' м</div><div style="overflow:auto;max-height:44vh"><table style="width:100%;border-collapse:collapse;font-size:13px"><tr style="font-weight:700"><td>Деталь</td><td>Цвет</td><td>Развёртка, мм</td><td>Шт</td><td>Пог. м</td></tr>'+rows+'</table></div>'+(parts.some(p=>p.over)?'<div class="skcalc" style="color:#b91c1c;font-weight:700">⚠ Длиннее 4 м: '+parts.filter(p=>p.over).map(p=>esc(p.nm)+' ('+fmt(p.L/1000)+' м)').join(', ')+' — гибочный станок 4 м не согнёт. Уменьшите ширину полосы или разделите её.</div>':'')+'<div class="skcalc" style="font-size:16px">'+(cols.length>1?cols.map(k=>'RAL '+esc(k||'—')+': <b>'+fmt(Math.round(byC[k]*100)/100)+' пог. м</b>').join('<br>')+'<br>':'')+'Итого: <b>'+fmt(Math.round(tot*100)/100)+' пог. м</b> · ≈ <b>'+fmt(Math.round(kg))+' кг</b></div><div style="font-size:12px;color:var(--mut)">'+(cols.length>1?'Цветов: '+cols.length+' — на каждый цвет свой рулон, поэтому скачаются отдельные файлы на каждый цвет. ':'')+'На каждый цвет 2 файла: <b>_lazer</b> — только контуры для резки, <b>_tsex</b> — то же + форма после гиба, для гибщика.</div>',async()=>{
+  skOpen('📐 Чертёж DXF для лазера','<div class="skcalc">'+esc(h.hClient||'Без имени')+' · металл <b>'+esc(th)+'</b> · рулон '+fmt(W/1000)+' м</div><div style="overflow:auto;max-height:44vh"><table style="width:100%;border-collapse:collapse;font-size:13px"><tr style="font-weight:700"><td>Деталь</td><td>Цвет</td><td>Развёртка, мм</td><td>Шт</td><td>Пог. м</td></tr>'+rows+'</table></div>'+(parts.some(p=>p.over)?'<div class="skcalc" style="color:#b91c1c;font-weight:700">⚠ Длиннее 4 м: '+parts.filter(p=>p.over).map(p=>esc(p.nm)+' ('+fmt(p.L/1000)+' м)').join(', ')+' — гибочный станок 4 м не согнёт. Уменьшите ширину полосы или разделите её.</div>':'')+'<div class="skcalc" style="font-size:16px">'+(cols.length>1?cols.map(k=>'RAL '+esc(k||'—')+': <b>'+fmt(Math.round(byC[k]*100)/100)+' пог. м</b>').join('<br>')+'<br>':'')+'Итого: <b>'+fmt(Math.round(tot*100)/100)+' пог. м</b> · ≈ <b>'+fmt(Math.round(kg))+' кг</b></div><div style="font-size:12px;color:var(--mut)">'+(cols.length>1?'Цветов: '+cols.length+' — все в одном файле: тёмные детали сверху, светлые снизу, между ними линия, код цвета слева. ':'')+'2 файла: <b>_lazer</b> — контуры для резки, <b>_tsex</b> — то же + форма после гиба, для гибщика.</div>',async()=>{
     const base=lat((h.hClient||'Заказ')+' '+(h.hDate||today())).replace(/[\\/:*?"<>|]+/g,'_').trim().replace(/\s+/g,'_');
     try{if(!dl){try{dl=await window.claude.use('downloads')}catch(_){}}if(!dl){toast('Скачивание недоступно в этом окне');return}let nf=0;
-      for(const k of cols){const ps=parts.filter(p=>p.col==k),name=base+(cols.length>1?'_'+lat(k||'bez_tsveta'):'');const hd={title:(h.hClient||'Заказ')+' '+(h.hDate||today()),mat:th+'/'+(k||'')};
-        await dl.save({filename:name+'_lazer.dxf',data:new Blob([cp1251(dxfWrite(ps,{...hd,forma:false}))],{type:'application/dxf'})});await new Promise(r=>setTimeout(r,700));
-        await dl.save({filename:name+'_tsex.dxf',data:new Blob([cp1251(dxfWrite(ps,{...hd,forma:true}))],{type:'application/dxf'})});await new Promise(r=>setTimeout(r,700));nf+=2}
+      {const name=base,hd={title:(h.hClient||'Заказ')+' '+(h.hDate||today()),mat:th+'/'+cols.filter(Boolean).join(', '),th};
+        await dl.save({filename:name+'_lazer.dxf',data:new Blob([cp1251(dxfWrite(parts,{...hd,forma:false}))],{type:'application/dxf'})});await new Promise(r=>setTimeout(r,700));
+        await dl.save({filename:name+'_tsex.dxf',data:new Blob([cp1251(dxfWrite(parts,{...hd,forma:true}))],{type:'application/dxf'})});nf=2}
       toast('Готово файлов: '+nf);$('mSk').classList.remove('show')}
     catch(e){if(!(e&&e.code=='declined'))toast('Ошибка: '+(e&&e.message||e))}},'⬇ Скачать DXF')}
 $('bDxf').onclick=ordDxfOpen;
@@ -2480,6 +2504,35 @@ function renderRate(){const box=$('rateBox');if(!box||!IS_OWNER)return;const R=r
     '<div class="rkg"><div><small>Продажи</small><b>'+money(r.rev)+'</b></div><div><small>Заказов</small><b>'+r.n+'</b></div><div><small>Средний чек</small><b>'+money(Math.round(r.avg))+'</b></div><div><small>Собрано</small><b>'+pc(r.col)+'</b></div><div><small>Долг клиентов</small><b style="color:'+(r.debt?'#dc2626':'inherit')+'">'+money(r.debt)+'</b></div><div><small>Дисциплина</small><b>'+(r.dis==null?'—':pc(r.dis))+'</b>'+(r.dis!=null?'<small>'+r.wd+' дн'+(r.late?' · опозд. '+r.late:'')+(r.ab?' · прогул '+r.ab:'')+'</small>':'')+'</div></div></div>'}).join(''):'<div class="empty">Продавцов пока нет. Назначьте роль «Продавец» в «Пользователи и роли».</div>')+
   '<details style="margin-top:10px;font-size:13px;color:var(--mut)"><summary style="cursor:pointer">Как считается коэффициент</summary><div style="margin-top:6px;line-height:1.6">Коэффициент KPI = сумма баллов (от 0 до 1):<br>• <b>продажи</b> — 40% (сравнение с лучшим продавцом)<br>• <b>собрано денег</b> из суммы заказов — 25%<br>• <b>количество заказов</b> — 15%<br>• <b>средний чек</b> — 10%<br>• <b>дисциплина</b> по табелю (явка, опоздания) — 10%<br>0.90 и выше — отлично · 0.75 — хорошо · 0.60 — норма · ниже — слабо.<br>Коэффициент удобно умножать на премию: премия × KPI.</div></details>'}
 document.addEventListener('click',e=>{const b=e.target.closest('[data-rper]');if(!b)return;RATE_PER=b.dataset.rper;renderRate()});
+
+// ---------- мастера (усто): список, рейтинг, премия ----------
+// «Усто Шахзод» в имени клиента или в примечании = заказ привёл мастер Шахзод
+let MST={def:1,m:{},pays:[]},MST_PER='m0';
+function mstOf(o){const t=String((o.client||'')+' '+((o.cli||{}).note||'')+' '+(o.note||''));const m=t.match(/(?:^|[^А-Яа-яЁёA-Za-z])(?:усто|usto|уста)\s+([А-ЯЁЎҚҒҲA-Z][А-Яа-яЁёЎўҚқҒғҲҳA-Za-z'’ʻ-]+)/i);if(!m)return '';const n=m[1].replace(/[’ʻ]/g,"'");return n.charAt(0).toUpperCase()+n.slice(1).toLowerCase()}
+function mstPct(n){const x=MST.m[n]&&MST.m[n].pct;return x!=null&&x!==''?num(x):num(MST.def)||1}
+async function mstSave(){try{await DB.doc('own/masters').set(MST)}catch(_){toast('Не сохранилось')}}
+function mstSync(){if(!IS_OWNER||!MST_OK)return;let ch=false;saved.forEach(o=>{const n=mstOf(o);if(n&&!MST.m[n]){MST.m[n]={pct:'',since:Date.now()};ch=true}});if(ch)mstSave()}
+let MST_OK=false;
+function mstData(per){const names=new Set(Object.keys(MST.m));saved.forEach(o=>{const n=mstOf(o);if(n)names.add(n)});
+  return [...names].map(n=>{const all=saved.filter(o=>mstOf(o)==n),os=all.filter(o=>inPeriod(o,per)),pct=mstPct(n);
+    const rev=os.reduce((a,o)=>a+(o.total||0),0),paid=os.reduce((a,o)=>a+Math.min(o.total||0,oPaid(o)),0);
+    const earnAll=all.reduce((a,o)=>a+Math.min(o.total||0,oPaid(o)),0)*pct/100,given=(MST.pays||[]).filter(p=>p.name==n).reduce((a,p)=>a+num(p.sum),0);
+    return {n,pct,cnt:os.length,rev,paid,bonus:Math.round(paid*pct/100),due:Math.max(0,Math.round(earnAll-given)),given,phone:(MST.m[n]||{}).phone||''}}).sort((a,b)=>b.rev-a.rev||b.cnt-a.cnt)}
+function renderMst(){const box=$('mstBox');if(!box||!IS_OWNER)return;if(typing(box))return;const R=mstData(MST_PER);
+  box.innerHTML='<div style="display:flex;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:8px"><div style="font-weight:800;font-size:17px">🧰 Мастера (усто)</div><div class="rw2" style="margin-left:auto">'+[['m0','Этот месяц'],['m1','Прошлый'],['y','Год']].map(p=>'<button class="chip'+(p[0]==MST_PER?' on':'')+'" data-mper="'+p[0]+'">'+p[1]+'</button>').join('')+'</div></div>'+
+  '<div class="rw2" style="font-size:14px;margin-bottom:10px">Премия по умолчанию <input id="mstDef" inputmode="decimal" value="'+esc(String(MST.def))+'" style="width:64px;text-align:center"> % от оплаченной суммы заказа</div>'+
+  (R.length?R.map((r,i)=>'<div class="rk" data-mst="'+esc(r.n)+'"><div class="rkh"><span class="rkn">'+(r.cnt?(['🥇','🥈','🥉'][i]||(i+1)+'.'):'·')+'</span><b>Усто '+esc(r.n)+'</b><span style="margin-left:auto;font-size:13px;color:var(--mut)">премия</span><input data-mpct inputmode="decimal" value="'+esc(String(r.pct))+'" style="width:58px;text-align:center;font-weight:800"> %</div>'+
+    '<div class="rkg" style="margin-top:8px"><div><small>Заказов</small><b>'+r.cnt+'</b></div><div><small>Сумма заказов</small><b>'+money(r.rev)+'</b></div><div><small>Оплачено</small><b>'+money(r.paid)+'</b></div><div><small>Премия за период</small><b style="color:#16a34a">'+money(r.bonus)+'</b></div><div><small>К выдаче (всего)</small><b style="color:'+(r.due?'#dc2626':'inherit')+'">'+money(r.due)+'</b>'+(r.given?'<small>выдано '+money(r.given)+'</small>':'')+'</div></div>'+
+    '<div class="rw2" style="margin-top:8px"><input data-mph inputmode="tel" placeholder="Телефон мастера" value="'+esc(r.phone)+'" style="flex:1;min-width:0">'+(r.due?'<button class="chip on" data-mgive>💵 Выдать премию</button>':'')+'</div></div>').join(''):'<div class="empty">Пока нет мастеров. Напишите в имени клиента <b>«Усто Имя»</b>, например «Усто Шахзод», и мастер появится здесь сам.</div>')+
+  '<div style="font-size:12px;color:var(--mut);margin-top:6px">Мастер определяется по слову <b>«усто»</b> в имени клиента или в примечании заказа. Премия считается только с <b>оплаченных</b> денег. Процент можно менять для каждого мастера.</div>'}
+document.addEventListener('click',e=>{const b=e.target.closest('[data-mper]');if(b){MST_PER=b.dataset.mper;renderMst();return}
+  const g=e.target.closest('[data-mgive]');if(g){const n=g.closest('[data-mst]').dataset.mst,r=mstData(MST_PER).find(x=>x.n==n);if(!r)return;
+    skOpen('💵 Премия: усто '+n,'<label>Сумма, сум<input id="fMg" inputmode="numeric" value="'+r.due+'"></label><div class="skcalc">К выдаче: <b>'+money(r.due)+'</b></div>',async()=>{const v=num(skVal('fMg').replace(/\s/g,''));if(!v){toast('Введите сумму');return}
+      (MST.pays=MST.pays||[]).push({name:n,sum:v,ts:Date.now()});await mstSave();$('mSk').classList.remove('show');toast('Премия выдана: '+money(v));renderMst()},'💵 Выдать')}});
+document.addEventListener('change',e=>{const t=e.target;if(t.id=='mstDef'){MST.def=num(t.value)||1;mstSave();renderMst();return}
+  const c=t.closest('[data-mst]');if(!c)return;const n=c.dataset.mst;MST.m[n]=MST.m[n]||{};
+  if(t.hasAttribute('data-mpct')){MST.m[n].pct=t.value.trim()==''?'':String(Math.max(0,num(t.value)));mstSave();renderMst()}
+  if(t.hasAttribute('data-mph')){MST.m[n].phone=t.value.trim();mstSave()}});
 // ---------- пользователи (видит только руководитель) ----------
 let USR_OPEN=false;
 function renderUsers(){const box=$('usrBox');if(!box||!IS_OWNER)return;if(typing(box))return;
