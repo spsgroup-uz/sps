@@ -1353,7 +1353,7 @@ function cutPlan(l){ if(!(l.unit=='m'&&isGroup(l))) return null; const len=num(l
   if(d<=1){ if(len<=MAXSHEET) return null; const t=meters(l),n=Math.ceil(t/MAXSHEET-1e-9);return {n,each:Math.ceil(t/n*100-1e-6)/100,pieces:true} }
   // листы режем на длину детали; длиннее 4 м — делим деталь на части
   const k=Math.ceil(len/MAXSHEET-1e-9),each=Math.ceil(len/k*100-1e-6)/100,pcs=q*k; return {n:Math.ceil(pcs/d-1e-9),each,div:d,pcs} }
-function cutText(l){const c=cutPlan(l);return c?(c.pieces?'✂ Детали: '+c.n+' шт по '+fmt(c.each)+' м':'✂ Резать: '+c.n+' лист. по '+fmt(c.each)+' м ('+c.div+' '+polos(c.div)+' из листа)'):''}
+function cutText(l){const c=cutPlan(l);return c?'✂ '+c.n+' × '+fmt(c.each)+' м':''}
 function lineTotal(l){
   if(l.unit=='face') return faceText(l);
   if(l.unit=='m'){const t=meters(l);if(!t)return '';
@@ -1418,9 +1418,9 @@ function polos(n){n=Math.abs(n)%100;const k=n%10;return n>10&&n<20?'полос':
 // сколько листов резать на доборные элементы (лист шириной 1.25 м, длина = длине детали)
 function cutListHtml(){const L=order.map(l=>[l,cutPlan(l)]).filter(x=>x[1]&&!x[1].pieces);if(!L.length)return '';
   const by={};L.forEach(([l,c])=>{by[c.each]=(by[c.each]||0)+c.n});const tot=L.reduce((a,x)=>a+x[1].n,0),tm=L.reduce((a,x)=>a+x[1].n*x[1].each,0);
-  return '<h4 style="margin-top:12px">✂ Резать листов (ширина 1.25 м)</h4><table>'+L.map(([l,c])=>'<tr><td>'+esc(l.name)+' <span style="color:#64748b;font-size:13px">('+fmt(num(l.len))+' м × '+fmt(num(l.qty))+' шт, '+c.div+' '+polos(c.div)+' из листа)</span></td><td><b>'+c.n+' лист. по '+fmt(c.each)+' м</b></td></tr>').join('')+
-  '<tr class="grp"><td colspan="2">Итого по длине листа</td></tr>'+Object.keys(by).sort((a,b)=>b-a).map(k=>'<tr><td>Лист 1.25 × '+fmt(+k)+' м</td><td><b>'+by[k]+' шт</b></td></tr>').join('')+
-  '<tr class="big"><td>Всего листов</td><td>'+tot+' шт · '+fmt(Math.round(tm*100)/100)+' м</td></tr></table>'}
+  return '<h4 style="margin-top:12px">✂ 1.25 м</h4><table>'+L.map(([l,c])=>'<tr><td>'+esc(l.name)+' <span style="color:#64748b;font-size:13px">'+fmt(num(l.len))+' × '+fmt(num(l.qty))+' ÷ '+c.div+'</span></td><td><b>'+c.n+' × '+fmt(c.each)+' м</b></td></tr>').join('')+
+  '<tr class="grp"><td colspan="2">Σ</td></tr>'+Object.keys(by).sort((a,b)=>b-a).map(k=>'<tr><td>1.25 × '+fmt(+k)+' м</td><td><b>'+by[k]+'</b></td></tr>').join('')+
+  '<tr class="big"><td>Σ</td><td>'+tot+' · '+fmt(Math.round(tm*100)/100)+' м</td></tr></table>'}
 function renderSum(){const h=sumHtml();$('sumBox').innerHTML=h;$('sumBox').hidden=!h}
 function razText(l){const r=razv(l);return 'Развёртка: <b>'+(r?fmt(r)+' см':'—')+'</b> · сгибов: '+Math.max(0,(l.seg||[]).length-1)}
 $('ordList').addEventListener('input',e=>{
@@ -1503,7 +1503,8 @@ $('bClear').onclick=()=>{if(!order.length)return;ask('Очистить зака�
 function buildSheet(){
   const h=readHead();
   let rows=order.map((l,i)=>{
-    const size=l.unit=='face'?'<span style="font-weight:normal;font-size:13px">'+esc(faceText(l))+'</span>':l.unit=='m'?(fmt(num(l.len))+' м × '+fmt(num(l.qty))+' шт'+(isTile(l)?'<div class="rz" style="font-weight:normal">с расходом: '+fmt(realLen(l))+' м<br>('+tileSteps(l)+' шаг. × '+fmt(num(l.extra))+' см)</div>':'')):(fmt(num(l.qty))+(l.unit=='kg'?' кг':' шт'))+(cutPlan(l)?'<div class="rz" style="font-weight:bold;font-size:14px">'+(cutPlan(l).pieces?'':'÷ '+fmt(divOf(l))+'б = '+fmt(lmat(l))+' м<br>')+esc(cutText(l).replace('✂ ',''))+'</div>':'');
+    let size=(l.unit=='face'?'<span style="font-weight:normal;font-size:13px">'+esc(faceText(l))+'</span>':l.unit=='m'?(fmt(num(l.len))+' м × '+fmt(num(l.qty))+' шт'+(isTile(l)?'<div class="rz" style="font-weight:normal">с расходом: '+fmt(realLen(l))+' м<br>('+tileSteps(l)+' шаг. × '+fmt(num(l.extra))+' см)</div>':'')):(fmt(num(l.qty))+(l.unit=='kg'?' кг':' шт')))+(cutPlan(l)?'<div class="rz" style="font-weight:bold;font-size:14px">'+esc(cutText(l).replace('✂ ',''))+'</div>':'');
+    {const c=cutPlan(l);if(c&&!c.pieces&&!isTile(l))size='<div style="font-size:22px;font-weight:800">'+c.n+' × '+fmt(c.each)+' м</div><div style="font-size:16px;font-weight:700;margin-top:2px">÷ '+c.div+'</div>'}
     const tot=l.unit=='face'?(faceCalc(l)?fmt(Math.round(faceCalc(l).metal*100)/100)+' м² мет.':''):l.unit=='m'?fmt(meters(l))+' м':'';
     return '<tr><td class="c">'+(i+1)+'</td><td>'+(nSeg(l)?'<div class="pp">'+profSvg(l.icon,l.seg,true)+'</div>':isPlain(l)?'':svg(l.icon))+'</td><td class="nm">'+esc(l.name)+(segText(l)?'<div class="rz">Развёртка: '+fmt(razv(l))+' см<br>'+esc(segText(l).split(' = ')[0])+'</div>':'')+'</td><td class="big">'+size+'</td><td class="c big">'+(l.note?'('+esc(l.note)+')':'')+'</td><td class="c">'+tot+'</td></tr>';
   }).join('');
