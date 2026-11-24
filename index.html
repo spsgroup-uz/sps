@@ -861,9 +861,9 @@ window.__fbReady=new Promise(r=>{window.__fbResolve=r});
 window.claude={use:(n)=>window.__fbReady.then(api=>api[n]||null)};
 </script>
 <script type="module">
-import {initializeApp} from "https://www.gstatic.com/firebasejs/12.19.0/firebase-app.js";
-import {getAuth,onAuthStateChanged,signInWithEmailAndPassword,createUserWithEmailAndPassword,signOut,setPersistence,browserLocalPersistence} from "https://www.gstatic.com/firebasejs/12.19.0/firebase-auth.js";
-import {initializeFirestore,persistentLocalCache,persistentMultipleTabManager,collection,doc,getDoc,getDocs,setDoc,updateDoc,deleteDoc,onSnapshot,query,orderBy,limit,where} from "https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore.js";
+import {initializeApp} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import {getAuth,onAuthStateChanged,signInWithEmailAndPassword,createUserWithEmailAndPassword,signOut,setPersistence,browserLocalPersistence} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import {initializeFirestore,persistentLocalCache,persistentMultipleTabManager,collection,doc,getDoc,getDocs,setDoc,updateDoc,deleteDoc,onSnapshot,query,orderBy,limit,where} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 const firebaseConfig={
   apiKey: "AIzaSyCtYo65YflQk4fQaChJ_AZ3-2_EGJnTK7M",
   authDomain: "sps-group-8ce00.firebaseapp.com",
@@ -881,9 +881,10 @@ const AI_MODELS=['gemini-2.5-flash','gemini-flash-latest','gemini-2.0-flash'];
 const b64of=b=>new Promise((ok,no)=>{const r=new FileReader();r.onload=()=>ok(String(r.result).split(',')[1]);r.onerror=no;r.readAsDataURL(b)});
 // App Check (reCAPTCHA v3) — без него Firebase не пускает к ИИ. Ключ сайта (site key) — публичный, его можно хранить здесь
 const RECAPTCHA_SITE_KEY='6LdqqzAuAAAAADI0AyATQ17nPTAXs7FLjDOfbtaS';const RECAPTCHA_ENT=true;let APPCHK=null;
-async function appCheckOn(){if(APPCHK||!RECAPTCHA_SITE_KEY)return;const M=await import('https://www.gstatic.com/firebasejs/12.19.0/firebase-app-check.js');APPCHK=M.initializeAppCheck(app,{provider:RECAPTCHA_ENT?new M.ReCaptchaEnterpriseProvider(RECAPTCHA_SITE_KEY):new M.ReCaptchaV3Provider(RECAPTCHA_SITE_KEY),isTokenAutoRefreshEnabled:true})}
+let AIAPP=null;async function aiApp(){if(AIAPP)return AIAPP;const A=await import('https://www.gstatic.com/firebasejs/12.19.0/firebase-app.js');AIAPP=A.initializeApp(firebaseConfig,'ai');return AIAPP}
+async function appCheckOn(){if(APPCHK||!RECAPTCHA_SITE_KEY)return;const ap=await aiApp();const M=await import('https://www.gstatic.com/firebasejs/12.19.0/firebase-app-check.js');APPCHK=M.initializeAppCheck(ap,{provider:RECAPTCHA_ENT?new M.ReCaptchaEnterpriseProvider(RECAPTCHA_SITE_KEY):new M.ReCaptchaV3Provider(RECAPTCHA_SITE_KEY),isTokenAutoRefreshEnabled:true})}
 const aiSample={async json(prompt,opt){await appCheckOn();if(!RECAPTCHA_SITE_KEY)throw new Error('app-check: нет ключа reCAPTCHA');const {getAI,getGenerativeModel,GoogleAIBackend}=await import('https://www.gstatic.com/firebasejs/12.19.0/firebase-ai.js');
-  const ai=getAI(app,{backend:new GoogleAIBackend()});const parts=[{text:String(prompt)}];
+  const ai=getAI(await aiApp(),{backend:new GoogleAIBackend()});const parts=[{text:String(prompt)}];
   for(const b of (opt&&opt.images)||[])parts.push({inlineData:{data:await b64of(b),mimeType:b.type||'image/jpeg'}});
   let last=null;for(const m of (window.__AI_MODEL?[window.__AI_MODEL]:AI_MODELS)){try{const model=getGenerativeModel(ai,{model:m,generationConfig:{responseMimeType:'application/json',temperature:0.1}});
       const r=await model.generateContent({contents:[{role:'user',parts}]});let t=r.response.text().trim().replace(/^```(?:json)?\s*/,'').replace(/```\s*$/,'');window.__AI_MODEL=m;return JSON.parse(t)}
@@ -892,6 +893,8 @@ const aiSample={async json(prompt,opt){await appCheckOn();if(!RECAPTCHA_SITE_KEY
   async text(prompt,opt){const r=await this.json(prompt+'\nОтветь JSON: {"text":"..."}',opt);return r&&r.text||''}};
 window.__aiSample=aiSample;
 const auth=getAuth(app);
+// одноразовая очистка локального кэша после неудачного обновления версии Firebase (данные в облаке не трогаются)
+try{if(!localStorage.getItem('sps_fsfix1')){await new Promise(ok=>{let d=false;const fin=()=>{if(!d){d=true;ok()}};try{const r=indexedDB.deleteDatabase('firestore/[DEFAULT]/'+firebaseConfig.projectId+'/main');r.onsuccess=r.onerror=r.onblocked=fin}catch(_){fin()}setTimeout(fin,2000)});localStorage.setItem('sps_fsfix1','1')}}catch(_){}
 let fs;try{fs=initializeFirestore(app,{localCache:persistentLocalCache({tabManager:persistentMultipleTabManager()})})}catch(e){fs=initializeFirestore(app,{})}
 await setPersistence(auth,browserLocalPersistence).catch(()=>{});
 
