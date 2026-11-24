@@ -86,7 +86,7 @@ main{padding:12px 12px 110px 6px;max-width:none;margin:0}
 .lgf label{font-size:12px;color:var(--mut);display:flex;flex-direction:column;gap:3px}
 .lgf select{font-size:15px;padding:8px;border:1px solid var(--line);border-radius:8px;background:#fff}
 .lgh{font-size:14px;text-transform:uppercase;color:var(--mut);margin:16px 2px 6px}
-.lo{cursor:pointer;display:flex;gap:8px;align-items:center}
+.lo{cursor:pointer;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
 .lo .b{flex:1;min-width:0;font-size:14px}
 .lo .b b{font-size:15px}
 .lo .b div{color:var(--mut);font-size:13px;margin-top:2px}
@@ -491,6 +491,46 @@ input:focus,select:focus,textarea:focus{outline:none;box-shadow:0 0 0 3px rgba(9
 @media(max-width:480px){.bar button{font-size:12.5px}.bar #bClear,.bar #bCopy{flex:0 0 48px}.bar .bt{display:none}}
 .dws{display:flex;align-items:center;gap:6px;flex-wrap:wrap;border-bottom:1px solid var(--line);padding:6px 0}.dws>b{width:18px;color:var(--mut)}
 .dwd{display:flex;gap:3px;flex-wrap:wrap}.dwd button{width:34px;height:34px;border:1px solid var(--line);background:#fff;border-radius:9px;font-size:17px;padding:0}.dwd button.on{background:linear-gradient(135deg,#4f46e5,#7c3aed);color:#fff;border-color:transparent}
+
+.shv .money{text-align:right;white-space:nowrap}
+.shv .ptot td{font-size:19px;font-weight:bold;background:#eee}
+.shv .rep{font-size:15px}
+.shv .rep td{border:1px solid #000;padding:6px 8px}
+.shv .rep .grp td{background:#eee}
+.shv .pbrand img{height:70px;width:auto}
+.shv .pbrand{display:flex;align-items:center;justify-content:center;gap:16px;font-size:30px;font-weight:800;letter-spacing:.03em;border-bottom:3px solid #000;padding-bottom:6px;margin-bottom:10px}
+.shv h2{margin:0 0 4px;font-size:24px}
+.shv .meta{display:grid;grid-template-columns:1fr 1fr;gap:4px 20px;font-size:15px;margin:10px 0 14px}
+.shv table{width:100%;border-collapse:collapse;font-size:15px}
+.shv th,.shv td{border:1px solid #000;padding:6px 6px;vertical-align:middle}
+.shv th{background:#eee}
+.shv td svg{width:62px;height:40px;color:#000;display:block}
+.shv .pp svg{width:140px;height:100px}
+.shv .rz{font-size:13px;margin-top:4px}
+.shv td img.ph{width:90px;height:56px;object-fit:cover;display:block}
+.shv .nm{width:120px;font-size:13px}
+.shv .rz{font-size:11px}
+.shv .c{text-align:center}
+.shv .big{font-size:17px;font-weight:bold;white-space:nowrap}
+.shv .psum{margin-top:16px;width:60%}
+.shv .plist{width:100%}
+.shv .plist table{font-size:17px!important;width:100%}
+.shv .plist td{padding:8px 10px!important}
+.shv .psum h4{margin:0 0 6px;font-size:17px}
+.shv .psum table{font-size:14px}
+.shv .psum td{border:1px solid #000;padding:4px 6px}
+.shv .psum td:last-child{text-align:right;font-weight:bold}
+.shv .psum .grp td{background:#eee;font-weight:bold;text-align:left}
+.shv .sign{margin-top:28px;display:flex;justify-content:space-between;font-size:14px}
+.shv{background:#fff;color:#000;padding:36px 40px;font-family:Arial,sans-serif;width:794px;box-sizing:border-box;transform-origin:0 0}
+.shvw{overflow:hidden;border:1px solid var(--line);border-radius:10px;margin:8px 0 4px;background:#fff}.shvw+.shvw{margin-top:10px}.lo .shvbox{flex-basis:100%;width:100%}
+#shvFull{position:fixed;inset:0;z-index:9999;background:#0f172a;display:flex;flex-direction:column}
+#shvFull .shf-bar{display:flex;align-items:center;gap:8px;padding:10px 12px;color:#fff;background:#1e1b4b}
+#shvFull .shf-bar b{flex:1;font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#shvFull .shf-bar button{min-width:44px;height:40px;border-radius:10px;border:0;background:#fff;color:#1e1b4b;font-size:20px;font-weight:800}
+#shvFull .shf-in{flex:1;overflow:auto;padding:8px;-webkit-overflow-scrolling:touch}
+#shvFull .shvw{margin:0 0 10px;border:0;border-radius:6px}
+.shvbox{cursor:zoom-in}
 </style>
 </head>
 <body class="worker">
@@ -1488,7 +1528,7 @@ $('colBox').onclick=e=>{const b=e.target.closest('[data-col]');if(b)setHC(curTh(
 $('hapBox').onclick=e=>{const b=e.target.closest('[data-hcol]');if(b)setHC(curTh(),RAL.find(c=>c[0]==b.dataset.hcol),true)};
 setTimeout(()=>{renderPick();$('hColor').addEventListener('input',renderPick)},0);
 const HF=['hClient','hPhone','hColor','hDate','hNote'];
-function readHead(){const o={};HF.forEach(k=>o[k]=$(k).value);return o}
+function readHead(){if(window.__RH)return window.__RH;const o={};HF.forEach(k=>o[k]=$(k).value);return o}
 function today(){const d=new Date();return String(d.getDate()).padStart(2,'0')+'.'+String(d.getMonth()+1).padStart(2,'0')+'.'+d.getFullYear()}
 if(head) HF.forEach(k=>{if(head[k]!=null)$(k).value=head[k]});
 if(!$('hDate').value) $('hDate').value=today();
@@ -1544,6 +1584,28 @@ function buildSheet(){
     (DRAW?'<div style="margin-top:14px"><b>Чертёж:</b><br><img src="'+DRAW+'" style="max-width:100%;max-height:420px;border:1px solid #000;margin-top:4px"></div>':'')+
     '<div class="sign"><span>Принял: ____________</span><span>Заказчик: ____________</span></div>';
 }
+// лист сохранённого заказа — тот же, что печатается (ЗАКАЗ + СПИСОК МАТЕРИАЛА)
+let SHV_OPEN=null;
+function savedSheets(o){const bk={order,DRAW,ROOM,sh:$('sheet').innerHTML};let out=[];
+  try{order=JSON.parse(JSON.stringify(o.lines||[]));DRAW=o.drawing||'';if(o.room)ROOM=JSON.parse(JSON.stringify(o.room));
+    window.__RH=({hClient:o.client||'',hPhone:o.phone||'',hColor:o.color||'',hDate:o.date||'',hNote:o.note||''});
+    buildSheet();out.push($('sheet').innerHTML);if(sumRows().length){buildList();out.push($('sheet').innerHTML)}}
+  catch(e){out=['<div style="padding:10px">Не удалось показать лист</div>']}
+  finally{order=bk.order;DRAW=bk.DRAW;ROOM=bk.ROOM;window.__RH=null;$('sheet').innerHTML=bk.sh}
+  return out.map(h=>'<div class="shvw"><div class="shv">'+h+'</div></div>').join('')}
+function shvFit(box){box.querySelectorAll('.shvw').forEach(w=>{const v=w.firstChild,k=Math.min(1,w.clientWidth/794);v.style.transform='scale('+k+')';w.style.height=Math.ceil(v.offsetHeight*k)+'px'})}
+window.addEventListener('resize',()=>{document.querySelectorAll('.shvbox').forEach(shvFit);const f=$('shvFull');if(f)shvZoom(0)});
+// полноэкранный просмотр листа: ✕ закрыть, − / + масштаб, листать пальцем
+let SHV_K=1;
+function shvFull(o){let f=$('shvFull');if(!f){f=document.createElement('div');f.id='shvFull';document.body.appendChild(f)}
+  f.innerHTML='<div class="shf-bar"><b>'+esc((o.date||'')+' · '+(o.client||''))+'</b><button data-shz="-1">−</button><button data-shz="1">+</button><button data-shx>✕</button></div><div class="shf-in">'+savedSheets(o).replace(/class="shvw"/g,'class="shvw shf"')+'</div>';
+  document.body.style.overflow='hidden';SHV_K=1;shvZoom(0)}
+function shvZoom(d){const f=$('shvFull');if(!f)return;const W=f.querySelector('.shf-in').clientWidth-16;SHV_K=Math.max(1,Math.min(4,SHV_K*(d>0?1.4:d<0?1/1.4:1)));
+  f.querySelectorAll('.shvw').forEach(w=>{const v=w.firstChild,k=W/794*SHV_K;v.style.transform='scale('+k+')';w.style.width=Math.ceil(794*k)+'px';w.style.height=Math.ceil(v.offsetHeight*k)+'px'})}
+document.addEventListener('click',e=>{const f=e.target.closest('#shvFull');if(!f)return;
+  if(e.target.closest('[data-shx]')){f.remove();document.body.style.overflow='';return}
+  const z=e.target.closest('[data-shz]');if(z)shvZoom(+z.dataset.shz)});
+document.addEventListener('keydown',e=>{if(e.key=='Escape'&&$('shvFull')){$('shvFull').remove();document.body.style.overflow=''}});
 function buildList(){
   const h=readHead();
   $('sheet').innerHTML='<div class="pbrand"><img src="'+LOGO_B+'" alt=""><span>SPS Group</span></div><h2>СПИСОК МАТЕРИАЛА</h2><div class="meta"><div>Дата: <b>'+esc(h.hDate)+'</b></div><div>Толщина / цвет: <b>'+esc(h.hColor)+'</b></div>'+
@@ -1969,13 +2031,16 @@ function renderLog(){
   }); h+='</table>'; }
   $('logSum').innerHTML=h;
   $('logCnt').textContent=list.length?'('+list.length+')':'';
+  setTimeout(()=>document.querySelectorAll('#logList .shvbox').forEach(shvFit),0);
   $('logList').innerHTML=list.map(o=>'<div class="card lo" data-o="'+o.id+'"><div class="b"><b>'+esc(o.date||'')+' · '+esc(o.client||'без имени')+'</b>'+(IS_OWNER&&o._by?'<span class="who">👤 '+esc(((TW.list||[]).find(x=>x.uid==o._by)||{}).name||uName(o._by))+'</span>':'')+(o.id==curId?' <span class="cur">● открыт</span>':'')+
     '<div>'+esc(o.color||'')+(o.phone?' · '+esc(o.phone):'')+'</div><div>Строк: '+(o.lines||[]).length+(o.total?' · <b style="color:var(--ink)">'+money(o.total)+' сум</b>':'')+(o.sum&&o.sum.area?' · металл '+fmt(o.sum.area)+' м²':'')+'</div>'+(o.total?(oDebt(o)>0?'<div class="dbt">долг '+money(oDebt(o))+' сум</div>':'<div class="pd">оплачено ✓</div>'):'')+'</div>'+
-    (o.total&&oDebt(o)>0?'<button class="pay" data-pay="'+o.id+'">+ Оплата</button>':'')+'<button data-open>Открыть</button><button class="x" data-del>✕</button></div>').join('')||(DB?'':'');
+    (o.total&&oDebt(o)>0?'<button class="pay" data-pay="'+o.id+'">+ Оплата</button>':'')+'<button data-shv>'+(SHV_OPEN==o.id?'▲ Лист':'📄 Лист')+'</button>'+(SHV_OPEN==o.id?'<button data-shf>⛶ Весь экран</button>':'')+'<button data-open>Открыть</button><button class="x" data-del>✕</button>'+(SHV_OPEN==o.id?'<div class="shvbox">'+savedSheets(o)+'</div>':'')+'</div>').join('')||(DB?'':'');
 }
 $('fPer').onchange=renderLog; $('fCol').onchange=renderLog; $('fUsr').onchange=renderLog;
 $('logList').addEventListener('click',e=>{
   const c=e.target.closest('[data-o]'); if(!c)return; const o=saved.find(x=>x.id==c.dataset.o); if(!o)return;
+  if(e.target.closest('.shvbox')||e.target.closest('[data-shf]')){shvFull(o);return}
+  if(e.target.closest('[data-shv]')){SHV_OPEN=SHV_OPEN==o.id?null:o.id;renderLog();if(SHV_OPEN){const n=document.querySelector('#logList [data-o="'+o.id+'"]');if(n)n.scrollIntoView({behavior:'smooth',block:'start'})}return}
   if(e.target.closest('[data-open]')||!e.target.closest('button')){
     const go=()=>{order=JSON.parse(JSON.stringify(o.lines||[]));
       DRAW=o.drawing||'';store.set('rz_draw',DRAW); if(o.room){ROOM=JSON.parse(JSON.stringify(o.room));roomSave()}
