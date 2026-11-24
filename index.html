@@ -931,6 +931,15 @@ const aiSample={async json(prompt,opt){await appCheckOn();if(!RECAPTCHA_SITE_KEY
       const r=await model.generateContent({contents:[{role:'user',parts}]});let t=r.response.text().trim().replace(/^```(?:json)?\s*/,'').replace(/```\s*$/,'');window.__AI_MODEL=m;return JSON.parse(t)}
     catch(e){last=e;const s=String(e&&e.message||e);if(/not found|404|is not supported|unknown model|\[50[03]|\[429|high demand|overloaded|unavailable|RESOURCE_EXHAUSTED/i.test(s))continue;throw e}}}
   throw last},
+  // живой голос Джарвиса: Gemini TTS → PCM 24 кГц → проигрывание
+  async speak(text,voice){await appCheckOn();const {getAI,getGenerativeModel,GoogleAIBackend}=await import('https://www.gstatic.com/firebasejs/12.19.0/firebase-ai.js');
+    const ai=getAI(await aiApp(),{backend:new GoogleAIBackend()});let last=null;
+    for(const m of ['gemini-3.1-flash-tts-preview','gemini-2.5-flash-preview-tts']){try{
+      const model=getGenerativeModel(ai,{model:m,generationConfig:{responseModalities:['AUDIO'],speechConfig:{voiceConfig:{prebuiltVoiceConfig:{voiceName:voice||'Charon'}}}}});
+      const r=await model.generateContent('Скажи спокойно, уверенно и дружелюбно, как вежливый личный помощник, в обычном темпе: '+text);
+      const parts=(r.response.candidates&&r.response.candidates[0]&&r.response.candidates[0].content.parts)||[];const p=parts.find(x=>x.inlineData);if(!p)throw new Error('нет аудио');
+      return {data:p.inlineData.data,mime:p.inlineData.mimeType||'audio/pcm;rate=24000'}}catch(e){last=e;continue}}
+    throw last},
   async text(prompt,opt){const r=await this.json(prompt+'\nОтветь JSON: {"text":"..."}',opt);return r&&r.text||''}};
 window.__aiSample=aiSample;
 const auth=getAuth(app);
@@ -3372,7 +3381,17 @@ function aicAddOrder(i){const m=AIC_H[i];if(!m||!m.order)return;const A=allItems
   if(m.order.client&&!$('hClient').value)$('hClient').value=m.order.client;if(m.order.phone&&!$('hPhone').value)$('hPhone').value=m.order.phone;
   m.done=true;save();renderCat();renderOrd();badge();aicRender();toast('🤖 В заказ добавлено строк: '+n)}
 let AIC_REC=null,AIC_VOICE=store.get('rz_aivoice',true),AIC_BYVOICE=false;
-function aicSay(t){try{if(!AIC_VOICE||!window.speechSynthesis||!t)return;speechSynthesis.cancel();const clean=String(t).replace(/[✦✅⏳✔🚚📥🔆✂️🔧💵💳🏦•*_#>`]/g,' ').replace(/\s+/g,' ').trim();
+let AIC_AC=null,AIC_SRC=null,AIC_SEQ=0;
+function aicAudio(){try{if(!AIC_AC)AIC_AC=new (window.AudioContext||window.webkitAudioContext)();if(AIC_AC.state=='suspended')AIC_AC.resume()}catch(_){}return AIC_AC}
+function aicStop(){AIC_SEQ++;try{if(AIC_SRC)AIC_SRC.stop()}catch(_){}AIC_SRC=null;try{speechSynthesis.cancel()}catch(_){}}
+// живой голос Gemini; если не вышло — голос телефона
+async function aicSay(t){if(!AIC_VOICE||!t)return;aicStop();const my=AIC_SEQ;const clean=String(t).replace(/[✦✅⏳✔🚚📥🔆✂️🔧💵💳🏦•*_#>`]/g,' ').replace(/\s+/g,' ').trim().slice(0,900);
+  try{const sm=await aiSm();if(sm&&sm.speak){const r=await sm.speak(clean);if(my!==AIC_SEQ)return;const ac=aicAudio();if(!ac)throw 0;
+      const bin=atob(r.data),n=bin.length>>1,buf=ac.createBuffer(1,n,(r.mime.match(/rate=(\d+)/)||[0,24000])[1]*1),ch=buf.getChannelData(0);
+      for(let i=0;i<n;i++){let v=bin.charCodeAt(2*i)|(bin.charCodeAt(2*i+1)<<8);if(v>32767)v-=65536;ch[i]=v/32768}
+      const src=ac.createBufferSource();src.buffer=buf;src.connect(ac.destination);AIC_SRC=src;src.start();return}}catch(_){if(my!==AIC_SEQ)return}
+  aicSayPhone(clean)}
+function aicSayPhone(t){try{if(!AIC_VOICE||!window.speechSynthesis||!t)return;speechSynthesis.cancel();const clean=String(t).replace(/[✦✅⏳✔🚚📥🔆✂️🔧💵💳🏦•*_#>`]/g,' ').replace(/\s+/g,' ').trim();
   const isUz=/[ўқғҳ]/i.test(clean)||/\b(va|uchun|qilish|bor|yo'q)\b/i.test(clean),isEn=/^[\x00-\x7F\s\d.,!?:;'"()\-–—%$]+$/.test(clean);
   const want=isEn?'en':isUz?'uz':'ru',V=speechSynthesis.getVoices();const v=V.find(x=>x.lang&&x.lang.toLowerCase().startsWith(want))||V.find(x=>x.lang&&x.lang.toLowerCase().startsWith('ru'));
   for(const part of clean.match(/[^.!?]{1,220}[.!?]?/g)||[clean]){const u=new SpeechSynthesisUtterance(part);if(v){u.voice=v;u.lang=v.lang}else u.lang=want=='en'?'en-US':'ru-RU';u.rate=1.05;speechSynthesis.speak(u)}}catch(_){}}
@@ -3383,16 +3402,16 @@ function aicMic(){const SR=window.SpeechRecognition||window.webkitSpeechRecognit
   r.onresult=e=>{let t='';for(const x of e.results)t+=x[0].transcript;q.value=base+t};r.onend=()=>{AIC_REC=null;$('aicMic').classList.remove('rec');if(q.value.trim())aicSend()};r.onerror=()=>{};
   AIC_REC=r;$('aicMic').classList.add('rec');try{r.start()}catch(_){AIC_REC=null;$('aicMic').classList.remove('rec')}}
 document.addEventListener('click',e=>{if(e.target.closest('#aiFab')){aicOpen();return}
-  if(e.target.closest('[data-aicx]')){$('aiChat').classList.remove('show');try{speechSynthesis.cancel()}catch(_){}return}
-  if(e.target.closest('[data-aicclr]')){AIC_H=[];aicRender();try{speechSynthesis.cancel()}catch(_){}return}
-  if(e.target.closest('[data-aicvoice]')){AIC_VOICE=!AIC_VOICE;store.set('rz_aivoice',AIC_VOICE);aicVoiceBtn();if(!AIC_VOICE){try{speechSynthesis.cancel()}catch(_){}}else aicSay('Голос включён');return}
-  if(e.target.closest('#aicGo')){aicSend();return}
-  const qq=e.target.closest('[data-aicq]');if(qq){$('aicQ').value=qq.dataset.aicq;aicSend();return}
-  if(e.target.closest('#aicMic')){aicMic();return}
+  if(e.target.closest('[data-aicx]')){$('aiChat').classList.remove('show');aicStop();return}
+  if(e.target.closest('[data-aicclr]')){AIC_H=[];aicRender();aicStop();return}
+  if(e.target.closest('[data-aicvoice]')){AIC_VOICE=!AIC_VOICE;store.set('rz_aivoice',AIC_VOICE);aicVoiceBtn();aicAudio();if(!AIC_VOICE)aicStop();else aicSay('Голос включён');return}
+  if(e.target.closest('#aicGo')){aicAudio();aicSend();return}
+  const qq=e.target.closest('[data-aicq]');if(qq){aicAudio();$('aicQ').value=qq.dataset.aicq;aicSend();return}
+  if(e.target.closest('#aicMic')){aicAudio();aicMic();return}
   const a=e.target.closest('[data-aicadd]');if(a){aicAddOrder(+a.dataset.aicadd);return}
-  const rp=e.target.closest('.aic-m.a');if(rp&&!e.target.closest('button')){aicSay(rp.innerText.replace(/^✦ Джарвис\s*/,''));return}
+  const rp=e.target.closest('.aic-m.a');if(rp&&!e.target.closest('button')){aicAudio();aicSay(rp.innerText.replace(/^✦ Джарвис\s*/,''));return}
   const o=e.target.closest('[data-aicopen]');if(o){$('aiChat').classList.remove('show');const w=o.dataset.aicopen;({cat:'tCat',ord:'tOrd',cli:'tCli',log:'tLog',sk:'tSk'})[w]?$(({cat:'tCat',ord:'tOrd',cli:'tCli',log:'tLog',sk:'tSk'})[w]).click():tab(w)}});
-document.addEventListener('keydown',e=>{if(e.target&&e.target.id=='aicQ'&&e.key=='Enter'&&!e.shiftKey){e.preventDefault();aicSend()}});
+document.addEventListener('keydown',e=>{if(e.target&&e.target.id=='aicQ'&&e.key=='Enter'&&!e.shiftKey){e.preventDefault();aicAudio();aicSend()}});
 document.addEventListener('change',async e=>{if(e.target.id!='aicFile')return;const f=e.target.files&&e.target.files[0];e.target.value='';if(!f)return;try{AIC_IMG=await shrinkImg(f,1600,0.85);$('aicPrev').innerHTML='<img src="'+AIC_IMG+'"><button data-aicimgx>✕</button>'}catch(_){toast('Не удалось открыть фото')}});
 document.addEventListener('click',e=>{if(e.target.closest('[data-aicimgx]')){AIC_IMG=null;$('aicPrev').innerHTML=''}});
 {const f=document.createElement('button');f.id='aiFab';f.title='Джарвис — ИИ-помощник';f.innerHTML='<svg viewBox="0 0 48 48" width="30" height="30" aria-hidden="true"><defs><linearGradient id="aig" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fff"/><stop offset="1" stop-color="#e0e7ff"/></linearGradient></defs><path d="M22 6c1.2 7.6 4.4 10.8 12 12-7.6 1.2-10.8 4.4-12 12-1.2-7.6-4.4-10.8-12-12 7.6-1.2 10.8-4.4 12-12z" fill="url(#aig)"/><path d="M36 26c.7 4.2 2.6 6.1 6.8 6.8-4.2.7-6.1 2.6-6.8 6.8-.7-4.2-2.6-6.1-6.8-6.8 4.2-.7 6.1-2.6 6.8-6.8z" fill="#fde68a"/><circle cx="12" cy="36" r="2.6" fill="#c4b5fd"/></svg><span class="aifr"></span>';document.body.appendChild(f)}
