@@ -3382,8 +3382,10 @@ async function aicSend(){const q=$('aicQ').value.trim();if((!q&&!AIC_IMG)||AIC_B
    '\nДАННЫЕ ПРОГРАММЫ (JSON):\n'+JSON.stringify(aiCtx())+'\n\nПРЕДЫДУЩИЙ РАЗГОВОР:\n'+(hist||'—')+'\n\nВОПРОС: '+(q||'что на фото?')+
    '\n\nОтветь ТОЛЬКО JSON: {"answer":"текст ответа","order":null,"open":null,"web":false,"search":""} — где order при необходимости = {"client":"","phone":"","lines":[{"id":"...","name":"...","len":2,"qty":5}]}';
   try{const sm=await aiSm();const r=await sm.json(P,img?{images:[dataToBlob(img)],modelTier:'default'}:{modelTier:'default'});
-    const needWeb=(r&&r.web)||/курс|новост|погод|сегодн|цен[аы] на|стоимост|найди|поищи|поиск|интернет|google|гугл|kurs|yangilik|ob-havo|narx|qidir|news|weather|price|search/i.test(q||'')||/запрашиваю|ищу|поищу|уточню в интернете/i.test((r&&r.answer)||'');
-    if(needWeb&&sm.web){try{const w=await sm.web('Ответь коротко и по делу на том же языке, что и вопрос (русский/узбекский/английский). Вопрос: '+(q||'')+(r.search?'\nЧто искать: '+r.search:'')+'\nСегодня: '+today());
+    const prevA=(AIC_H.slice(0,-1).reverse().find(m=>m.r=='a')||{}).t||'',prevQ=(AIC_H.slice(0,-1).reverse().find(m=>m.r=='u')||{}).t||'',yes=/^(да|ага|разрешаю|можно|давай|поищи|ищи|ок|ok|ha|xa|mayli|yes)\b/i.test(q||'')&&/интернет|поиск|internet|qidir|search/i.test(prevA);
+    const wq=yes?prevQ:q;
+    const needWeb=yes||(r&&r.web)||/курс|новост|погод|сегодн|цен[аы] на|стоимост|найди|поищи|поиск|интернет|google|гугл|kurs|yangilik|ob-havo|narx|qidir|news|weather|price|search/i.test(q||'')||/запрашиваю|ищу|поищу|уточню в интернете/i.test((r&&r.answer)||'');
+    if(needWeb&&sm.web){try{const w=await sm.web('Ответь коротко и по делу на том же языке, что и вопрос (русский/узбекский/английский). Не проси разрешения — сразу найди. Вопрос: '+(wq||'')+(r.search?'\nЧто искать: '+r.search:'')+'\nСегодня: '+today());
       AIC_H.push({r:'a',t:w.text||'…',web:w});aicSay(w.text||'');AIC_BUSY=false;aicRender();return}catch(we){const t=String(we&&we.message||we);AIC_H.push({r:'a',t:'🌐 Поиск в интернете не сработал: '+(/billing|paid|free tier|not available|PERMISSION|403/i.test(t)?'Google не даёт поиск на бесплатном тарифе.':aiWhy(we))+'\n['+t.slice(0,200)+']'});AIC_BUSY=false;aicRender();return}}
     aicSay((r&&r.answer)||'');AIC_H.push({r:'a',t:(r&&r.answer)||'…',order:r&&r.order&&r.order.lines&&r.order.lines.length?r.order:null,open:r&&r.open||null})}
   catch(e){AIC_H.push({r:'a',t:'Не получилось ответить.'+aiWhy(e)})}
