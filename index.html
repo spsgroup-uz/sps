@@ -520,6 +520,7 @@ input:focus,select:focus,textarea:focus{outline:none;box-shadow:0 0 0 3px rgba(9
   <button class="dl" data-dtab="cli">👤 Клиент</button>
   <button class="dl" data-dtab="log">📒 Журнал и долги</button>
   <button class="dl" data-dtab="dxf">📐 Расчёт по DXF</button>
+  <button class="dl" data-dtab="ugol">📐 Угол карниза → DXF</button>
   <div class="dsec own-only">Деньги и склад</div>
   <button class="dl own-only" data-dtab="sk">📦 Склад и отчёт</button>
   <button class="dl own-only" data-dtab="pl">📈 Прибыль и расходы</button>
@@ -655,6 +656,7 @@ input:focus,select:focus,textarea:focus{outline:none;box-shadow:0 0 0 3px rgba(9
         <label>Цвет<select id="fCol"><option value="">Все цвета</option></select></label>
         <label class="own-only">Кто<select id="fUsr"><option value="*">Все</option></select></label>
       </div>
+      <div class="rw2 own-only" id="logWho" style="margin-top:8px;flex-wrap:wrap;gap:6px"></div>
     </div>
     <div class="card debts" id="logDebt"></div>
     <div class="card sum own-only" id="logSum"></div>
@@ -1498,7 +1500,7 @@ function drawerSync(){document.querySelectorAll('[data-dtab]').forEach(b=>b.clas
 function drawer(o){$('drawer').classList.toggle('open',o);$('drawerBg').classList.toggle('show',o)}
 $('menuBtn').onclick=()=>{if(innerWidth>=900){const h=!document.body.classList.contains('navhide');document.body.classList.toggle('navhide',h);store.set('rz_navhide',h?1:0)}else drawer(true)};
 if(store.get('rz_navhide',0))document.body.classList.add('navhide'); $('drawerBg').onclick=()=>drawer(false);
-$('drawer').addEventListener('click',e=>{const b=e.target.closest('[data-dtab]');if(b&&b.dataset.dtab=='dxf'){drawer(false);dxfOpen();return}if(b&&b.dataset.dtab=='bak'){drawer(false);bakOpen();return}if(b&&b.dataset.dtab=='rate'){drawer(false);TB_SEG='rate';tab('tab');renderTab();return}if(b&&b.dataset.dtab=='mst'){drawer(false);TB_SEG='mst';tab('tab');renderTab();return}if(b&&b.dataset.dtab=='usr'){drawer(false);USR_OPEN=true;renderSk();tab('sk');renderUsers();setTimeout(()=>{const u=$('usrBox');if(u){u.scrollIntoView({behavior:'smooth',block:'start'});u.style.outline='3px solid #2563eb';setTimeout(()=>u.style.outline='',2500)}},120);return}
+$('drawer').addEventListener('click',e=>{const b=e.target.closest('[data-dtab]');if(b&&b.dataset.dtab=='dxf'){drawer(false);dxfOpen();return}if(b&&b.dataset.dtab=='ugol'){drawer(false);ugOpen();return}if(b&&b.dataset.dtab=='bak'){drawer(false);bakOpen();return}if(b&&b.dataset.dtab=='rate'){drawer(false);TB_SEG='rate';tab('tab');renderTab();return}if(b&&b.dataset.dtab=='mst'){drawer(false);TB_SEG='mst';tab('tab');renderTab();return}if(b&&b.dataset.dtab=='usr'){drawer(false);USR_OPEN=true;renderSk();tab('sk');renderUsers();setTimeout(()=>{const u=$('usrBox');if(u){u.scrollIntoView({behavior:'smooth',block:'start'});u.style.outline='3px solid #2563eb';setTimeout(()=>u.style.outline='',2500)}},120);return}
   if(b&&['tab','me','cl','pl','home'].includes(b.dataset.dtab)){tab(b.dataset.dtab);drawer(false);return}if(b){({cat:'tCat',ord:'tOrd',cli:'tCli',log:'tLog',sk:'tSk'})[b.dataset.dtab]&&$(({cat:'tCat',ord:'tOrd',cli:'tCli',log:'tLog',sk:'tSk'})[b.dataset.dtab]).click();drawer(false)} if(e.target.closest('[data-dmode]'))drawer(false)});
 function tab(w){if(typeof IS_OWNER!='undefined'&&!IS_OWNER){const ok=document.body.classList.contains('sales')?['me','cat','ord','cli','log']:['me'];if(!ok.includes(w))w='me'}curTab=w;$('vTab').hidden=w!='tab';if(w=='tab')renderTab();$('vMe').hidden=w!='me';if(w=='me')renderMe();$('vCl').hidden=w!='cl';if(w=='cl')renderCl();$('vPl').hidden=w!='pl';if(w=='pl')renderPl();$('vHome').hidden=w!='home';if(w=='home')renderHome();setTimeout(drawerSync,0);$('vSk').hidden=w!='sk';$('tSk').classList.toggle('on',w=='sk');$('vCat').hidden=w!='cat';$('vOrd').hidden=w!='ord';$('vLog').hidden=w!='log';$('vCli').hidden=w!='cli';$('tCat').classList.toggle('on',w=='cat');$('tOrd').classList.toggle('on',w=='ord');$('tLog').classList.toggle('on',w=='log');$('tCli').classList.toggle('on',w=='cli');document.querySelector('.bar').hidden=['log','sk','tab','me','cl','pl','home'].includes(w);window.scrollTo(0,0)}
 $('tLog').onclick=()=>{renderLog();tab('log')};
@@ -1935,12 +1937,19 @@ function payForm(o){const lm=store.get('rz_lastpm','cash');skOpen('Оплата:
   async()=>{const v=num(String(skVal('fPay')).replace(/\s/g,''));if(!v){toast('Впишите сумму');return}
     try{await DB.doc(o._col+'/'+o.id).update({pays:(o.pays||[]).concat([{sum:v,m:$('fPm').dataset.v||'',date:today(),ts:Date.now(),note:skVal('fPn'),by:(IS_OWNER&&!window.__BUH)?'':(UID||'')}])});store.set('rz_lastpm',$('fPm').dataset.v||'cash');$('mSk').classList.remove('show');toast('Оплата записана')}catch(e){toast('Не сохранилось')}})}
 document.addEventListener('click',e=>{const b=e.target.closest('[data-pay]');if(!b)return;e.stopPropagation();const o=saved.find(x=>x.id==b.dataset.pay);if(o)payForm(o)},true);
+document.addEventListener('click',e=>{const b=e.target.closest('[data-lwho]');if(!b)return;const v=b.dataset.lwho,sel=$('fUsr');if(![...sel.options].some(o=>o.value==v)){const o=document.createElement('option');o.value=v;sel.appendChild(o)}sel.value=v;renderLog()});
 function renderLog(){
   if($('logDebt'))$('logDebt').innerHTML=debtHtml();
   if($('vLog').hidden&&arguments.length==0&&false)return;
   const fu=$('fUsr').value||'*';
-  if(IS_OWNER){const us=['',...Object.keys(STAFF)];$('fUsr').innerHTML='<option value="*">Все</option>'+us.map(u=>'<option value="'+u+'"'+(u==fu?' selected':'')+'>'+esc(uName(u))+'</option>').join('')}
-  const mine=saved.filter(o=>(o.mode||'roof')==MODE&&(fu=='*'||(o._by||'')==fu));
+  if(IS_OWNER){const us=['',...Object.keys(STAFF)];$('fUsr').innerHTML='<option value="*">Все</option>'+us.map(u=>'<option value="'+u+'"'+(u==fu?' selected':'')+'>'+esc(u?(((TW.list||[]).find(x=>x.uid==u)||{}).name||uName(u)):'Вы (руководитель)')+'</option>').join('')}
+  // заказы по продавцам: владелец и его вход продавца — одна строка
+  const mw=typeof meWorker=='function'?meWorker():null,myU=new Set(['',UID,mw&&mw.uid].filter(x=>x!=null)),who=o=>myU.has(o._by||'')?'':o._by;
+  const mine=saved.filter(o=>(o.mode||'roof')==MODE&&(fu=='*'||who(o)==fu));
+  if(IS_OWNER&&$('logWho')){const per=$('fPer').value,base=saved.filter(o=>(o.mode||'roof')==MODE&&inPeriod(o,per));const G={};base.forEach(o=>{const k=who(o);(G[k]=G[k]||{n:0,t:0}).n++;G[k].t+=o.total||0});
+    Object.keys(ROLES).filter(u=>ROLES[u]=='sales'&&!myU.has(u)).forEach(u=>{G[u]=G[u]||{n:0,t:0}});G['']=G['']||{n:0,t:0};
+    const nm=k=>k?((TW.list.find(x=>x.uid==k)||{}).name||uName(k)):(mw?mw.name:'Рахим')+' (вы)';
+    $('logWho').innerHTML='<button class="chip'+(fu=='*'?' on':'')+'" data-lwho="*">Все · '+base.length+'</button>'+Object.keys(G).sort((a,b)=>G[b].t-G[a].t).map(k=>'<button class="chip'+(fu==k?' on':'')+'" data-lwho="'+k+'">👤 '+esc(nm(k))+' · '+G[k].n+(G[k].t?' · '+money(G[k].t):'')+'</button>').join('')}
   const cols=[...new Set(mine.map(o=>colKey(o.color)))].sort();
   const fc=$('fCol').value; $('fCol').innerHTML='<option value="">Все цвета</option>'+cols.map(c=>'<option'+(c==fc?' selected':'')+'>'+esc(c)+'</option>').join('');
   const list=mine.filter(o=>inPeriod(o,$('fPer').value)&&(!fc||colKey(o.color)==fc));
@@ -1960,7 +1969,7 @@ function renderLog(){
   }); h+='</table>'; }
   $('logSum').innerHTML=h;
   $('logCnt').textContent=list.length?'('+list.length+')':'';
-  $('logList').innerHTML=list.map(o=>'<div class="card lo" data-o="'+o.id+'"><div class="b"><b>'+esc(o.date||'')+' · '+esc(o.client||'без имени')+'</b>'+(IS_OWNER&&o._by?'<span class="who">👤 '+esc(uName(o._by))+'</span>':'')+(o.id==curId?' <span class="cur">● открыт</span>':'')+
+  $('logList').innerHTML=list.map(o=>'<div class="card lo" data-o="'+o.id+'"><div class="b"><b>'+esc(o.date||'')+' · '+esc(o.client||'без имени')+'</b>'+(IS_OWNER&&o._by?'<span class="who">👤 '+esc(((TW.list||[]).find(x=>x.uid==o._by)||{}).name||uName(o._by))+'</span>':'')+(o.id==curId?' <span class="cur">● открыт</span>':'')+
     '<div>'+esc(o.color||'')+(o.phone?' · '+esc(o.phone):'')+'</div><div>Строк: '+(o.lines||[]).length+(o.total?' · <b style="color:var(--ink)">'+money(o.total)+' сум</b>':'')+(o.sum&&o.sum.area?' · металл '+fmt(o.sum.area)+' м²':'')+'</div>'+(o.total?(oDebt(o)>0?'<div class="dbt">долг '+money(oDebt(o))+' сум</div>':'<div class="pd">оплачено ✓</div>'):'')+'</div>'+
     (o.total&&oDebt(o)>0?'<button class="pay" data-pay="'+o.id+'">+ Оплата</button>':'')+'<button data-open>Открыть</button><button class="x" data-del>✕</button></div>').join('')||(DB?'':'');
 }
@@ -2612,6 +2621,136 @@ async function drwSave(){DRW.name=$('dwName').value.trim();DRW.cat=+$('dwCat').v
 async function ownPush(){if(!IS_OWNER||!DB)return;try{await DB.doc('sk_cfg/own').set({list:own.filter(o=>o.pts),ts:Date.now()})}catch(_){}}
 function ownSync(){if(!DB)return;DB.doc('sk_cfg/own').onSnapshot(sn=>{const L=sn.exists?((sn.data()||{}).list||[]):[];let ch=false;L.forEach(o=>{const i=own.findIndex(x=>x.id==o.id);if(i<0){own.push(o);ch=true}else if(JSON.stringify(own[i])!=JSON.stringify(o)){own[i]=o;ch=true}});if(ch){regOwn();save();renderCat()}},()=>{})}
 regOwn();
+// ===================== УГОЛ КАРНИЗА: развёртка двух половинок с косым резом по профилю =====================
+// Профиль: отрезки (мм) с направлением (градусы, 0 = вправо, 90 = вниз) и прогибом дуги (мм, + / −).
+// Рез: в точке профиля, отстоящей от стены на x, половинка длиннее (наружный угол) или короче (внутренний) на x·ctg(угол/2).
+const UG_DEMO=[{v:30,a:270,h:0},{v:20,a:0,h:0},{v:15,a:90,h:0},{v:60,a:45,h:-12},{v:15,a:90,h:0},{v:20,a:0,h:0},{v:80,a:45,h:15},{v:15,a:90,h:0},{v:20,a:0,h:0},{v:25,a:90,h:0}];
+let UG=store.get('rz_ugol',null)||{name:'Карниз (пример — впишите свои размеры)',segs:UG_DEMO.map(x=>({...x})),ang:90,typ:'out',L:300,n:1,teeth:0,tl:10,tw:5,tg:5,wall:'L',saved:[]};
+if(!UG.saved)UG.saved=[];if(UG.lock==null||!UG.v2){UG.lock=0;UG.teeth=1;UG.tl='8';UG.tw='5';UG.tg='5';UG.v2=1}['lw:12','ld:12','lt:10','ls:1.2','lp:80'].forEach(q=>{const[k,v]=q.split(':');if(UG[k]==null)UG[k]=v});
+function ugSave(){store.set('rz_ugol',UG)}
+// точки профиля (мм) + плотная выборка по развёртке: [{x,y,s}], и места загибов (s)
+function ugGeo(segs){let x=0,y=0,s=0;const V=[{x,y,b:0}],S=[{x,y,s:0}],bends=[],arcs=[];
+  segs.forEach((g,i)=>{const c=num(g.v);if(!(c>0))return;const r=num(g.a)*Math.PI/180,dx=Math.cos(r)*c,dy=Math.sin(r)*c,h=num(g.h)||0;
+    const b=Math.abs(h)>0.01?2*h/c:0;V[V.length-1].b=b;
+    const x0=x,y0=y,x1=x+dx,y1=y+dy;let len=c;
+    if(b){const th=4*Math.atan(Math.abs(b)),R=c/(2*Math.sin(th/2));len=R*th;
+      // центр дуги
+      const mx=(x0+x1)/2,my=(y0+y1)/2,nx=-dy/c,ny=dx/c,d=R-Math.abs(h),sg=h>0?-1:1,cx=mx+nx*d*sg,cy=my+ny*d*sg;
+      const a0=Math.atan2(y0-cy,x0-cx);let a1=Math.atan2(y1-cy,x1-cx);let da=a1-a0;
+      // направление обхода: + прогиб = дуга слева по ходу (bulge>0 = против часовой в DXF; у нас y вниз — проверяем по середине)
+      const tryM=dd=>{const am=a0+dd/2;const px=cx+R*Math.cos(am),py=cy+R*Math.sin(am);return Math.hypot(px-(mx+nx*h),py-(my+ny*h))};
+      const alt=da>0?da-2*Math.PI:da+2*Math.PI;if(tryM(alt)<tryM(da))da=alt;
+      const n=Math.max(4,Math.ceil(len/1));for(let k=1;k<=n;k++){const am=a0+da*k/n;S.push({x:cx+R*Math.cos(am),y:cy+R*Math.sin(am),s:s+len*k/n})}
+      arcs.push([s,s+len])}
+    else{const n=Math.max(1,Math.ceil(c/2));for(let k=1;k<=n;k++)S.push({x:x0+dx*k/n,y:y0+dy*k/n,s:s+c*k/n})}
+    x=x1;y=y1;s+=len;V.push({x,y,b:0});if(i<segs.length-1)bends.push(s)});
+  return {V,S,bends:bends.filter(b=>b>0.5&&b<s-0.5),arcs,W:s}}
+// контур половинки A (рез справа) в координатах: X — вдоль карниза, Y — развёртка
+function ugBlank(G){const k=1/Math.tan(num(UG.ang||90)*Math.PI/360),L=num(UG.L)||300,xs=G.S.map(p=>p.x),
+  xw=UG.wall=='R'?Math.max(...xs):Math.min(...xs),dist=p=>Math.abs(p.x-xw),sg=UG.typ=='in'?-1:1;
+  const cut=G.S.map(p=>[L+sg*k*dist(p),p.s]);const xAt=s=>{for(let i=1;i<cut.length;i++)if(cut[i][1]>=s-1e-9){const a=cut[i-1],b=cut[i],t=(s-a[1])/((b[1]-a[1])||1);return a[0]+(b[0]-a[0])*t}return cut[cut.length-1][0]};
+  // зубчики — только на прямых отрезках, не ближе 6 мм к загибу
+  const tl=num(UG.tl)||10,tw=num(UG.tw)||5,tg=num(UG.tg)||5,teeth=[];
+  // зубчики на ОБЕИХ половинках, через один: у A — чётные, у B — нечётные места; на дугах — треугольные (пила)
+  if(UG.teeth){const stops=[0,...G.bends,G.W],inArc=s=>G.arcs.some(([a,b])=>s>a-0.1&&s<b+0.1),sh=UG._side=='B'?tw:0;
+    for(let i=0;i<stops.length-1;i++){const a=stops[i]+3,b=stops[i+1]-3;if(b-a<tw)continue;const arc=inArc((stops[i]+stops[i+1])/2);
+      const ps=tw+tg,k=Math.floor((b-a+tg)/ps),off=a+((b-a)-(k*ps-tg))/2;
+      for(let j=0;j<k;j++){const s0=off+j*ps;teeth.push([s0,s0+tw,0])}}}
+  // замок «язычок + прорезь»: на прямых отрезках, по 1 на каждые lp мм; язычок A заходит за линию реза, прорезь B — на том же месте
+  const locks=[];if(UG.lock){const lw=num(UG.lw)||12,lp=num(UG.lp)||80,stops=[0,...G.bends,G.W],inArc=s=>G.arcs.some(([a,b])=>s>a-0.1&&s<b+0.1);
+    for(let i=0;i<stops.length-1;i++){const a=stops[i]+4,b=stops[i+1]-4;if(b-a<lw||inArc((stops[i]+stops[i+1])/2))continue;
+      const n=Math.max(1,Math.floor((b-a)/lp)),st=(b-a)/n;for(let j=0;j<n;j++){const c=a+st*(j+0.5);locks.push([c-lw/2,c+lw/2])}}}
+  const ld=num(UG.ld)||12,lt=num(UG.lt)||10,ls=num(UG.ls)||1.2;
+  // язычок — перпендикулярно линии реза; после загиба по углу он ложится на B на том же расстоянии от края → прорезь = отражение внутрь
+  const nrm=(s0,s1)=>{const x0=xAt(s0),x1=xAt(s1),dx=x1-x0,dy=s1-s0,L=Math.hypot(dx,dy)||1;let nx=dy/L,ny=-dx/L;if(nx<0){nx=-nx;ny=-ny}return {x0,x1,nx,ny,tx:dx/L,ty:dy/L}};
+  const slots=locks.map(([s0,s1])=>{const N=nrm(s0,s1),e=0.5,p=(x,y,k,t)=>[x+N.nx*k+N.tx*t,y+N.ny*k+N.ty*t];
+    return [p(N.x0,s0,-ld+ls/2,-e),p(N.x1,s1,-ld+ls/2,e),p(N.x1,s1,-ld-ls/2,e),p(N.x0,s0,-ld-ls/2,-e)]});
+  // обход: низ (Y=0) слева направо, рез снизу вверх (с зубчиками и прорезями), верх справа налево, торец сверху вниз (прорези)
+  const P=[[0,0]],sl=7;
+  const evs=[...G.bends.map(b=>({s:b,t:'b'})),...teeth.map(t=>({s:t[0],t:'t',e:t[1],arc:t[2]})),...(UG.noLockTabs?[]:locks).map(t=>({s:t[0],t:'l',e:t[1]}))].sort((p,q)=>p.s-q.s);
+  let ci=0;const pushCut=uptoS=>{while(ci<cut.length&&cut[ci][1]<uptoS-1e-6){P.push(cut[ci]);ci++}};
+  evs.forEach(ev=>{if(ev.t=='b'){pushCut(ev.s);const x=xAt(ev.s);P.push([x,ev.s],[x-sl*sg,ev.s],[x,ev.s])}
+    else if(ev.t=='l'){pushCut(ev.s);const N=nrm(ev.s,ev.e),T=ld+lt,c=1.5,p=(x,y,k,t)=>[x+N.nx*k+N.tx*t,y+N.ny*k+N.ty*t];P.push([N.x0,ev.s],p(N.x0,ev.s,ld,0),p(N.x0,ev.s,T,c),p(N.x1,ev.e,T,-c),p(N.x1,ev.e,ld,0),[N.x1,ev.e]);while(ci<cut.length&&cut[ci][1]<=ev.e+1e-6)ci++}
+    else{pushCut(ev.s);const N=nrm(ev.s,ev.e),p=(x,y,k,t)=>[x+N.nx*k+N.tx*t,y+N.ny*k+N.ty*t];if(ev.arc){const sm=(ev.s+ev.e)/2;P.push([N.x0,ev.s],p(xAt(sm),sm,tl,0),[N.x1,ev.e])}else P.push([N.x0,ev.s],p(N.x0,ev.s,tl,0),p(N.x1,ev.e,tl,0),[N.x1,ev.e]);while(ci<cut.length&&cut[ci][1]<=ev.e+1e-6)ci++}});
+  pushCut(G.W+1);P.push(cut[cut.length-1]);
+  P.push([0,G.W]);G.bends.slice().reverse().forEach(b=>P.push([0,b],[sl,b],[0,b]));
+  // убрать повторы
+  const Q=[];P.forEach(p=>{const q=Q[Q.length-1];if(!q||Math.hypot(q[0]-p[0],q[1]-p[1])>0.05)Q.push(p)});
+  const mx=Math.max(...Q.map(p=>p[0]));return {P:Q,maxX:mx,minCut:Math.min(...cut.map(c=>c[0])),k,slots,locks}}
+function ugMirror(P,mx){return P.map(([x,y])=>[mx-x,y]).reverse()}
+function ugSvg(){const G=ugGeo(UG.segs);if(!G.W)return '<div class="skcalc">Впишите профиль</div>';
+  // профиль
+  const xs=G.S.map(p=>p.x),ys=G.S.map(p=>p.y),bw=Math.max(...xs)-Math.min(...xs)||1,bh=Math.max(...ys)-Math.min(...ys)||1,sc=Math.min(130/bw,150/bh);
+  const px=p=>(10+(p.x-Math.min(...xs))*sc).toFixed(1),py=p=>(20+(p.y-Math.min(...ys))*sc).toFixed(1);
+  let e='<polyline points="'+G.S.map(p=>px(p)+','+py(p)).join(' ')+'" fill="none" stroke="#1e1b4b" stroke-width="3" stroke-linejoin="round"/>';
+  e+='<circle cx="'+px(G.S[0])+'" cy="'+py(G.S[0])+'" r="4" fill="#16a34a"/>';
+  const wx=UG.wall=='R'?10+bw*sc:10;e+='<line x1="'+wx+'" y1="8" x2="'+wx+'" y2="'+(32+bh*sc)+'" stroke="#94a3b8" stroke-width="2" stroke-dasharray="4 3"/><text x="'+wx+'" y="6" font-size="10" text-anchor="middle" fill="#64748b">стена</text>';
+  // половинка A
+  const B=ugBlank(G),s2=Math.min(220/B.maxX,190/G.W),ox=160;
+  e+='<polygon points="'+B.P.map(p=>(ox+p[0]*s2).toFixed(1)+','+(10+p[1]*s2).toFixed(1)).join(' ')+'" fill="#e0e7ff" stroke="#1e1b4b" stroke-width="1.2"/>';
+  if(UG.lock)B.slots.forEach(S=>{e+='<polygon points="'+S.map(p=>(ox+p[0]*s2).toFixed(1)+','+(10+p[1]*s2).toFixed(1)).join(' ')+'" fill="none" stroke="#dc2626" stroke-width="1" stroke-dasharray="2 2"/>'});
+  e+='<text x="'+(ox+4)+'" y="'+(10+G.W*s2+14)+'" font-size="11" fill="#334155">A · '+fmt(Math.round(B.maxX))+' × '+fmt(Math.round(G.W))+' мм</text>';
+  return '<svg viewBox="0 0 400 '+Math.max(200,Math.round(30+G.W*s2))+'" style="width:100%;background:#f8fafc;border:1px solid var(--line);border-radius:12px">'+e+'</svg>'+
+    '<div class="skcalc">Развёртка: <b>'+fmt(Math.round(G.W*10)/10)+' мм</b> · половинка: <b>'+fmt(Math.round(B.maxX))+' мм</b> по длинному краю · 2 половинки (A и зеркальная B) × '+(num(UG.n)||1)+' шт</div>'}
+const UG_DIR=[['→',0],['↘',45],['↓',90],['↙',135],['←',180],['↖',225],['↑',270],['↗',315]];
+function ugHtml(){const f=(k,ph,w)=>'<input data-ugf="'+k+'" inputmode="decimal" value="'+esc(String(UG[k]??''))+'" placeholder="'+(ph||'')+'" style="width:'+(w||70)+'px;text-align:center">';
+  const ch=(k,v,t)=>'<button class="chip'+(String(UG[k])==String(v)?' on':'')+'" data-ugc="'+k+'" data-v="'+v+'">'+t+'</button>';
+  const fromCat=allItems().filter(i=>i.unit=='m'&&PTS[i.icon]&&DEFSEG[i.icon]);
+  return '<label>Название<input data-ugf="name" value="'+esc(UG.name||'')+'"></label>'+
+   '<div class="rw2" style="gap:6px;flex-wrap:wrap;margin:6px 0">'+ch('typ','out','⌐ Наружный')+ch('typ','in','⌙ Внутренний')+ch('wall','L','Стена слева')+ch('wall','R','Стена справа')+'</div>'+
+   '<div class="two"><label>Угол стен, °'+f('ang','90')+'</label><label>Длина по стене, мм'+f('L','300')+'</label></div>'+
+   '<div class="two"><label>Углов, шт'+f('n','1')+'</label><label>Соединение '+ch('lock',1,'🔒 Замок')+ch('lock',0,'нет')+'</label></div>'+
+   (UG.lock?'<div style="font-size:12px;color:var(--mut)">Язычок A: ширина '+f('lw','12',44)+' до загиба '+f('ld','12',44)+' кончик '+f('lt','10',44)+' мм · прорезь B '+f('ls','1.2',44)+' мм · шаг '+f('lp','80',44)+' мм<br>A: язычок загибается по линии реза внутрь, ложится за B, кончик входит в прорезь B и загибается — без саморезов.</div>':'')+
+   '<div class="rw2" style="gap:6px;margin-top:4px">Зубчики '+ch('teeth',1,'есть')+ch('teeth',0,'нет')+'</div>'+
+   (UG.teeth?'<div style="font-size:12px;color:var(--mut)">Зубчик: длина '+f('tl','10',46)+' ширина '+f('tw','5',46)+' шаг '+f('tg','5',46)+' мм (одинаковые, на обеих половинках, по всему резу)</div>':'')+
+   '<div id="ugPrev" style="margin-top:8px">'+ugSvg()+'</div>'+
+   '<div style="font-weight:700;margin:8px 0 4px">Профиль (мм). Прогиб — для дуги: + наружу, − внутрь, 0 — прямой</div>'+
+   '<div id="ugSegs">'+UG.segs.map((g,i)=>'<div class="dws" data-ugs="'+i+'" style="flex-wrap:wrap"><b>'+(i+1)+'</b><input data-ugv="v" inputmode="decimal" value="'+esc(String(g.v))+'" style="width:56px;text-align:center"><span>мм</span>'+
+     '<div class="dwd">'+UG_DIR.map(d=>'<button data-uga="'+d[1]+'" class="'+(num(g.a)==d[1]?'on':'')+'">'+d[0]+'</button>').join('')+'</div>'+
+     '<input data-ugv="a" inputmode="decimal" value="'+esc(String(g.a))+'" style="width:44px;text-align:center" title="угол">°'+
+     '<span style="margin-left:6px">◠</span><input data-ugv="h" inputmode="decimal" value="'+esc(String(g.h||0))+'" style="width:48px;text-align:center" title="прогиб дуги, мм"><button class="chip" data-ugx>✕</button></div>').join('')+'</div>'+
+   '<div class="rw2" style="margin-top:6px;gap:6px;flex-wrap:wrap"><button class="chip on" data-ugadd>+ Отрезок</button>'+
+   (fromCat.length?'<select id="ugCat" style="max-width:200px"><option value="">Взять профиль из каталога…</option>'+fromCat.map(i=>'<option value="'+i.id+'">'+esc(i.name)+'</option>').join('')+'</select>':'')+
+   '<button class="chip" data-ugkeep>💾 Запомнить профиль</button></div>'+
+   (UG.saved.length?'<div class="rw2" style="margin-top:6px;gap:6px;flex-wrap:wrap">'+UG.saved.map((p,i)=>'<button class="chip" data-ugload="'+i+'">📁 '+esc(p.name)+'</button><button class="chip" data-ugdel="'+i+'">✕</button>').join('')+'</div>':'')}
+function ugOpen(){skOpen('📐 Угол карниза → DXF','<div id="ugBox">'+ugHtml()+'</div>',ugDxf,'⬇️ Скачать DXF')}
+function ugRe(){const b=$('ugBox');if(b)b.innerHTML=ugHtml()}
+let UG_T=null;
+document.addEventListener('input',e=>{const t=e.target;if(!t.closest('#ugBox'))return;
+  if(t.dataset.ugf){UG[t.dataset.ugf]=t.dataset.ugf=='name'?t.value:t.value.replace(',','.')}
+  const r=t.closest('[data-ugs]');if(r&&t.dataset.ugv){UG.segs[+r.dataset.ugs][t.dataset.ugv]=t.value.replace(',','.')}
+  ugSave();clearTimeout(UG_T);UG_T=setTimeout(()=>{const p=$('ugPrev');if(p)p.innerHTML=ugSvg()},150)});
+document.addEventListener('change',e=>{if(e.target.id!='ugCat'||!e.target.value)return;const it=allItems().find(i=>i.id==e.target.value);if(!it)return;
+  const P=PTS[it.icon],D=DEFSEG[it.icon];UG.name=it.name;UG.segs=[];for(let i=0;i<P.length-1;i++){const dx=P[i+1][0]-P[i][0],dy=P[i+1][1]-P[i][1];UG.segs.push({v:Math.round(num(D[i])*100)/10,a:Math.round(((Math.atan2(dy,dx)*180/Math.PI)+360)%360),h:0})}
+  ugSave();ugRe();toast('Профиль взят из каталога — проверьте размеры и дуги')});
+document.addEventListener('click',e=>{const t=e.target;if(!t.closest('#ugBox'))return;const r=t.closest('[data-ugs]');
+  const c=t.closest('[data-ugc]');if(c){UG[c.dataset.ugc]=isNaN(+c.dataset.v)?c.dataset.v:+c.dataset.v;ugSave();ugRe();return}
+  const a=t.closest('[data-uga]');if(a&&r){UG.segs[+r.dataset.ugs].a=+a.dataset.uga;ugSave();ugRe();return}
+  if(t.closest('[data-ugx]')&&r){if(UG.segs.length>1)UG.segs.splice(+r.dataset.ugs,1);ugSave();ugRe();return}
+  if(t.closest('[data-ugadd]')){const l=UG.segs[UG.segs.length-1];UG.segs.push({v:'',a:l?(num(l.a)+90)%360:0,h:0});ugSave();ugRe();const q=$('ugBox').querySelectorAll('[data-ugv="v"]');const n=q[q.length-1];if(n)n.focus();return}
+  if(t.closest('[data-ugkeep]')){const nm=(UG.name||'Профиль').trim();const i=UG.saved.findIndex(p=>p.name==nm);const p={name:nm,segs:UG.segs.map(x=>({...x}))};if(i>=0)UG.saved[i]=p;else UG.saved.push(p);ugSave();ugRe();toast('Профиль сохранён');return}
+  const ld=t.closest('[data-ugload]');if(ld){const p=UG.saved[+ld.dataset.ugload];UG.name=p.name;UG.segs=p.segs.map(x=>({...x}));ugSave();ugRe();return}
+  const dd=t.closest('[data-ugdel]');if(dd){UG.saved.splice(+dd.dataset.ugdel,1);ugSave();ugRe();return}});
+function ugDxfText(){const G=ugGeo(UG.segs);if(!G.W)return null;const B=ugBlank(G),t0=UG.teeth;UG._side='B';UG.noLockTabs=1;const B0=ugBlank(G);UG._side='';UG.noLockTabs=0;const Bm=ugMirror(B0.P,B0.maxX),n=num(UG.n)||1;
+  const o=[];const a=(...x)=>o.push(...x.map(String));
+  const tx=(x,y,h,s,ly)=>a(0,'TEXT',8,ly||'TEXT',10,x.toFixed(2),20,y.toFixed(2),30,0,40,h,1,lat(String(s)));
+  const pl=(pts,x,y,ly,cl=1)=>{a(0,'POLYLINE',8,ly||'CUT',66,1,10,0,20,0,30,0,70,cl);pts.forEach(p=>{a(0,'VERTEX',8,ly||'CUT',10,(x+p[0]).toFixed(3),20,(y+p[1]).toFixed(3),30,0);if(p[2])a(42,p[2].toFixed(6))});a(0,'SEQEND',8,ly||'CUT')};
+  a(0,'SECTION',2,'HEADER',9,'$ACADVER',1,'AC1009',9,'$DWGCODEPAGE',3,'ANSI_1251',9,'$INSUNITS',70,4,0,'ENDSEC');
+  a(0,'SECTION',2,'TABLES',0,'TABLE',2,'LAYER',70,3);[['CUT',7],['TEXT',3],['FORMA',4]].forEach(([nm,c])=>a(0,'LAYER',2,nm,70,0,62,c,6,'CONTINUOUS'));a(0,'ENDTAB',0,'ENDSEC');
+  a(0,'SECTION',2,'ENTITIES');
+  const gap=Math.max(80,B.maxX*0.15),xB=B.maxX+gap;
+  pl(B.P,0,0);pl(Bm,xB,0);(B0.slots||[]).forEach(S=>pl(ugMirror(S,B0.maxX),xB,0));
+  tx(0,G.W+40,40,'A - '+n+' sht');tx(xB,G.W+40,40,'B - '+n+' sht');
+  // форма профиля (настоящий размер) над деталями — слой FORMA, лазер не режет
+  const ys=G.S.map(p=>p.y),xs=G.S.map(p=>p.x),fy=G.W+140,fx=0;
+  pl(G.V.map(v=>[v.x-Math.min(...xs),(Math.max(...ys)-v.y),-v.b]),fx,fy,'FORMA',0);
+  const h0=readHead(),th=curTh()||'',c=curCol(),col=c?c[0]:'';
+  tx(0,fy+(Math.max(...ys)-Math.min(...ys))+60,40,(th?th+'*':'')+(col||'')+'  '+(UG.name||'Ugol')+' - '+(UG.typ=='in'?'vnutrenniy':'narujniy')+' '+fmt(num(UG.ang))+' gr - '+fmt(num(UG.L))+' mm  '+(h0.hClient||'')+' '+(h0.hDate||today()));
+  a(0,'ENDSEC',0,'EOF');return o.join('\r\n')+'\r\n'}
+function ugDxf(){const t=ugDxfText();if(!t){toast('Впишите профиль');return}const h0=readHead();
+  const name=lat('Ugol_'+(UG.name||'karniz').slice(0,30)+'_'+(h0.hClient||'')+'_'+(h0.hDate||today())).replace(/[\\/:*?"<>|\s]+/g,'_');
+  (async()=>{try{if(!dl){try{dl=await window.claude.use('downloads')}catch(_){}}if(!dl){toast('Скачивание недоступно');return}
+    await dl.save({filename:name+'.dxf',data:new Blob([cp1251(t)],{type:'application/dxf'})});toast('DXF угла готов')}catch(e){if(!(e&&e.code=='declined'))toast('Ошибка: '+(e&&e.message||e))}})()}
 // ===================== ДИЗАЙН ДИЛА (потолок): рамка из Дил по периметру + поле кессонов =====================
 // Правила взяты из проекта «Golibaka 19.11.2026»: отступ от стены 200, Дила 485, зазоры 100,
 // длинная Дила в ряду ≤ 3000, боковая — пока заготовка ≤ 4 м, поле: две рамки по 100, кессоны с шагом ~930 × 720.
