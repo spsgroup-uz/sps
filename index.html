@@ -861,9 +861,9 @@ window.__fbReady=new Promise(r=>{window.__fbResolve=r});
 window.claude={use:(n)=>window.__fbReady.then(api=>api[n]||null)};
 </script>
 <script type="module">
-import {initializeApp} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import {getAuth,onAuthStateChanged,signInWithEmailAndPassword,createUserWithEmailAndPassword,signOut,setPersistence,browserLocalPersistence} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-import {initializeFirestore,persistentLocalCache,persistentMultipleTabManager,collection,doc,getDoc,getDocs,setDoc,updateDoc,deleteDoc,onSnapshot,query,orderBy,limit,where} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import {initializeApp} from "https://www.gstatic.com/firebasejs/12.19.0/firebase-app.js";
+import {getAuth,onAuthStateChanged,signInWithEmailAndPassword,createUserWithEmailAndPassword,signOut,setPersistence,browserLocalPersistence} from "https://www.gstatic.com/firebasejs/12.19.0/firebase-auth.js";
+import {initializeFirestore,persistentLocalCache,persistentMultipleTabManager,collection,doc,getDoc,getDocs,setDoc,updateDoc,deleteDoc,onSnapshot,query,orderBy,limit,where} from "https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore.js";
 const firebaseConfig={
   apiKey: "AIzaSyCtYo65YflQk4fQaChJ_AZ3-2_EGJnTK7M",
   authDomain: "sps-group-8ce00.firebaseapp.com",
@@ -876,6 +876,21 @@ const firebaseConfig={
 const OWNER_EMAIL='raxim6233@gmail.com';
 const STAFF_DOMAIN='staff.spsgroup.app';
 const app=initializeApp(firebaseConfig);
+// ИИ-помощник (Firebase AI Logic → Gemini): читает бирки, чертежи и фото; ключа в программе нет
+const AI_MODELS=['gemini-2.5-flash','gemini-flash-latest','gemini-2.0-flash'];
+const b64of=b=>new Promise((ok,no)=>{const r=new FileReader();r.onload=()=>ok(String(r.result).split(',')[1]);r.onerror=no;r.readAsDataURL(b)});
+// App Check (reCAPTCHA v3) — без него Firebase не пускает к ИИ. Ключ сайта (site key) — публичный, его можно хранить здесь
+const RECAPTCHA_SITE_KEY='6LdqqzAuAAAAADI0AyATQ17nPTAXs7FLjDOfbtaS';const RECAPTCHA_ENT=true;let APPCHK=null;
+async function appCheckOn(){if(APPCHK||!RECAPTCHA_SITE_KEY)return;const M=await import('https://www.gstatic.com/firebasejs/12.19.0/firebase-app-check.js');APPCHK=M.initializeAppCheck(app,{provider:RECAPTCHA_ENT?new M.ReCaptchaEnterpriseProvider(RECAPTCHA_SITE_KEY):new M.ReCaptchaV3Provider(RECAPTCHA_SITE_KEY),isTokenAutoRefreshEnabled:true})}
+const aiSample={async json(prompt,opt){await appCheckOn();if(!RECAPTCHA_SITE_KEY)throw new Error('app-check: нет ключа reCAPTCHA');const {getAI,getGenerativeModel,GoogleAIBackend}=await import('https://www.gstatic.com/firebasejs/12.19.0/firebase-ai.js');
+  const ai=getAI(app,{backend:new GoogleAIBackend()});const parts=[{text:String(prompt)}];
+  for(const b of (opt&&opt.images)||[])parts.push({inlineData:{data:await b64of(b),mimeType:b.type||'image/jpeg'}});
+  let last=null;for(const m of (window.__AI_MODEL?[window.__AI_MODEL]:AI_MODELS)){try{const model=getGenerativeModel(ai,{model:m,generationConfig:{responseMimeType:'application/json',temperature:0.1}});
+      const r=await model.generateContent({contents:[{role:'user',parts}]});let t=r.response.text().trim().replace(/^```(?:json)?\s*/,'').replace(/```\s*$/,'');window.__AI_MODEL=m;return JSON.parse(t)}
+    catch(e){last=e;const s=String(e&&e.message||e);if(/not found|404|is not supported|unknown model/i.test(s))continue;throw e}}
+  throw last},
+  async text(prompt,opt){const r=await this.json(prompt+'\nОтветь JSON: {"text":"..."}',opt);return r&&r.text||''}};
+window.__aiSample=aiSample;
 const auth=getAuth(app);
 let fs;try{fs=initializeFirestore(app,{localCache:persistentLocalCache({tabManager:persistentMultipleTabManager()})})}catch(e){fs=initializeFirestore(app,{})}
 await setPersistence(auth,browserLocalPersistence).catch(()=>{});
@@ -944,7 +959,7 @@ onAuthStateChanged(auth,async u=>{
   if(!u){L.hidden=false;if(started)location.reload();return}
   L.hidden=true;
   if(!started&&!isBoss()){try{const r=await getDoc(doc(fs,'sk_cfg/roles'));BUH=!!(r.exists()&&r.data()[u.uid]=='buh')}catch(_){BUH=false}window.__BUH=BUH}
-  if(!started){started=true;window.__fbResolve({db,user,downloads,sample:null});
+  if(!started){started=true;window.__fbResolve({db,user,downloads,sample:aiSample});
     const out=()=>{if(confirm('Выйти из программы?'))signOut(auth)};const o=document.createElement('button');o.id='fbOut';o.className='dl';o.textContent='🚪 Выйти';o.onclick=out;(document.getElementById('drawer')||document.body).appendChild(o);const o2=document.createElement('button');o2.id='fbOut2';o2.textContent='🚪 Выйти из программы';o2.onclick=out;(document.getElementById('vMe')||document.body).appendChild(o2)}
 });
 if('serviceWorker' in navigator)navigator.serviceWorker.register('sw.js').catch(()=>{});
@@ -2284,7 +2299,7 @@ async function skTag(file,upd){const msg=$('skForm').querySelector('#fTagMsg');i
     if(r.coating&&/мат|хап|matt|mat/i.test(r.coating))f.querySelector('#fH').checked=true;
     f.querySelector('#fN').value=[r.coil_no?'№'+r.coil_no:'',r.supplier||''].filter(Boolean).join(' · ');
     msg.textContent='✅ Бирка прочитана. Проверьте цифры и нажмите «Сохранить».'+(msg.dataset.k?' По бирке обновил метров в тонне: '+msg.dataset.k+'.':''); upd();
-  }catch(e){msg.textContent=e&&e.code=='not_granted'?'Вы не разрешили использовать Claude.':'Не получилось прочитать бирку — впишите вручную.'}}
+  }catch(e){msg.textContent=e&&e.code=='not_granted'?'Вы не разрешили использовать Claude.':'Не получилось прочитать бирку — впишите вручную.'+aiWhy(e)}}
 function skNewForm(){skOpen('Новый материал','<label>Название<input id="fNm" placeholder="Саморезы 4.8×19"></label><label>Единица<select id="fU"><option>шт</option><option>кг</option><option>пачка</option><option>м</option><option>тюбик</option></select></label><label>Предупредить, если меньше<input id="fMin" inputmode="decimal"></label>',
   async()=>{if(!DB){toast('Склад недоступен');return}const n=skVal('fNm').trim();if(!n)return;await DB.collection('sk_items').add({kind:'other',name:n,unit:skVal('fU'),min:skVal('fMin')});$('mSk').classList.remove('show');toast('Материал добавлен')})}
 function skOutForm(pre){const it=SK_ITEMS.find(i=>i.id==pre);
@@ -3154,6 +3169,8 @@ document.addEventListener('change',async e=>{const r=e.target.closest('[data-rol
 // ---------- приём рулонов: начальник склада фотографирует, руководитель подтверждает ----------
 const TAG_PROMPT='Это фото бирки (этикетки) рулона окрашенной/оцинкованной стали (фото может быть повёрнуто). Поля бывают на трёх языках: «O‘LCHAM / РАЗМЕР / DIMENSIONS mm» (например 0.40*1250 = толщина 0.40 мм × ширина 1250 мм), «RANG / ЦВЕТ / COLOR» (код RAL, например 1015T2 → 1015), «NETTO / НЕТТО кг» (бери НЕТТО, не брутто), «UZUNLIK / ДЛИНА м», «PARTIYA / РУЛОН №», производитель (например SMZ). Ответь ТОЛЬКО JSON: {"thickness_mm":0.4,"width_m":1.25,"weight_t":5.344,"length_m":1418,"ral":"1015","coating":"глянец или мат/хапёр или null","coil_no":"номер рулона","supplier":"производитель"}. Вес нетто переведи в тонны (кг ÷ 1000). Ширину в метры. Если чего-то нет — null.';
 function ralLabel(code){const c=RAL.find(x=>x[0]==String(code||''));return c?(c[0]=='ZN'?'Оцинковка':'RAL '+c[0]+' '+c[1]):(code?'RAL '+code:'')}
+// почему ИИ не ответил — понятным языком
+function aiWhy(e){const s=String(e&&(e.message||e.code)||e||'');if(/firebasevertexai|AI Logic|API has not been used|SERVICE_DISABLED|PERMISSION_DENIED|api-not-enabled/i.test(s))return ' ⚠ ИИ-помощник не включён в Firebase (AI Logic).';if(/app.?check/i.test(s))return ' ⚠ Firebase App Check блокирует ИИ — отключите его принудительное включение для AI Logic.';if(/quota|429|RESOURCE_EXHAUSTED/i.test(s))return ' ⚠ Лимит ИИ на сегодня исчерпан — попробуйте позже.';if(/network|fetch/i.test(s))return ' ⚠ Нет интернета.';return ''}
 async function readTag(img){let sm=null;try{sm=window.claude?await window.claude.use('sample'):null}catch(_){}if(!sm)throw {code:'nosample'};
   return await sm.json(TAG_PROMPT,{images:[dataToBlob(img)],modelTier:'default'})}
 function tagFields(r,pre){const v=x=>x==null?'':x;return '<div class="two"><label>Толщина, мм<input id="'+pre+'T" inputmode="decimal" value="'+v(r.thickness_mm)+'"></label><label>Ширина, м<input id="'+pre+'W" inputmode="decimal" value="'+v(r.width_m||1.25)+'"></label></div>'+
@@ -3168,7 +3185,7 @@ $('rcvFile').addEventListener('change',async e=>{const f=e.target.files&&e.targe
   box.innerHTML='<div class="skcalc">🤖 Читаю бирку… (до минуты)</div>';let img;
   try{img=await shrinkImg(f,1600,0.85)}catch(_){box.innerHTML='<div class="skcalc">Не удалось открыть фото</div>';return}
   RCV_IMG=await shrinkImg(dataToBlob(img),700,0.6).catch(()=>img);
-  let r={},note='';try{r=await readTag(img)||{};note='✅ Бирка прочитана — проверьте цифры.'}catch(er){note='Не удалось прочитать бирку автоматически — впишите цифры вручную.'}
+  let r={},note='';try{r=await readTag(img)||{};note='✅ Бирка прочитана — проверьте цифры.'}catch(er){note=aiWhy(er)+' Не удалось прочитать бирку автоматически — впишите цифры вручную.'}
   box.innerHTML='<img class="rcvph" src="'+RCV_IMG+'"><div class="skcalc">'+note+'</div><div class="skf">'+tagFields(r,'r')+'</div><button class="mebtn out" id="rcvSend">📤 Отправить руководителю</button>'});
 document.addEventListener('click',async e=>{if(e.target.id!='rcvSend')return;const box=$('rcvForm'),tag=tagRead(box,'r');
   if(!tag.thickness_mm||!(tag.weight_t||tag.length_m)){toast('Впишите толщину и вес или длину');return}
