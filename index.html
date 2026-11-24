@@ -2889,17 +2889,18 @@ function palmaGeo(){const R=palmaRects();if(!R.length)return null;const P=k=>num
   const inF=DG?(x,y)=>DG.some(q=>q&&x>=q.r.x+q.gin&&x<=q.r.x+q.r.l-q.gin&&y>=q.r.y+q.gin&&y<=q.r.y+q.r.w-q.gin):(x,y)=>{if(!inU(x,y))return false;if(o<=0)return true;for(let t=-o;t<=o+1e-6;t+=st){if(!inU(x+t,y-o)||!inU(x+t,y+o)||!inU(x-o,y+t)||!inU(x+o,y+t))return false}return true};
   const bx0=Math.min(...R.map(r=>r.x)),by0=Math.min(...R.map(r=>r.y)),bx1=Math.max(...R.map(r=>r.x+r.l)),by1=Math.max(...R.map(r=>r.y+r.w));
   const c0=R[0],X0=c0.x+c0.l/2+P('sx'),Y0=c0.y+c0.w/2+P('sy');
-  const i0=Math.floor((bx0-X0)/g)-1,i1=Math.ceil((bx1-X0)/g)+1,j0=Math.floor((by0-Y0)/g)-1,j1=Math.ceil((by1-Y0)/g)+1;
+  const rot=PALMA.rot=='45',ca=rot?Math.SQRT1_2:1,sa=rot?Math.SQRT1_2:0,W2=(x,y)=>[X0+(x-X0)*ca-(y-Y0)*sa,Y0+(x-X0)*sa+(y-Y0)*ca];
+  const ext=rot?Math.max(bx1-bx0,by1-by0):0,i0=Math.floor((bx0-ext-X0)/g)-1,i1=Math.ceil((bx1+ext-X0)/g)+1,j0=Math.floor((by0-ext-Y0)/g)-1,j1=Math.ceil((by1+ext-Y0)/g)+1;
   const frac=(A,B,C,D)=>{let n=0,k=0;const N=10;for(let a=0;a<N;a++)for(let b=0;b<N;b++){const u=(a+.5)/N,v=(b+.5)/N;
       // ромб A(звезда)-B(бок)-C(звезда)-D(бок): A + u*(B-A) + v*(D-A)
       const x=A[0]+u*(B[0]-A[0])+v*(D[0]-A[0]),y=A[1]+u*(B[1]-A[1])+v*(D[1]-A[1]);k++;if(inF(x,y))n++}return n/k};
   const tiles=[];let full=0,big=0,half=0;
   for(let i=i0;i<=i1;i++)for(let j=j0;j<=j1;j++){const x=X0+i*g,y=Y0+j*g;
-    [[[x,y],[x+g/2,y-hw],[x+g,y],[x+g/2,y+hw]],[[x,y],[x+hw,y+g/2],[x,y+g],[x-hw,y+g/2]]].forEach(Q=>{const f=frac(Q[0],Q[1],Q[2],Q[3]);
+    [[[x,y],[x+g/2,y-hw],[x+g,y],[x+g/2,y+hw]],[[x,y],[x+hw,y+g/2],[x,y+g],[x-hw,y+g/2]]].map(Q=>Q.map(p=>W2(p[0],p[1]))).forEach(Q=>{if(rot&&(Q[1][0]<bx0-g||Q[1][0]>bx1+g||Q[1][1]<by0-g||Q[1][1]>by1+g))return;const f=frac(Q[0],Q[1],Q[2],Q[3]);
       if(f<0.03)return;tiles.push({Q,f});if(f>=0.97)full++;else if(f>0.5)big++;else half++})}
   let nz=0,cells=0;const cen=[];
-  for(let i=i0;i<=i1;i++)for(let j=j0;j<=j1;j++){const cx=X0+i*g+g/2,cy=Y0+j*g+g/2;if(inF(cx,cy)){cells++;cen.push([cx,cy])}
-    [[-1,-1],[1,-1],[1,1],[-1,1]].forEach(([dx,dy])=>{let n=0;for(let s=0;s<10;s++){const t=(s+.5)/10;if(inF(cx+dx*g/2*t,cy+dy*g/2*t))n++}if(n>5)nz++})}
+  for(let i=i0;i<=i1;i++)for(let j=j0;j<=j1;j++){const [cx,cy]=W2(X0+i*g+g/2,Y0+j*g+g/2);if(cx<bx0-g||cx>bx1+g||cy<by0-g||cy>by1+g)continue;if(inF(cx,cy)){cells++;cen.push([cx,cy])}
+    [[-1,-1],[1,-1],[1,1],[-1,1]].forEach(([dx,dy])=>{let n=0;const ex=dx*g/2*ca-dy*g/2*sa,ey=dx*g/2*sa+dy*g/2*ca;for(let s=0;s<10;s++){const t=(s+.5)/10;if(inF(cx+ex*t,cy+ey*t))n++}if(n>5)nz++})}
   const z=1+P('zap')/100,raw=full+big+half/2;
   return {R,DG,o,g,hw,X0,Y0,tiles,cen,full,big,half,nTile:Math.ceil(raw*z-1e-9),nNz:Math.ceil(nz*z-1e-9),nDisc:Math.ceil(cells*z-1e-9),rawT:raw,rawN:nz,cells,bx0,by0,bx1,by1}}
 function palmaParts(G){G=G||palmaGeo();if(!G||!G.nTile)return [];const T=PTPL;
@@ -2930,7 +2931,7 @@ function palmaSvg(G){const pad=300,vx=G.bx0-pad,vy=G.by0-pad,vw=G.bx1-G.bx0+2*pa
   G.cen.forEach(c=>{e+='<circle cx="'+c[0]+'" cy="'+Y(c[1])+'" r="55" fill="#facc15" stroke="#a16207" stroke-width="'+(vw/1400)+'"/>'});
   return '<svg viewBox="'+vx+' '+vy+' '+vw+' '+vh+'" style="width:100%;max-height:420px;background:#f8fafc">'+e+'</svg>'}
 function palmaHtml(){const A=PALMA,W=num(store.get('rz_dxfw','1250'))||1250;let h='<div class="card room" data-palma><div class="rt">✳️ Дизайн Палма: плитки по диагонали + найза + круг Ø110</div>'+
-  '<div class="rw2" style="gap:6px;margin:4px 0 4px"><button class="chip on">□ Квадрат (как Низомака)</button><button class="chip" disabled title="пришлите размеры дилы">△ Треугольник — скоро</button></div>'+
+  '<div class="rw2" style="gap:6px;margin:4px 0 4px"><button class="chip'+(A.rot!='45'?' on':'')+'" data-prot="0">□ Прямо (как Низомака)</button><button class="chip'+(A.rot=='45'?' on':'')+'" data-prot="45">◇ Повёрнуто 45°</button><button class="chip" disabled title="пришлите размеры дилы">△ Треугольник — скоро</button></div>'+
   '<div class="rw2" style="gap:6px;margin:0 0 8px;flex-wrap:wrap"><b style="font-size:13px">Рамка:</b>'+[['karn','〰 Карниз (плинтус + карниз)'],['kes','▭ Аликафон (как Низомака)'],['dila','◫ Дила (как Golibaka)']].map(([k,t])=>'<button class="chip'+(A.frame==k?' on':'')+'" data-pfr="'+k+'">'+t+'</button>').join('')+'</div>'+
   (A.frame=='kes'?'<div style="font-size:12px;color:var(--mut);margin-bottom:6px">По краю — аликафон шапка: <b>кош + дила (кассета) + плинтус</b>, шириной '+fmt(num(A.o)/1000)+' м (= отступ поля) по всему периметру. Считается как в «Аликафон шапка» (вариант, цвета и детали меняются там).</div>':A.frame=='karn'?'<div style="font-size:12px;color:var(--mut);margin-bottom:6px">По стене: 1 — плинтус, 2 — карниз, 3 — скаты (плитки). Поле с отступом '+esc(A.ok)+' мм от стены (меняется в «Размеры дизайна»).</div>':A.frame=='dila'?'<div style="font-size:12px;color:var(--mut);margin-bottom:6px">Рамка считается как в «Дизайн Дила» (её размеры меняются там). Г / Т-комнату для Дилы вписывайте отдельными прямоугольниками.</div>':'');
   h+=(A.rooms||[]).map((r,i)=>'<div class="rw2" style="margin:4px 0;flex-wrap:wrap;gap:4px"><b style="width:22px">'+(i+1)+'.</b> длина <input data-pf="l'+i+'" inputmode="decimal" value="'+esc(r.l||'')+'" placeholder="14.95" style="width:70px"> × ширина <input data-pf="w'+i+'" inputmode="decimal" value="'+esc(r.w||'')+'" placeholder="5.2" style="width:70px"> м'+
@@ -2958,6 +2959,7 @@ function palmaFlush(){if(!PALMA_DIRTY)return;const ae=document.activeElement;if(
 document.addEventListener('focusout',()=>setTimeout(palmaFlush,30));
 document.addEventListener('click',e=>{if(e.target.closest('[data-padd]')){PALMA.rooms.push({l:'',w:'',x:'0',y:'0'});palmaSave();palmaRerender();return}
   const x=e.target.closest('[data-pdel]');if(x){PALMA.rooms.splice(+x.dataset.pdel,1);palmaSave();palmaRerender();return}
+  const pr=e.target.closest('[data-prot]');if(pr){PALMA.rot=pr.dataset.prot;palmaSave();palmaRerender();return}
   const fr=e.target.closest('[data-pfr]');if(fr){PALMA.frame=fr.dataset.pfr;palmaSave();palmaRerender();return}
   if(e.target.closest('[data-pgo]')){palmaAdd();return}
   if(e.target.closest('[data-pdxf]')){palmaDxf();return}});
