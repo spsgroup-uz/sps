@@ -3373,7 +3373,7 @@ function aiCtx(q){q=String(q||'').toLowerCase();const W=re=>re.test(q);const nee
 function aicRender(){const b=$('aicMsgs');if(!b)return;b.innerHTML=(AIC_H.length?'':'<div class="aic-hi">✦ Салом! Я <b>Джарвис</b> — ваш ИИ-помощник. Спросите что угодно — по программе (долги, заказы, склад, сотрудники) или любой другой вопрос.<br>Свежее из интернета (новости, курс, погода) — тоже ищу в Google.<br>Или скажите: «сделай заказ: карниз 2 м 5 штук, конёк 3 м 2 штуки».<br><small>🎤 — голосом · 📷 — с фото</small><div class="aicq">'+['Кто сегодня пришёл и кто нет?','Кто опоздал?','Какой заказ на каком этапе?','Что сейчас на лазере и гибке?','Кто должен больше всех?','Что осталось на складе?'].map(q=>'<button data-aicq="'+q+'">'+q+'</button>').join('')+'</div></div>')+
   AIC_H.map((m,i)=>'<div class="aic-m '+(m.r=='u'?'u':'a')+'">'+(m.r=='a'?'<small class="aicn">✦ Джарвис</small>':'')+(m.img?'<img src="'+m.img+'">':'')+esc(m.t).replace(/\n/g,'<br>')+(m.order&&m.order.lines&&m.order.lines.length&&!m.done?'<button class="aic-act" data-aicadd="'+i+'">➕ Добавить в заказ ('+m.order.lines.length+' стр.)</button>':'')+(m.open?'<button class="aic-act" data-aicopen="'+m.open+'">Открыть →</button>':'')+(m.web?'<div class="aicw">'+(m.web.sources&&m.web.sources.length?'<div class="aics">🌐 Источники: '+m.web.sources.slice(0,5).map(x=>'<a href="'+esc(x.uri)+'" target="_blank" rel="noopener">'+esc(x.title||'ссылка')+'</a>').join(' · ')+'</div>':'')+(m.web.rendered?'<div class="aicg">'+m.web.rendered+'</div>':'')+'</div>':'')+'</div>').join('')+(AIC_BUSY?'<div class="aic-m a"><small class="aicn">✦ Джарвис</small><span class="aicwait">думаю…</span></div>':'');b.scrollTop=b.scrollHeight}
 function aicOpen(){let w=$('aiChat');if(!w){w=document.createElement('div');w.id='aiChat';w.innerHTML='<div class="aic-bar"><b><span class="aich">✦</span> Джарвис <small style="font-weight:600;opacity:.7;font-size:12px">ИИ-помощник</small></b><button data-aicwake title="Слушать слово «Джарвис»" id="aicWake">👂</button><button data-aicvoice title="голос" id="aicVoice">🔊</button><button data-aicclr title="очистить">🧹</button><button data-aicx>✕</button></div><div id="aicMsgs"></div><div id="aicLive" style="display:none"></div><div id="aicPrev"></div><div class="aic-in"><label class="aic-b" title="фото">📷<input type="file" accept="image/*" id="aicFile" hidden></label><textarea id="aicQ" rows="1" placeholder="Спросите Джарвиса…"></textarea><button class="aic-b" id="aicMic" title="голосом">🎤</button><button class="aic-b go" id="aicGo">➤</button></div>';document.body.appendChild(w)}
-  w.classList.add('show');aicVoiceBtn();aicWakeUI();if(!(window.SpeechRecognition||window.webkitSpeechRecognition))$('aicMic').style.display='none';aicRender();setTimeout(()=>$('aicQ').focus(),100)}
+  w.classList.add('show');aicVoiceBtn();aicWakeUI();if(!(window.SpeechRecognition||window.webkitSpeechRecognition))$('aicMic').style.display=navigator.mediaDevices?'':'none';aicRender();setTimeout(()=>$('aicQ').focus(),100)}
 // мгновенные факты без ИИ и без лимитов: курс ЦБ Узбекистана и погода
 async function aicJ(u,ms){const c=new AbortController();const t=setTimeout(()=>c.abort(),ms||6000);try{const r=await fetch(u,{signal:c.signal,cache:'no-store'});if(!r.ok)throw new Error(r.status);return await r.json()}finally{clearTimeout(t)}}
 const AIC_CUR={USD:/доллар|dollar|\$|usd/i,EUR:/евро|euro|eur/i,RUB:/рубл|rubl|rub/i,KZT:/тенге|tenge|kzt/i,CNY:/юан|yuan|cny/i,TRY:/лир|lira|try/i,GBP:/фунт|pound|gbp/i};
@@ -3437,13 +3437,53 @@ function aicSayPhone(t){try{if(!AIC_VOICE||!window.speechSynthesis||!t)return;sp
   for(const part of clean.match(/[^.!?]{1,220}[.!?]?/g)||[clean]){const u=new SpeechSynthesisUtterance(part);if(v){u.voice=v;u.lang=v.lang}else u.lang=want=='en'?'en-US':'ru-RU';u.rate=1.05;speechSynthesis.speak(u)}}catch(_){}}
 function aicVoiceBtn(){const b=$('aicVoice');if(b){b.textContent=AIC_VOICE?'🔊':'🔇';b.title=AIC_VOICE?'Джарвис говорит вслух':'Голос выключен'}}
 try{if(window.speechSynthesis)speechSynthesis.getVoices();speechSynthesis.onvoiceschanged=()=>{}}catch(_){}
+// тихий микрофон: без писка Android — свой детектор голоса + распознавание через Gemini
+let AIC_NOVAD=!(navigator.mediaDevices&&navigator.mediaDevices.getUserMedia),AIC_LASTACT=0,AIC_QWARN=0;
+const VAD={st:null,ac:null,src:null,proc:null,mode:null,rec:false,buf:[],pre:[],sil:0,sp:0,noise:0.008,sending:false,starting:false,err:''};
+async function aicVadOn(){if(VAD.st||VAD.starting)return;VAD.starting=true;try{
+    const st=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true,autoGainControl:true,channelCount:1}});
+    const ac=new (window.AudioContext||window.webkitAudioContext)();if(ac.state=='suspended')try{await ac.resume()}catch(_){}
+    const src=ac.createMediaStreamSource(st),proc=ac.createScriptProcessor(4096,1,1);proc.onaudioprocess=e=>aicVadFrame(e.inputBuffer.getChannelData(0),ac.sampleRate);
+    src.connect(proc);proc.connect(ac.destination);Object.assign(VAD,{st,ac,src,proc,err:''})}
+  catch(e){const t=String(e&&(e.name||e.message)||e);if(/NotAllowed|Permission|denied/i.test(t)){VAD.err='🎤 Нет доступа к микрофону — разрешите его';toast(VAD.err);AIC_WAKE=false;try{localStorage.setItem('sps_wake','')}catch(_){}aicWakeStop();aicLiveOff()}else AIC_NOVAD=true}
+  VAD.starting=false}
+function aicVadOff(){try{VAD.st&&VAD.st.getTracks().forEach(t=>t.stop())}catch(_){}try{VAD.proc&&VAD.proc.disconnect();VAD.src&&VAD.src.disconnect();VAD.ac&&VAD.ac.close()}catch(_){}Object.assign(VAD,{st:null,ac:null,src:null,proc:null,rec:false,buf:[],pre:[],sp:0})}
+function aicVadTick(){if(AIC_NOVAD)return;const want=AIC_LIVE?'live':(AIC_WAKE&&!document.hidden?'wake':null);
+  if(want!==VAD.mode){VAD.mode=want;VAD.rec=false;VAD.buf=[];VAD.sp=0}
+  if(!want){if(VAD.st)aicVadOff();return}if(!VAD.st)aicVadOn()}
+function aicVadFrame(d,sr){const paused=!VAD.mode||AIC_BUSY||aicSpeaking()||VAD.sending||document.hidden;
+  if(paused){if(VAD.rec){VAD.rec=false;VAD.buf=[]}VAD.pre=[];VAD.sp=0;return}
+  let e=0;for(let i=0;i<d.length;i+=2)e+=d[i]*d[i];const rms=Math.sqrt(e/(d.length/2)),thr=Math.max(0.012,VAD.noise*3.2),fr=new Float32Array(d),fd=d.length/sr;
+  if(!VAD.rec){VAD.pre.push(fr);if(VAD.pre.length>4)VAD.pre.shift();
+    if(rms>thr){if(++VAD.sp>=2){VAD.rec=true;VAD.buf=VAD.pre.slice();VAD.pre=[];VAD.sil=0}}else{VAD.sp=0;VAD.noise=VAD.noise*0.96+rms*0.04}return}
+  VAD.buf.push(fr);if(rms>thr)VAD.sil=0;else VAD.sil+=fd;const dur=VAD.buf.length*fd;
+  if(VAD.sil>=(VAD.mode=='wake'?0.75:1.0)||dur>=(VAD.mode=='wake'?7:15)){const b=VAD.buf,mode=VAD.mode;VAD.rec=false;VAD.buf=[];VAD.sp=0;if(dur-VAD.sil<0.4)return;aicVadClip(b,sr,mode)}}
+function aicWav(frames,sr){const R=16000,ratio=sr/R;let n=0;frames.forEach(f=>n+=f.length);const all=new Float32Array(n);let o=0;frames.forEach(f=>{all.set(f,o);o+=f.length});
+  const m=Math.floor(n/ratio),buf=new ArrayBuffer(44+m*2),v=new DataView(buf);const w=(p,s)=>{for(let i=0;i<s.length;i++)v.setUint8(p+i,s.charCodeAt(i))};
+  w(0,'RIFF');v.setUint32(4,36+m*2,true);w(8,'WAVE');w(12,'fmt ');v.setUint32(16,16,true);v.setUint16(20,1,true);v.setUint16(22,1,true);v.setUint32(24,R,true);v.setUint32(28,R*2,true);v.setUint16(32,2,true);v.setUint16(34,16,true);w(36,'data');v.setUint32(40,m*2,true);
+  let peak=0.0001;for(let i=0;i<n;i++)peak=Math.max(peak,Math.abs(all[i]));const g=Math.min(4,0.9/peak);
+  for(let i=0;i<m;i++){let x=all[Math.floor(i*ratio)]*g;x=Math.max(-1,Math.min(1,x));v.setInt16(44+i*2,x<0?x*32768:x*32767,true)}
+  return new Blob([buf],{type:'audio/wav'})}
+async function aicVadClip(frames,sr,mode){VAD.sending=true;aicLiveUI();let t='';
+  try{const sm=await aiSm();const r=await sm.json('Это короткая запись голоса. Перепиши ДОСЛОВНО, что сказал человек (русский, узбекский или английский). Имя помощника пиши как «Джарвис». Если речи нет, только шум, музыка или неразборчиво — верни пустую строку. Ответь JSON {"text":"..."}',{images:[aicWav(frames,sr)]});t=String(r&&r.text||'').trim()}
+  catch(e){const s=String(e&&e.message||e);if(/\[429|quota|RESOURCE_EXHAUSTED/i.test(s)&&Date.now()-AIC_QWARN>60000){AIC_QWARN=Date.now();toast('⚠️ Лимит Google на распознавание голоса — подождите минуту')}}
+  finally{VAD.sending=false;aicLiveUI()}
+  if(!t||/^[\s.…-]*$/.test(t))return;
+  if(mode=='wake'){if(AIC_LIVE)return;const m=t.match(AIC_WW);if(!m)return;aicWoke(null,t.slice(m.index+m[0].length).trim());return}
+  if(!AIC_LIVE)return;AIC_LASTACT=Date.now();const q=$('aicQ');
+  if(/^(стоп|хватит|отключись|выключись|пока|спасибо,? пока|tamom|bas|stop)[\s!.]*$/i.test(t)){AIC_H.push({r:'u',t},{r:'a',t:'Хорошо, отключаюсь.'});aicRender();aicSay('Хорошо, отключаюсь');aicLiveOff();return}
+  if(q){q.value=t.replace(/^(джарвис|jarvis)[\s,.!?]+(?=\S)/i,'');AIC_BYVOICE=true;aicSend()}}
+document.addEventListener('visibilitychange',()=>{try{aicVadTick()}catch(_){}});
+['pointerdown','touchstart','keydown'].forEach(ev=>document.addEventListener(ev,()=>{try{if(VAD.ac&&VAD.ac.state!=='running')VAD.ac.resume();if(AIC_AC&&AIC_AC.state!=='running')AIC_AC.resume()}catch(_){}},{capture:true,passive:true}));
+setInterval(()=>{try{if(VAD.ac&&VAD.ac.state!=='running'){VAD.err='👆 Коснитесь экрана, чтобы включить микрофон';aicLiveUI()}else if(VAD.err&&VAD.err.startsWith('👆')){VAD.err='';aicLiveUI()}}catch(_){}},1000);
 // режим «как Алиса»: программа тихо слушает и ждёт слово «Джарвис»
 const AIC_WW=/(джарвис|жарвис|джарвиз|джервис|чарвис|jarvis|jarvi[sz])[\s,.!?]*/i;
 function aicWakeUI(){const b=$('aicWake');if(b){b.textContent=AIC_WAKE?'👂':'🙉';b.style.background=AIC_WAKE?'#16a34a':'';b.title=AIC_WAKE?'Слушаю слово «Джарвис» — нажмите, чтобы выключить':'Включить: отвечать на слово «Джарвис» без кнопки'}
   const f=$('aiFab');if(f)f.classList.toggle('wake',AIC_WAKE)}
-function aicWakeStop(){clearInterval(AIC_WT);AIC_WT=null;if(AIC_WREC){const r=AIC_WREC;AIC_WREC=null;r.onend=null;try{r.abort()}catch(_){}}aicWakeUI()}
+function aicWakeStop(){clearInterval(AIC_WT);AIC_WT=null;setTimeout(aicVadTick,0);if(AIC_WREC){const r=AIC_WREC;AIC_WREC=null;r.onend=null;try{r.abort()}catch(_){}}aicWakeUI()}
 function aicWakeStart(){if(!(window.SpeechRecognition||window.webkitSpeechRecognition))return;clearInterval(AIC_WT);AIC_WT=setInterval(aicWakeTick,700);aicWakeTick()}
 function aicWakeTick(){if(!AIC_WAKE){aicWakeStop();return}
+  if(!AIC_NOVAD){aicVadTick();return}
   const busy=AIC_LIVE||AIC_REC||AIC_BUSY||aicSpeaking()||document.hidden||Date.now()<AIC_PAUSE;
   if(busy){if(AIC_WREC){const r=AIC_WREC;AIC_WREC=null;r.onend=null;try{r.abort()}catch(_){}}return}
   if(AIC_WREC)return;const SR=window.SpeechRecognition||window.webkitSpeechRecognition;const r=new SR();
@@ -3455,19 +3495,20 @@ function aicWakeTick(){if(!AIC_WAKE){aicWakeStop();return}
   r.onerror=e=>{if(e&&/not-allowed|service-not-allowed/.test(e.error)){AIC_WAKE=false;try{localStorage.setItem('sps_wake','')}catch(_){}toast('🎤 Нет доступа к микрофону — разрешите его в браузере');aicWakeStop()}else AIC_PAUSE=Date.now()+500};
   r.onend=()=>{if(AIC_WREC===r)AIC_WREC=null};
   AIC_WREC=r;try{r.start()}catch(_){AIC_WREC=null;AIC_PAUSE=Date.now()+1500}}
-function aicWoke(r,rest){if(AIC_WREC!==r)return;AIC_WREC=null;r.onend=null;try{r.abort()}catch(_){}
-  aicOpen();aicAudio();AIC_LIVE=true;AIC_BYWAKE=true;AIC_EMPTY=0;clearInterval(AIC_LT);AIC_LT=setInterval(aicLiveTick,350);
+function aicWoke(r,rest){if(r){if(AIC_WREC!==r)return;AIC_WREC=null;r.onend=null;try{r.abort()}catch(_){}}
+  aicOpen();aicAudio();AIC_LIVE=true;AIC_BYWAKE=true;AIC_EMPTY=0;AIC_LASTACT=Date.now();clearInterval(AIC_LT);AIC_LT=setInterval(aicLiveTick,350);
   if(rest&&rest.length>1){$('aicQ').value=rest;AIC_BYVOICE=true;aicSend()}else{const t='Слушаю';AIC_H.push({r:'a',t:'Слушаю, Рахим 🙂'});aicRender();aicSay(t)}
   aicLiveUI()}
 // разговорный режим: нажал 🎤 один раз — Джарвис слушает постоянно, нажал ещё раз — выключил
 function aicSpeaking(){if(AIC_SPK&&Date.now()-AIC_SPK>90000)AIC_SPK=0;return !!AIC_SPK||(window.speechSynthesis&&speechSynthesis.speaking)}
-function aicLiveUI(){const b=$('aicMic');if(b){b.classList.toggle('live',AIC_LIVE);b.classList.toggle('rec',!!AIC_REC);b.textContent=AIC_LIVE?'⏹':'🎤';b.title=AIC_LIVE?'Выключить разговор':'Включить разговор'}
-  const st=$('aicLive');if(st){st.style.display=AIC_LIVE?'block':'none';st.textContent=AIC_REC?'🎙 Слушаю… говорите':AIC_BUSY?'⏳ Думаю…':aicSpeaking()?'🔊 Говорю… (нажмите ⏹ чтобы выключить)':'🎙 Разговор включён'}}
-function aicMic(){const SR=window.SpeechRecognition||window.webkitSpeechRecognition;if(!SR)return;
+function aicLiveUI(){const b=$('aicMic');if(b){b.classList.toggle('live',AIC_LIVE);b.classList.toggle('rec',!!AIC_REC||VAD.rec);b.textContent=AIC_LIVE?'⏹':'🎤';b.title=AIC_LIVE?'Выключить разговор':'Включить разговор'}
+  const st=$('aicLive');if(st){st.style.display=AIC_LIVE?'block':'none';st.textContent=VAD.err?VAD.err:VAD.rec?'🎙 Слышу вас…':VAD.sending?'✍️ Разбираю, что вы сказали…':AIC_REC?'🎙 Слушаю… говорите':AIC_BUSY?'⏳ Думаю…':aicSpeaking()?'🔊 Говорю… (нажмите ⏹ чтобы выключить)':(AIC_NOVAD?'🎙 Разговор включён':'🎙 Говорите — я слушаю')}}
+function aicMic(){const SR=window.SpeechRecognition||window.webkitSpeechRecognition;if(!SR&&!navigator.mediaDevices)return;
   if(AIC_LIVE){aicLiveOff();return}
   AIC_LIVE=true;aicStop();AIC_PAUSE=0;clearInterval(AIC_LT);AIC_LT=setInterval(aicLiveTick,350);aicLiveTick()}
-function aicLiveOff(){AIC_LIVE=false;AIC_BYWAKE=false;AIC_EMPTY=0;clearInterval(AIC_LT);AIC_LT=null;if(AIC_REC){const r=AIC_REC;AIC_REC=null;r.onend=null;try{r.abort()}catch(_){}}aicLiveUI()}
+function aicLiveOff(){AIC_LIVE=false;AIC_BYWAKE=false;AIC_EMPTY=0;clearInterval(AIC_LT);AIC_LT=null;setTimeout(aicVadTick,0);if(AIC_REC){const r=AIC_REC;AIC_REC=null;r.onend=null;try{r.abort()}catch(_){}}aicLiveUI()}
 function aicLiveTick(){aicLiveUI();if(!AIC_LIVE)return;const w=$('aiChat');if(!w||!w.classList.contains('show')){aicLiveOff();return}
+  if(!AIC_NOVAD){if(AIC_BUSY||aicSpeaking()||VAD.rec||VAD.sending)AIC_LASTACT=Date.now();else if(AIC_BYWAKE&&Date.now()-AIC_LASTACT>9000){aicLiveOff();return}aicVadTick();return}
   if(AIC_REC||AIC_BUSY||aicSpeaking()||Date.now()<AIC_PAUSE)return;aicListen()}
 function aicListen(){const SR=window.SpeechRecognition||window.webkitSpeechRecognition;if(!SR)return;
   const r=new SR();r.lang=LANG=='en'?'en-US':(LANG=='uzc'||LANG=='uzl')?'uz-UZ':'ru-RU';r.interimResults=true;r.continuous=false;const q=$('aicQ');q.value='';let fin='';
