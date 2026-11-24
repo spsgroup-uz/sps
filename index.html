@@ -1,8 +1,10 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
+<link rel="manifest" href="manifest.json"><meta name="theme-color" content="#1e3a8a"><link rel="icon" href="icon-192.png"><link rel="apple-touch-icon" href="icon-192.png">
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="SPS Group"><meta name="apple-mobile-web-app-status-bar-style" content="default">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <title>Заказ кровли</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
@@ -561,6 +563,7 @@ input:focus,select:focus,textarea:focus{outline:none;box-shadow:0 0 0 3px rgba(9
   <button class="dl" data-dtab="log">📒 Журнал и долги</button>
   <button class="dl" data-dtab="dxf">📐 Расчёт по DXF</button>
   <button class="dl" data-dtab="ugol">📐 Угол карниза → DXF</button>
+  <button class="dl" id="pwaBtn" hidden>📲 Установить приложение</button>
   <div class="dsec own-only">Деньги и склад</div>
   <button class="dl own-only" data-dtab="sk">📦 Склад и отчёт</button>
   <button class="dl own-only" data-dtab="pl">📈 Прибыль и расходы</button>
@@ -2686,6 +2689,16 @@ async function drwSave(){DRW.name=$('dwName').value.trim();DRW.cat=+$('dwCat').v
 async function ownPush(){if(!IS_OWNER||!DB)return;try{await DB.doc('sk_cfg/own').set({list:own.filter(o=>o.pts),ts:Date.now()})}catch(_){}}
 function ownSync(){if(!DB)return;DB.doc('sk_cfg/own').onSnapshot(sn=>{const L=sn.exists?((sn.data()||{}).list||[]):[];let ch=false;L.forEach(o=>{const i=own.findIndex(x=>x.id==o.id);if(i<0){own.push(o);ch=true}else if(JSON.stringify(own[i])!=JSON.stringify(o)){own[i]=o;ch=true}});if(ch){regOwn();save();renderCat()}},()=>{})}
 regOwn();
+// ---------- установка как приложение (значок на телефоне / компьютере) ----------
+let PWA_EVT=null;const PWA_STANDALONE=()=>window.matchMedia&&matchMedia('(display-mode: standalone)').matches||navigator.standalone===true;
+const PWA_IOS=/iphone|ipad|ipod/i.test(navigator.userAgent);
+function pwaShow(){const b=$('pwaBtn');if(b)b.hidden=PWA_STANDALONE()||!(PWA_EVT||PWA_IOS)}
+window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();PWA_EVT=e;pwaShow();if(!store.get('rz_pwa_asked',0)){store.set('rz_pwa_asked',1);setTimeout(()=>toast('📲 Программу можно установить на телефон: меню → «Установить приложение»'),4000)}});
+window.addEventListener('appinstalled',()=>{PWA_EVT=null;pwaShow();toast('Приложение SPS Group установлено ✓')});
+document.addEventListener('click',async e=>{if(!e.target.closest('#pwaBtn'))return;try{drawer(false)}catch(_){}
+  if(PWA_EVT){PWA_EVT.prompt();try{await PWA_EVT.userChoice}catch(_){}PWA_EVT=null;pwaShow();return}
+  if(PWA_IOS)ask('Установить на iPhone','Внизу Safari нажмите «Поделиться» (квадрат со стрелкой ↑) → «На экран „Домой“» → «Добавить». Появится значок SPS Group.',()=>{})});
+setTimeout(pwaShow,500);
 // ===================== УГОЛ КАРНИЗА: развёртка двух половинок с косым резом по профилю =====================
 // Профиль: отрезки (мм) с направлением (градусы, 0 = вправо, 90 = вниз) и прогибом дуги (мм, + / −).
 // Рез: в точке профиля, отстоящей от стены на x, половинка длиннее (наружный угол) или короче (внутренний) на x·ctg(угол/2).
