@@ -1739,8 +1739,8 @@ document.addEventListener('click',e=>{const b=e.target.closest('[data-cdes]');if
 function renderCli(){
   renderCliCoils();
   {const ri=$('cliRoomInfo');if(ri){const t=roomInfo();ri.hidden=!t;ri.textContent='📐 '+t}}
-  if($('cliDes'))$('cliDes').innerHTML=[[7,'Дизайн Скат'],[8,'Дизайн Дила'],[9,'Аликафон шапка']].map(([c,n])=>'<button class="chip'+(CLI_DES==c?' on':'')+'" data-cdes="'+c+'">'+n+(order.some(l=>l.auto==c)?' ✓':'')+'</button>').join('');
-  if($('cliRoom')&&!$('cliRoom').querySelector('input:focus')) $('cliRoom').innerHTML=CLI_DES==9?alikHtml():CLI_DES==8?dilaHtml():roomHtml(7);
+  if($('cliDes'))$('cliDes').innerHTML=[[7,'Дизайн Скат'],[8,'Дизайн Дила'],[10,'Дизайн Палма'],[9,'Аликафон шапка']].map(([c,n])=>'<button class="chip'+(CLI_DES==c?' on':'')+'" data-cdes="'+c+'">'+n+(order.some(l=>l.auto==c)?' ✓':'')+'</button>').join('');
+  if($('cliRoom')&&!$('cliRoom').querySelector('input:focus')) $('cliRoom').innerHTML=CLI_DES==9?alikHtml():CLI_DES==8?dilaHtml():CLI_DES==10?palmaHtml():roomHtml(7);
   for(const k in CMAP) $(k).value=$(CMAP[k]).value;
   if(!order.length){$('cliList').innerHTML='<div class="card empty">Нажмите «+ Добавить строку» и выберите деталь.</div>';renderCliTot();return}
   const idx=order.map((l,i)=>i), A=idx.filter(i=>isSheet(order[i])), B=idx.filter(i=>isGroup(order[i])), C=idx.filter(i=>!isSheet(order[i])&&!isGroup(order[i])&&order[i].unit!='face'), F=idx.filter(i=>order[i].unit=='face');
@@ -2873,6 +2873,122 @@ document.addEventListener('click',e=>{if(e.target.closest('[data-dadd]')){DILA.r
   const x=e.target.closest('[data-ddel]');if(x){DILA.rooms.splice(+x.dataset.ddel,1);dilaSave();dilaRerender();return}
   if(e.target.closest('[data-dgo]')){dilaAdd();return}
   if(e.target.closest('[data-ddxf]')){dilaDxf();return}});
+const PTPL={"nz":[127.88,530.25,[[103.94,515.0,0],[103.55,510.02,0],[104.06,510.02,0],[104.44,515.0,0],[118.78,515.0,0],[114.89,464.64,0],[127.88,464.64,0],[127.88,444.64,0],[113.34,444.64,0],[86.71,100.0,0],[72.17,100.0,0],[72.55,105.0,0],[72.05,105.0,0],[63.94,0.0,0],[55.83,105.0,0],[55.32,105.0,0],[55.71,100.0,0],[41.17,100.0,0],[14.54,444.64,0],[0.0,444.64,0],[0.0,464.64,0],[12.99,464.64,0],[9.1,515.0,0],[23.44,515.0,0],[23.82,510.0,0],[24.33,510.0,0],[23.94,515.0,0],[39.19,530.25,0.414214],[88.69,530.25,0]]],"tile":[625,625,[[492.0,625.0,0.0],[590.0,610.0,0.0],[585.0,610.0,0.0],[585.0,609.5,0.0],[590.0,609.5,0.0],[590.0,590.0,0.0],[609.5,590.0,0.0],[609.5,585.0,0.0],[610.0,585.0,0.0],[610.0,590.0,0.0],[625.0,590.0,0.0],[625.0,75.0,0.0],[610.0,75.0,0.0],[610.0,80.0,0.0],[609.5,80.0,0.0],[609.5,75.0,0.0],[550.0,75.0,0.0],[550.0,15.5,0.0],[545.0,15.5,0.0],[545.0,15.0,0.0],[550.0,15.0,0.0],[550.0,0.0,0.0],[133.0,0.0,0.0],[35.0,15.0,0.0],[40.0,15.0,0.0],[40.0,15.5,0.0],[35.0,15.5,0.0],[35.0,35.0,0.0],[15.5,35.0,0.0],[15.5,40.0,0.0],[15.0,40.0,0.0],[15.0,35.0,0.0],[0.0,35.0,0.0],[0.0,550.0,0.0],[15.0,550.0,0.0],[15.0,545.0,0.0],[15.5,545.0,0.0],[15.5,550.0,0.0],[75.0,550.0,0.0],[75.0,609.5,0.0],[80.0,609.5,0.0],[80.0,610.0,0.0],[75.0,610.0,0.0],[75.0,625.0,0.0]]]};
+// ===================== ДИЗАЙН ПАЛМА (квадратная сетка, по образцу Usto Nizomaka) =====================
+// Плитка 625×625 гнётся по диагонали и лежит между двумя «звёздами» (шаг сетки 785 мм).
+// Между плитками — найза (острый конец у звезды), в середине клетки сходятся 4 найзы — круг Ø110.
+const PPAR=[['o','отступ поля от стены, мм',700],['g','шаг звёзд, мм',785],['hw','полуширина плитки в плане, мм',336],['ok','отступ поля при карнизе, мм',100],['zap','запас, %',5],['sx','сдвиг сетки X, мм',0],['sy','сдвиг сетки Y, мм',0]];
+let PALMA=store.get('rz_palma',null)||{rooms:[{l:'',w:'',x:'0',y:'0'}]};PPAR.forEach(p=>{if(PALMA[p[0]]==null)PALMA[p[0]]=String(p[2])});
+if(!PALMA.frame||PALMA.frame=='none')PALMA.frame='karn';if(PALMA.ok==null)PALMA.ok='100';
+function palmaSave(){store.set('rz_palma',PALMA)}
+function palmaRects(){return (PALMA.rooms||[]).map(r=>({x:num(r.x)*1000,y:num(r.y)*1000,l:num(r.l)*1000,w:num(r.w)*1000})).filter(r=>r.l>0&&r.w>0)}
+function palmaGeo(){const R=palmaRects();if(!R.length)return null;const P=k=>num(PALMA[k]),o=PALMA.frame=='karn'?P('ok'):P('o'),g=P('g')||785,hw=P('hw')||336;
+  const inU=(x,y)=>R.some(r=>x>=r.x-0.5&&x<=r.x+r.l+0.5&&y>=r.y-0.5&&y<=r.y+r.w+0.5);
+  const st=Math.max(25,Math.min(100,o/4));
+  const DG=PALMA.frame=='dila'?R.map(r=>{const g=dilaGeo(r.l/1000,r.w/1000);return g&&!g.err?{r,gin:g.gin,dg:g}:null}):null;
+  const inF=DG?(x,y)=>DG.some(q=>q&&x>=q.r.x+q.gin&&x<=q.r.x+q.r.l-q.gin&&y>=q.r.y+q.gin&&y<=q.r.y+q.r.w-q.gin):(x,y)=>{if(!inU(x,y))return false;if(o<=0)return true;for(let t=-o;t<=o+1e-6;t+=st){if(!inU(x+t,y-o)||!inU(x+t,y+o)||!inU(x-o,y+t)||!inU(x+o,y+t))return false}return true};
+  const bx0=Math.min(...R.map(r=>r.x)),by0=Math.min(...R.map(r=>r.y)),bx1=Math.max(...R.map(r=>r.x+r.l)),by1=Math.max(...R.map(r=>r.y+r.w));
+  const c0=R[0],X0=c0.x+c0.l/2+P('sx'),Y0=c0.y+c0.w/2+P('sy');
+  const i0=Math.floor((bx0-X0)/g)-1,i1=Math.ceil((bx1-X0)/g)+1,j0=Math.floor((by0-Y0)/g)-1,j1=Math.ceil((by1-Y0)/g)+1;
+  const frac=(A,B,C,D)=>{let n=0,k=0;const N=10;for(let a=0;a<N;a++)for(let b=0;b<N;b++){const u=(a+.5)/N,v=(b+.5)/N;
+      // ромб A(звезда)-B(бок)-C(звезда)-D(бок): A + u*(B-A) + v*(D-A)
+      const x=A[0]+u*(B[0]-A[0])+v*(D[0]-A[0]),y=A[1]+u*(B[1]-A[1])+v*(D[1]-A[1]);k++;if(inF(x,y))n++}return n/k};
+  const tiles=[];let full=0,big=0,half=0;
+  for(let i=i0;i<=i1;i++)for(let j=j0;j<=j1;j++){const x=X0+i*g,y=Y0+j*g;
+    [[[x,y],[x+g/2,y-hw],[x+g,y],[x+g/2,y+hw]],[[x,y],[x+hw,y+g/2],[x,y+g],[x-hw,y+g/2]]].forEach(Q=>{const f=frac(Q[0],Q[1],Q[2],Q[3]);
+      if(f<0.03)return;tiles.push({Q,f});if(f>=0.97)full++;else if(f>0.5)big++;else half++})}
+  let nz=0,cells=0;const cen=[];
+  for(let i=i0;i<=i1;i++)for(let j=j0;j<=j1;j++){const cx=X0+i*g+g/2,cy=Y0+j*g+g/2;if(inF(cx,cy)){cells++;cen.push([cx,cy])}
+    [[-1,-1],[1,-1],[1,1],[-1,1]].forEach(([dx,dy])=>{let n=0;for(let s=0;s<10;s++){const t=(s+.5)/10;if(inF(cx+dx*g/2*t,cy+dy*g/2*t))n++}if(n>5)nz++})}
+  const z=1+P('zap')/100,raw=full+big+half/2;
+  return {R,DG,o,g,hw,X0,Y0,tiles,cen,full,big,half,nTile:Math.ceil(raw*z-1e-9),nNz:Math.ceil(nz*z-1e-9),nDisc:Math.ceil(cells*z-1e-9),rawT:raw,rawN:nz,cells,bx0,by0,bx1,by1}}
+function palmaParts(G){G=G||palmaGeo();if(!G||!G.nTile)return [];const T=PTPL;
+  return [...(PALMA.frame=='dila'?palmaDilaParts(G):[]),{k:'tile',nm:'Палма плитка',w:T.tile[0],h:T.tile[1],n:G.nTile,col:'Oq (белый)'},{k:'nz',nm:'Найза',w:Math.round(T.nz[0]*10)/10,h:Math.round(T.nz[1]*10)/10,n:G.nNz,col:'Mokri (тёмный)'},{k:'disc',nm:'Круг Ø110',w:110,h:110,n:G.nDisc,col:'Oq (белый)'}]}
+// рамка из Дил (как Golibaka): квадраты, длинные Дилы, перемычки, полосы у стены и рамки поля
+function palmaDilaParts(G){const D=k=>num(DILA[k]),add=D('add'),sp=D('sep'),B=v=>Math.round((v+add)*10)/10,BL=v=>Math.round((Math.ceil(v/10-1e-6)*10+add)*10)/10;const M={};
+  const put=(k,nm,tp,w,h,c)=>{if(!c)return;const key=k+'|'+Math.round(w)+'|'+Math.round(h);(M[key]=M[key]||{k,nm,tp,w,h,n:0,col:'рамка Дила'}).n+=c};let wallN=0,frameM=0;
+  G.R.forEach(r=>{const g=dilaGeo(r.l/1000,r.w/1000);if(!g||g.err)return;
+    put('sq','Дила квадрат','sq',B(g.d-1),B(g.d-1),2*(g.n+1)+2*(g.m-1));put('lx','Дила длинная (в ряду)','long',BL(g.lx),B(g.d-1),2*g.n);put('ly','Дила длинная (боковая)','long',BL(g.ly),B(g.d-1),2*g.m);
+    put('sepD','Перемычка у Дил','sep',DTPL.sep[0],g.d+sp,4*g.n+4*g.m);wallN+=Math.ceil(2*(g.L+g.W)/4000-1e-9);frameM+=2*(g.L+g.W-4*g.x0)});
+  if(wallN){put('s242','Полоса 24.2 см (по периметру стен)','s242',DTPL.s242[0],4000,wallN);put('s279','Полоса 27.9 см (рамка поля)','s279',DTPL.s279[0],4000,Math.ceil(frameM/4000-1e-9))}
+  return Object.values(M).map(p=>({...p,w:Math.round(p.w*10)/10,h:Math.round(p.h*10)/10}))}
+// периметр комнаты (части комнаты, общие стыки вычитаются)
+function palmaPer(R){let p=0;R.forEach(r=>p+=2*(r.l+r.w));const ov=(a0,a1,b0,b1)=>Math.max(0,Math.min(a1,b1)-Math.max(a0,b0));
+  for(let i=0;i<R.length;i++)for(let j=i+1;j<R.length;j++){const a=R[i],b=R[j];
+    if(Math.abs(a.y+a.w-b.y)<1||Math.abs(b.y+b.w-a.y)<1)p-=2*ov(a.x,a.x+a.l,b.x,b.x+b.l);
+    if(Math.abs(a.x+a.l-b.x)<1||Math.abs(b.x+b.l-a.x)<1)p-=2*ov(a.y,a.y+a.w,b.y,b.y+b.w)}return p/1000}
+function palmaMeters(G){if(PALMA.frame!='karn'||!G)return [];const per=palmaPer(G.R),z=num(ALIK.zap)||3,m=Math.round((per+z)*100)/100;
+  return [['alPlint','Плинтус',m],['alKarn','Карниз',m]].map(([ic,nm,m])=>({ic,nm,m,n:Math.ceil(m/4-1e-9)}))}
+// аликафон по периметру: одна полоса = ширина отступа × периметр
+function palmaAlik(G){if(PALMA.frame!='kes'||!G)return null;const bk=ALIK.rows,bv=ALIK.v;ALIK.rows=[{w:String(num(PALMA.o)/1000),l:String(Math.round(palmaPer(G.R)*100)/100)}];ALIK.v='1';let g=null;try{g=alikPlan()}finally{ALIK.rows=bk;ALIK.v=bv}return g}
+function palmaSvg(G){const pad=300,vx=G.bx0-pad,vy=G.by0-pad,vw=G.bx1-G.bx0+2*pad,vh=G.by1-G.by0+2*pad,Y=y=>(G.by1+G.by0-y);let e='';
+  G.R.forEach(r=>{e+='<rect x="'+r.x+'" y="'+(Y(r.y+r.w))+'" width="'+r.l+'" height="'+r.w+'" fill="#fff" stroke="#1e1b4b" stroke-width="'+(vw/300)+'"/>'});
+  (G.DG||[]).forEach(q=>{if(!q)return;const r=q.r,a=q.gin;e+='<rect x="'+(r.x+a)+'" y="'+Y(r.y+r.w-a)+'" width="'+(r.l-2*a)+'" height="'+(r.w-2*a)+'" fill="none" stroke="#b45309" stroke-width="'+(vw/350)+'"/>'+[q.dg.o,q.dg.o+q.dg.d].map(t=>'<rect x="'+(r.x+t)+'" y="'+Y(r.y+r.w-t)+'" width="'+(r.l-2*t)+'" height="'+(r.w-2*t)+'" fill="'+(t==q.dg.o?'#fde68a':'#fff')+'" stroke="#b45309" stroke-width="'+(vw/500)+'"/>').join('')});
+  const clip=G.DG?'<clipPath id="pclip">'+G.DG.filter(Boolean).map(q=>'<rect x="'+(q.r.x+q.gin)+'" y="'+Y(q.r.y+q.r.w-q.gin)+'" width="'+(q.r.l-2*q.gin)+'" height="'+(q.r.w-2*q.gin)+'"/>').join('')+'</clipPath>':'';e+=clip+(clip?'<g clip-path="url(#pclip)">':'');
+  G.tiles.forEach(t=>{const Q=t.Q;e+='<polygon points="'+Q.map(p=>p[0].toFixed(0)+','+Y(p[1]).toFixed(0)).join(' ')+'" fill="'+(t.f>=0.97?'#c7d2fe':t.f>0.5?'#e0e7ff':'#f1f5f9')+'" stroke="#475569" stroke-width="'+(vw/900)+'"/><line x1="'+Q[0][0]+'" y1="'+Y(Q[0][1])+'" x2="'+Q[2][0]+'" y2="'+Y(Q[2][1])+'" stroke="#94a3b8" stroke-width="'+(vw/1400)+'"/>'});
+  if(clip)e+='</g>';
+  G.cen.forEach(c=>{e+='<circle cx="'+c[0]+'" cy="'+Y(c[1])+'" r="55" fill="#facc15" stroke="#a16207" stroke-width="'+(vw/1400)+'"/>'});
+  return '<svg viewBox="'+vx+' '+vy+' '+vw+' '+vh+'" style="width:100%;max-height:420px;background:#f8fafc">'+e+'</svg>'}
+function palmaHtml(){const A=PALMA,W=num(store.get('rz_dxfw','1250'))||1250;let h='<div class="card room" data-palma><div class="rt">✳️ Дизайн Палма: плитки по диагонали + найза + круг Ø110</div>'+
+  '<div class="rw2" style="gap:6px;margin:4px 0 4px"><button class="chip on">□ Квадрат (как Низомака)</button><button class="chip" disabled title="пришлите размеры дилы">△ Треугольник — скоро</button></div>'+
+  '<div class="rw2" style="gap:6px;margin:0 0 8px;flex-wrap:wrap"><b style="font-size:13px">Рамка:</b>'+[['karn','〰 Карниз (плинтус + карниз)'],['kes','▭ Аликафон (как Низомака)'],['dila','◫ Дила (как Golibaka)']].map(([k,t])=>'<button class="chip'+(A.frame==k?' on':'')+'" data-pfr="'+k+'">'+t+'</button>').join('')+'</div>'+
+  (A.frame=='kes'?'<div style="font-size:12px;color:var(--mut);margin-bottom:6px">По краю — аликафон шапка: <b>кош + дила (кассета) + плинтус</b>, шириной '+fmt(num(A.o)/1000)+' м (= отступ поля) по всему периметру. Считается как в «Аликафон шапка» (вариант, цвета и детали меняются там).</div>':A.frame=='karn'?'<div style="font-size:12px;color:var(--mut);margin-bottom:6px">По стене: 1 — плинтус, 2 — карниз, 3 — скаты (плитки). Поле с отступом '+esc(A.ok)+' мм от стены (меняется в «Размеры дизайна»).</div>':A.frame=='dila'?'<div style="font-size:12px;color:var(--mut);margin-bottom:6px">Рамка считается как в «Дизайн Дила» (её размеры меняются там). Г / Т-комнату для Дилы вписывайте отдельными прямоугольниками.</div>':'');
+  h+=(A.rooms||[]).map((r,i)=>'<div class="rw2" style="margin:4px 0;flex-wrap:wrap;gap:4px"><b style="width:22px">'+(i+1)+'.</b> длина <input data-pf="l'+i+'" inputmode="decimal" value="'+esc(r.l||'')+'" placeholder="14.95" style="width:70px"> × ширина <input data-pf="w'+i+'" inputmode="decimal" value="'+esc(r.w||'')+'" placeholder="5.2" style="width:70px"> м'+
+    (i?' · сдвиг X <input data-pf="x'+i+'" inputmode="decimal" value="'+esc(r.x||'0')+'" style="width:56px"> Y <input data-pf="y'+i+'" inputmode="decimal" value="'+esc(r.y||'0')+'" style="width:56px"> м':'')+(A.rooms.length>1?' <button class="chip" data-pdel="'+i+'">✕</button>':'')+'</div>').join('')+
+    '<div class="rw2"><button class="chip" data-padd>+ часть комнаты (Г / Т-образная)</button></div>'+
+    '<div style="font-size:12px;color:var(--mut);margin:4px 0">Для Г / Т-образной комнаты добавьте вторую часть и укажите, на сколько метров она сдвинута от левого нижнего угла первой.</div>'+
+    '<details class="rpar"><summary>Размеры дизайна (мм)</summary>'+PPAR.map(p=>'<label>'+p[1]+' <input data-pf="'+p[0]+'" inputmode="decimal" value="'+esc(A[p[0]])+'" style="width:80px"></label>').join('')+'</details>';
+  const G=palmaGeo();
+  if(G&&G.nTile){h+='<div style="margin:6px 0;border:1px solid var(--line);border-radius:10px;overflow:hidden">'+palmaSvg(G)+'</div>'+
+    '<div class="geo">Плиток: целых <b>'+G.full+'</b> · у края больших <b>'+G.big+'</b> · половинок <b>'+G.half+'</b> (2 из одной) → '+fmt(G.rawT)+' + запас = <b>'+G.nTile+'</b><br>Найза: '+G.rawN+' + запас = <b>'+G.nNz+'</b> · кругов: '+G.cells+' + запас = <b>'+G.nDisc+'</b></div>';
+    let tot=0;const P=palmaParts(G);
+    h+='<table class="rtab">'+P.map(p=>{const b=nestM({w:p.w,L:p.h,n:p.n},W);tot+=b?b.m:0;return '<tr><td>'+esc(p.nm)+'<div style="font-size:11px;color:var(--mut)">'+esc(p.col)+' · заготовка '+fmt(p.w)+' × '+fmt(p.h)+' мм</div></td><td><b>'+p.n+' шт</b><div style="font-size:11px;color:var(--mut)">'+(b?fmt(Math.round(b.m*100)/100)+' пог. м':'')+'</div></td></tr>'}).join('')+
+      (()=>{const ag=palmaAlik(G);if(!ag)return '';return '<tr class="grp"><td colspan="2">Аликафон по периметру '+fmt(Math.round(ag.SL*100)/100)+' м</td></tr>'+ag.P.map(x=>'<tr><td>'+x.nm+' <span class="who">'+esc(x.col)+'</span></td><td><b>'+fmt(x.m)+' м</b></td></tr>').join('')+ag.pa.concat(ALIK.pick&&ALIK.pick.alPlB=='none'?[]:ag.pb).map(x=>'<tr><td>'+x.nm+' <span class="who">'+esc(x.col)+'</span><div style="font-size:11px;color:var(--mut)">заготовка '+fmt(x.len)+' м</div></td><td><b>'+x.n+' шт</b></td></tr>').join('')})()+
+      palmaMeters(G).map(x=>'<tr><td>'+x.nm+'<div style="font-size:11px;color:var(--mut)">периметр + '+fmt(num(ALIK.zap)||3)+' м запас · по 4 м</div></td><td><b>'+fmt(x.m)+' м</b><div style="font-size:11px;color:var(--mut)">'+x.n+' шт × '+fmt(Math.ceil(x.m/x.n*100-1e-6)/100)+' м</div></td></tr>').join('')+
+      '<tr><td><b>Металл (рулон '+fmt(W/1000)+' м)</b></td><td><b>'+fmt(Math.round(tot*100)/100)+' пог. м</b></td></tr></table>'+
+      '<div class="rw2" style="margin-top:8px"><button class="pri" data-pgo>+ В заказ</button><button class="chip on" data-pdxf>📐 DXF: план + детали</button></div>'+
+      (A.frame=='kes'?'<div style="font-size:12px;color:var(--mut);margin-top:6px">По краю комнаты аликафон — добавьте его в «Аликафон шапка».</div>':'')}
+  else if(palmaRects().length)h+='<div class="hint">Комната слишком маленькая для Палмы</div>';
+  return h+'</div>'}
+function palmaRerender(){document.querySelectorAll('[data-palma]').forEach(c=>{const op=!!c.querySelector('details[open]');c.outerHTML=palmaHtml();if(op)document.querySelectorAll('[data-palma] details').forEach(d=>d.open=true)})}
+let PALMA_DIRTY=false;
+document.addEventListener('input',e=>{const t=e.target.closest('[data-palma] [data-pf]');if(!t)return;const k=t.dataset.pf,m=k.match(/^([lwxy])(\d+)$/);if(m)PALMA.rooms[+m[2]][m[1]]=t.value.replace(',','.');else PALMA[k]=t.value.replace(',','.');palmaSave()});
+document.addEventListener('change',e=>{if(e.target.closest('[data-palma] [data-pf]')){PALMA_DIRTY=true;setTimeout(palmaFlush,0)}});
+function palmaFlush(){if(!PALMA_DIRTY)return;const ae=document.activeElement;if(ae&&ae.closest&&ae.closest('[data-palma]')&&ae.matches('input'))return;PALMA_DIRTY=false;palmaRerender()}
+document.addEventListener('focusout',()=>setTimeout(palmaFlush,30));
+document.addEventListener('click',e=>{if(e.target.closest('[data-padd]')){PALMA.rooms.push({l:'',w:'',x:'0',y:'0'});palmaSave();palmaRerender();return}
+  const x=e.target.closest('[data-pdel]');if(x){PALMA.rooms.splice(+x.dataset.pdel,1);palmaSave();palmaRerender();return}
+  const fr=e.target.closest('[data-pfr]');if(fr){PALMA.frame=fr.dataset.pfr;palmaSave();palmaRerender();return}
+  if(e.target.closest('[data-pgo]')){palmaAdd();return}
+  if(e.target.closest('[data-pdxf]')){palmaDxf();return}});
+function palmaAdd(){const P=palmaParts();if(!P.length){toast('Впишите размеры комнаты');return}order=order.filter(l=>l.auto!=10);
+  P.forEach(p=>{const it=dilaItem(p.nm);if(!it)return;order.push({uid:Date.now()+Math.random(),itemId:it.id+':palma:'+p.k+p.w+'x'+p.h,icon:it.icon,name:p.nm+' '+fmt(p.w)+' × '+fmt(p.h)+' мм ('+p.col+')',unit:'pcs',len:'',qty:String(p.n),note:'',auto:10})});
+  palmaMeters(palmaGeo()).forEach(x=>{const it=itByIcon(9,x.ic)||allItems().find(i=>i.icon==x.ic);if(!it)return;const each=Math.ceil(x.m/x.n*100-1e-6)/100,dv=stripsOf(x.ic),l={uid:Date.now()+Math.random(),itemId:it.id+':palma',icon:it.icon,name:it.name,unit:'m',len:String(each),qty:String(x.n),note:(dv>1?dv+'б · ':'')+'Палма',auto:10,seg:(x.ic=='alPlint'?plinSeg():alikSeg(x.ic)).map(v=>fmt(v))};if(dv>1)l.div=String(dv);order.push(l)});
+  if(PALMA.frame=='kes'){const G=palmaGeo();if(G){ALIK.rows=[{w:String(num(PALMA.o)/1000),l:String(Math.round(palmaPer(G.R)*100)/100)}];const bv=ALIK.v;ALIK.v='1';try{alikAdd(true)}finally{ALIK.v=bv}store.set('rz_alik',ALIK)}}
+  save();renderCat();renderOrd();badge();if(curTab=='cli')renderCli();toast(PALMA.frame=='kes'?'Палма и аликафон добавлены в заказ':'Палма добавлена в заказ')}
+function palmaDxfText(){const G=palmaGeo();if(!G||!G.nTile)return null;const P=palmaParts(G);
+  const o=[];const a=(...x)=>o.push(...x.map(String));
+  const ln=(x1,y1,x2,y2,ly)=>a(0,'LINE',8,ly||'PLAN',10,x1.toFixed(2),20,y1.toFixed(2),30,0,11,x2.toFixed(2),21,y2.toFixed(2),31,0);
+  const tx=(x,y,h,s,ly)=>a(0,'TEXT',8,ly||'TEXT',10,x.toFixed(2),20,y.toFixed(2),30,0,40,h,1,lat(String(s)));
+  const pl=(pts,x,y,ly,cl=1)=>{a(0,'POLYLINE',8,ly||'CUT',66,1,10,0,20,0,30,0,70,cl);pts.forEach(([vx,vy,b])=>{a(0,'VERTEX',8,ly||'CUT',10,(x+vx).toFixed(3),20,(y+vy).toFixed(3),30,0);if(b)a(42,(+b).toFixed(6))});a(0,'SEQEND',8,ly||'CUT')};
+  a(0,'SECTION',2,'HEADER',9,'$ACADVER',1,'AC1009',9,'$DWGCODEPAGE',3,'ANSI_1251',9,'$INSUNITS',70,4,0,'ENDSEC');
+  a(0,'SECTION',2,'TABLES',0,'TABLE',2,'LAYER',70,3);[['CUT',7],['TEXT',3],['PLAN',8]].forEach(([n,c])=>a(0,'LAYER',2,n,70,0,62,c,6,'CONTINUOUS'));a(0,'ENDTAB',0,'ENDSEC');
+  a(0,'SECTION',2,'ENTITIES');
+  // план: комната, плитки (ромбы) с линией загиба, круги
+  const ox=-G.bx0,oy=-G.by0;G.R.forEach(r=>pl([[r.x,r.y],[r.x+r.l,r.y],[r.x+r.l,r.y+r.w],[r.x,r.y+r.w]],ox,oy,'PLAN'));
+  G.tiles.filter(t=>t.f>=0.5).forEach(t=>{pl(t.Q,ox,oy,'PLAN');ln(t.Q[0][0]+ox,t.Q[0][1]+oy,t.Q[2][0]+ox,t.Q[2][1]+oy)});
+  G.cen.forEach(c=>pl([[c[0]-55,c[1],1],[c[0]+55,c[1],1]],ox,oy,'PLAN'));
+  const h0=readHead(),th=curTh()||'';tx(0,G.by1-G.by0+400,400,(h0.hClient||'')+'  Palma  '+(h0.hDate||today()));
+  // детали справа от плана
+  let x=G.bx1-G.bx0+1500;
+  const shape={tile:PTPL.tile[2],nz:PTPL.nz[2],disc:[[0,55,1],[110,55,1]]};
+  P.forEach(p=>{pl(shape[p.k]||dtplPts(p.tp,p.w,p.h),x,0);dtplHoles(p.tp||'',p.w,p.h).forEach(H=>pl(H,x,0));tx(x,(p.k=='disc'?110:p.h)+80,60,String(p.n));tx(x,-160,50,(th?th+' ':'')+lat(p.col.split(' ')[0]));x+=Math.max(p.w,420)+300});
+  a(0,'ENDSEC',0,'EOF');return o.join('\r\n')+'\r\n'}
+function palmaDxf(){const t=palmaDxfText();if(!t){toast('Впишите размеры комнаты');return}const h0=readHead();
+  const name=lat('Palma_'+(h0.hClient||'')+'_'+(h0.hDate||today())).replace(/[\\/:*?"<>|\s]+/g,'_');
+  (async()=>{try{if(!dl){try{dl=await window.claude.use('downloads')}catch(_){}}if(!dl){toast('Скачивание недоступно');return}
+    await dl.save({filename:name+'.dxf',data:new Blob([cp1251(t)],{type:'application/dxf'})});toast('DXF Палмы готов')}catch(e){if(!(e&&e.code=='declined'))toast('Ошибка: '+(e&&e.message||e))}})()}
+
 function dilaItem(nm){const A=allItems();return A.find(i=>i.cat==8&&i.name==nm)||A.find(i=>i.cat==8&&i.unit=='face')||A.find(i=>i.cat==8)}
 function dilaAdd(){const P=dilaParts();if(!P.length){toast('Впишите размеры помещения');return}order=order.filter(l=>l.auto!=8);
   P.forEach(p=>{const it=dilaItem(p.nm);if(!it)return;order.push({uid:Date.now()+Math.random(),itemId:it.id+':'+p.nm+p.w+'x'+p.h,icon:it.icon,name:p.nm+' '+fmt(p.w)+' × '+fmt(p.h)+' мм',unit:'pcs',len:'',qty:String(p.n),note:'',auto:8,dila:{w:p.w,h:p.h,tp:p.tp}})});
