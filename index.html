@@ -612,6 +612,7 @@ body.worker.tsex main>#vProd{display:block!important}body.worker.tsex main>#vPro
 .prl{margin:8px 0;padding:8px 10px;background:#f8fafc;border-radius:10px;font-size:14px;line-height:1.55}.prl span{color:var(--mut);font-size:12px}.prl i{color:#b45309}
 .prph{width:100%;max-height:260px;object-fit:cover;border-radius:10px;margin:6px 0;cursor:zoom-in}
 .prc .stb .stn{padding:14px;font-size:16px}
+.aicw{margin-top:8px}.aics{font-size:12px;color:#475569}.aics a{color:#4f46e5}.aicg{margin-top:6px;overflow:auto}
 </style>
 </head>
 <body class="worker">
@@ -939,6 +940,15 @@ const aiSample={async json(prompt,opt){await appCheckOn();if(!RECAPTCHA_SITE_KEY
       const r=await model.generateContent('Скажи спокойно, уверенно и дружелюбно, как вежливый личный помощник, в обычном темпе: '+text);
       const parts=(r.response.candidates&&r.response.candidates[0]&&r.response.candidates[0].content.parts)||[];const p=parts.find(x=>x.inlineData);if(!p)throw new Error('нет аудио');
       return {data:p.inlineData.data,mime:p.inlineData.mimeType||'audio/pcm;rate=24000'}}catch(e){last=e;continue}}
+    throw last},
+  // ответ с поиском Google (свежие новости, курсы, цены, погода)
+  async web(prompt){await appCheckOn();const {getAI,getGenerativeModel,GoogleAIBackend}=await import('https://www.gstatic.com/firebasejs/12.19.0/firebase-ai.js');
+    const ai=getAI(await aiApp(),{backend:new GoogleAIBackend()});let last=null;
+    for(const m of [window.__AI_MODEL||'gemini-flash-latest','gemini-2.5-flash','gemini-flash-latest']){try{
+      const model=getGenerativeModel(ai,{model:m,tools:[{googleSearch:{}}]});const r=await model.generateContent(prompt);
+      const c=(r.response.candidates||[])[0]||{},g=c.groundingMetadata||{};
+      return {text:r.response.text(),rendered:(g.searchEntryPoint&&g.searchEntryPoint.renderedContent)||'',sources:(g.groundingChunks||[]).map(x=>x.web).filter(Boolean).map(w=>({uri:w.uri,title:w.title}))}}
+      catch(e){last=e;const t=String(e&&e.message||e);if(/not found|404|\[50[03]|\[429|high demand|overloaded|unavailable/i.test(t))continue;throw e}}
     throw last},
   async text(prompt,opt){const r=await this.json(prompt+'\nОтветь JSON: {"text":"..."}',opt);return r&&r.text||''}};
 window.__aiSample=aiSample;
@@ -3358,20 +3368,22 @@ function aiCtx(){const so=saved.slice().sort((a,b)=>(b.ts||0)-(a.ts||0)).slice(0
   return {today:today(),program_mode:MODE=='tun'?'тунукабонд':'кровля',user:IS_OWNER?'руководитель (владелец)':'сотрудник',orders:so,stock,staff,attendance,
     catalog:allItems().filter(i=>!i.hidden).map(i=>i.id+' | '+i.name+' | '+(i.unit=='m'?'м×шт':i.unit)),
     current_order_on_screen:{client:$('hClient').value,phone:$('hPhone').value,lines:order.map(l=>l.name+(l.len?' '+l.len+'м':'')+(l.qty?' ×'+l.qty:''))}}}
-function aicRender(){const b=$('aicMsgs');if(!b)return;b.innerHTML=(AIC_H.length?'':'<div class="aic-hi">✦ Салом! Я <b>Джарвис</b> — ваш ИИ-помощник. Спросите что угодно по программе: долги, заказы, склад, сотрудники.<br>Или скажите: «сделай заказ: карниз 2 м 5 штук, конёк 3 м 2 штуки».<br><small>🎤 — голосом · 📷 — с фото</small><div class="aicq">'+['Кто сегодня пришёл и кто нет?','Кто опоздал?','Какой заказ на каком этапе?','Что сейчас на лазере и гибке?','Кто должен больше всех?','Что осталось на складе?'].map(q=>'<button data-aicq="'+q+'">'+q+'</button>').join('')+'</div></div>')+
-  AIC_H.map((m,i)=>'<div class="aic-m '+(m.r=='u'?'u':'a')+'">'+(m.r=='a'?'<small class="aicn">✦ Джарвис</small>':'')+(m.img?'<img src="'+m.img+'">':'')+esc(m.t).replace(/\n/g,'<br>')+(m.order&&m.order.lines&&m.order.lines.length&&!m.done?'<button class="aic-act" data-aicadd="'+i+'">➕ Добавить в заказ ('+m.order.lines.length+' стр.)</button>':'')+(m.open?'<button class="aic-act" data-aicopen="'+m.open+'">Открыть →</button>':'')+'</div>').join('')+(AIC_BUSY?'<div class="aic-m a"><small class="aicn">✦ Джарвис</small>думаю…</div>':'');b.scrollTop=b.scrollHeight}
+function aicRender(){const b=$('aicMsgs');if(!b)return;b.innerHTML=(AIC_H.length?'':'<div class="aic-hi">✦ Салом! Я <b>Джарвис</b> — ваш ИИ-помощник. Спросите что угодно — по программе (долги, заказы, склад, сотрудники) или любой другой вопрос.<br>Свежее из интернета (новости, курс, погода) — тоже ищу в Google.<br>Или скажите: «сделай заказ: карниз 2 м 5 штук, конёк 3 м 2 штуки».<br><small>🎤 — голосом · 📷 — с фото</small><div class="aicq">'+['Кто сегодня пришёл и кто нет?','Кто опоздал?','Какой заказ на каком этапе?','Что сейчас на лазере и гибке?','Кто должен больше всех?','Что осталось на складе?'].map(q=>'<button data-aicq="'+q+'">'+q+'</button>').join('')+'</div></div>')+
+  AIC_H.map((m,i)=>'<div class="aic-m '+(m.r=='u'?'u':'a')+'">'+(m.r=='a'?'<small class="aicn">✦ Джарвис</small>':'')+(m.img?'<img src="'+m.img+'">':'')+esc(m.t).replace(/\n/g,'<br>')+(m.order&&m.order.lines&&m.order.lines.length&&!m.done?'<button class="aic-act" data-aicadd="'+i+'">➕ Добавить в заказ ('+m.order.lines.length+' стр.)</button>':'')+(m.open?'<button class="aic-act" data-aicopen="'+m.open+'">Открыть →</button>':'')+(m.web?'<div class="aicw">'+(m.web.sources&&m.web.sources.length?'<div class="aics">🌐 Источники: '+m.web.sources.slice(0,5).map(x=>'<a href="'+esc(x.uri)+'" target="_blank" rel="noopener">'+esc(x.title||'ссылка')+'</a>').join(' · ')+'</div>':'')+(m.web.rendered?'<div class="aicg">'+m.web.rendered+'</div>':'')+'</div>':'')+'</div>').join('')+(AIC_BUSY?'<div class="aic-m a"><small class="aicn">✦ Джарвис</small>думаю…</div>':'');b.scrollTop=b.scrollHeight}
 function aicOpen(){let w=$('aiChat');if(!w){w=document.createElement('div');w.id='aiChat';w.innerHTML='<div class="aic-bar"><b><span class="aich">✦</span> Джарвис <small style="font-weight:600;opacity:.7;font-size:12px">ИИ-помощник</small></b><button data-aicvoice title="голос" id="aicVoice">🔊</button><button data-aicclr title="очистить">🧹</button><button data-aicx>✕</button></div><div id="aicMsgs"></div><div id="aicPrev"></div><div class="aic-in"><label class="aic-b" title="фото">📷<input type="file" accept="image/*" id="aicFile" hidden></label><textarea id="aicQ" rows="1" placeholder="Спросите Джарвиса…"></textarea><button class="aic-b" id="aicMic" title="голосом">🎤</button><button class="aic-b go" id="aicGo">➤</button></div>';document.body.appendChild(w)}
   w.classList.add('show');aicVoiceBtn();if(!(window.SpeechRecognition||window.webkitSpeechRecognition))$('aicMic').style.display='none';aicRender();setTimeout(()=>$('aicQ').focus(),100)}
 async function aicSend(){const q=$('aicQ').value.trim();if((!q&&!AIC_IMG)||AIC_BUSY)return;const img=AIC_IMG;AIC_IMG=null;$('aicPrev').innerHTML='';$('aicQ').value='';
   AIC_H.push({r:'u',t:q||'(фото)',img});AIC_BUSY=true;aicRender();
   const hist=AIC_H.slice(-8,-1).map(m=>(m.r=='u'?'Пользователь: ':'Помощник: ')+m.t).join('\n');
   const P='Тебя зовут Джарвис. Ты — ИИ-помощник внутри программы SPS Group (табель сотрудников: кто пришёл, кто не пришёл, опоздания — в attendance; этапы заказов: Заказ принят → Лазер принял/передал → Резка → Гибка → Готов → Отгружен — поле stage и stage_since у каждого заказа) (кровля, доборные элементы, тунукабонд — металлические потолки и фасады; склад рулонов; заказы; долги клиентов; сотрудники). '+
-   'Отвечай КОРОТКО и по делу, на том же языке, на котором спросили (русский, узбекский кириллица/латиница или английский). Суммы — в сумах с пробелами между тысячами. Опирайся ТОЛЬКО на данные ниже; если данных нет — так и скажи.\n'+
+   'Отвечай КОРОТКО и по делу, на том же языке, на котором спросили (русский, узбекский кириллица/латиница или английский). Суммы — в сумах с пробелами между тысячами. На вопросы про заказы, долги, склад, сотрудников, этапы опирайся ТОЛЬКО на данные программы ниже (если там нет — так и скажи, не выдумывай). На ЛЮБЫЕ другие вопросы (общие знания, советы, расчёты, металл и кровля, перевод, бизнес, жизнь) отвечай свободно из своих знаний, как умный помощник. Если для ответа нужны СВЕЖИЕ данные из интернета (новости, курсы валют и цены на сегодня, погода, адреса и телефоны компаний, события) — поставь "web":true и в "search" напиши, что искать.\n'+
    'Если пользователь просит СДЕЛАТЬ/ДОБАВИТЬ заказ — заполни order: подбери детали из catalog (id), длину len в метрах и количество qty. Если просит открыть раздел — open: одно из home, log, sk, cli, ord, cat, des, tab, pl, cl.\n'+
    (img?'К вопросу приложено фото — используй его.\n':'')+
    '\nДАННЫЕ ПРОГРАММЫ (JSON):\n'+JSON.stringify(aiCtx())+'\n\nПРЕДЫДУЩИЙ РАЗГОВОР:\n'+(hist||'—')+'\n\nВОПРОС: '+(q||'что на фото?')+
-   '\n\nОтветь ТОЛЬКО JSON: {"answer":"текст ответа","order":null,"open":null} — где order при необходимости = {"client":"","phone":"","lines":[{"id":"...","name":"...","len":2,"qty":5}]}';
+   '\n\nОтветь ТОЛЬКО JSON: {"answer":"текст ответа","order":null,"open":null,"web":false,"search":""} — где order при необходимости = {"client":"","phone":"","lines":[{"id":"...","name":"...","len":2,"qty":5}]}';
   try{const sm=await aiSm();const r=await sm.json(P,img?{images:[dataToBlob(img)],modelTier:'default'}:{modelTier:'default'});
+    if(r&&r.web&&sm.web){try{const w=await sm.web('Ответь коротко и по делу на том же языке, что и вопрос (русский/узбекский/английский). Вопрос: '+(q||'')+(r.search?'\nЧто искать: '+r.search:'')+'\nСегодня: '+today());
+      AIC_H.push({r:'a',t:w.text||'…',web:w});aicSay(w.text||'');AIC_BUSY=false;aicRender();return}catch(_){}}
     aicSay((r&&r.answer)||'');AIC_H.push({r:'a',t:(r&&r.answer)||'…',order:r&&r.order&&r.order.lines&&r.order.lines.length?r.order:null,open:r&&r.open||null})}
   catch(e){AIC_H.push({r:'a',t:'Не получилось ответить.'+aiWhy(e)})}
   AIC_BUSY=false;aicRender()}
