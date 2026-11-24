@@ -1121,9 +1121,11 @@ function koshReach(){const k=DEFSEG.alKosh;return Math.round(num(k[1])+num(k[3])
 function karnReach(){const k=DEFSEG.alKarn;return Math.round(num(k[4])*Math.SQRT1_2+num(k[5])-3)}
 const PLV={'1':[5,3.5],'2':[6,5],'3':[5.5,4]};
 function plinSeg(){if(ALIK.plv=='4')return [4.5,4,3.5,2,1];const v=PLV[ALIK.plv||'1']||PLV['1'];return [v[0],Math.round((num(ALIK.rise||'3')+2.2)*10)/10,v[1],2,1]}
-function alikPick(ic){const id=ALIK.pick&&ALIK.pick[ic];return id?allItems().find(i=>i.id==id)||null:null}
-function stripsOf(icon){const pk=alikPick(icon);const sg=pk?(DEFSEG[pk.icon]||[]):icon=='alPlint'?plinSeg():(DEFSEG[icon]||[]);const w=sg.reduce((a,x)=>a+num(x),0);return w?Math.max(1,Math.floor(125/w+1e-9)):1}
-function alikStep(){const A=ALIK;if(num(A.step)&&A.step!='0.57')return num(A.step);const a=(DEFSEG.alPlA||[])[2],b=(DEFSEG.alPlB||[])[2];return (num(a)+num(b))/100||0.594}
+function alikPick(ic){const id=ALIK.pick&&ALIK.pick[ic];return id&&id!='none'?allItems().find(i=>i.id==id)||null:null}
+function stripsOf(icon){const pk=alikPick(icon);const sg=pk?(DEFSEG[pk.icon]||[]):icon=='alPlint'?plinSeg():/^alPl[AB]$/.test(icon)?alikSeg(icon):(DEFSEG[icon]||[]);const w=sg.reduce((a,x)=>a+num(x),0);return w?Math.max(1,Math.floor(125/w+1e-9)):1}
+function alikSeg(ic){const o=ALIK.segs&&ALIK.segs[ic];if(o){const a=String(o).split(/[\s,;]+/).map(num).filter(v=>v>0);if(a.length)return a}return DEFSEG[ic]||[]}
+function alikFace(ic){const p=ALIK.pick&&ALIK.pick[ic];if(p=='none')return 0;const pk=alikPick(ic);const sg=pk?DEFSEG[pk.icon]:alikSeg(ic);return pk?Math.max(...(sg||[0]).map(num)):num((sg||[])[2])}
+function alikStep(){const A=ALIK;if(num(A.step)&&A.step!='0.57')return num(A.step);return (alikFace('alPlA')+alikFace('alPlB'))/100||0.594}
 function alikPlan(){const A=ALIK,V1=A.v=='1',off=num(A.off)/100,st=alikStep(),zap=num(A.zap);const R=A.rows.map(r=>{const w=num(r.w),l=num(r.l);if(!w||!l)return null;const kas=Math.round((w-off)*100)/100,n=num(r.n)||Math.max(1,Math.round(l/st));return {w,l,kas,n}}).filter(Boolean);
   if(!R.length)return null;const SL=R.reduce((a,r)=>a+r.l,0),N=R.reduce((a,r)=>a+r.n,0),lb=num(A.lenB)||0.55;
   const P=[['alKosh','Кош',Math.round((SL+zap)*100)/100,A.cK]].concat(V1?[]:[['alKarn','Карниз',Math.round((SL+zap)*100)/100,A.cKr]]).concat([['alPlint','Плинтус',Math.round((SL+zap)*100)/100,A.cP]]).map(([ic,nm,m,col])=>({ic,nm,m,col,div:stripsOf(ic)}));
@@ -1138,7 +1140,7 @@ function alikHtml(){const A=ALIK,g=alikPlan(),inp=(k,v,ph,w)=>'<input data-af="'
    '<button class="chip" data-arow-add>+ Полоса</button>'+
    '<details class="rpar"><summary>Настройки расчёта</summary><label>Кассета короче полосы на, см '+inp('off',A.off,'25')+'</label><div style="font-size:12px;color:var(--mut)">Клиент даёт чистый размер. Кош занимает '+koshReach()+' см (2 + 5 + 7)'+(A.v=='1'?'':', карниз — '+karnReach()+' см (4 + 6 − 3, кассета заходит 3 см)')+', поэтому кассета на '+(A.v=='1'?koshReach():koshReach()+karnReach())+' см короче.</div><label>Шаг ряда (кассета 1 + кассета 2), м '+inp('step',A.step&&A.step!='0.57'?A.step:'',String(Math.round(alikStep()*1000)/1000))+'</label><label>Запас коша, карниза, плинтуса, м '+inp('zap',A.zap,'3')+'</label><label>Подъём кассеты, см (плинтус = подъём + 2.2) '+inp('rise',A.rise,'3')+'</label><label>Плинтус <select data-af="plv">'+[['1','5 · 3.5 (7 из ширины)'],['2','6 · 5 (6 из ширины)'],['3','5.5 · 4 (7 из ширины)'],['4','под карнизом 4.5 · 4 · 3.5 (8 из ширины)']].map(o=>'<option value="'+o[0]+'"'+((A.plv||'1')==o[0]?' selected':'')+'>'+o[1]+'</option>').join('')+'</select></label><label>Заготовка кассеты 1 длиннее низа на, см '+inp('addK',A.addK,'13')+'</label>'+
    '</details><div class="rpar" style="display:block"><div style="font-weight:700;margin:6px 0 4px">🎨 Цвета деталей (RAL)</div><div style="display:flex;flex-wrap:wrap;gap:6px 12px">'+[['cK','Кош'],['cKr','Карниз'],['cP','Плинтус'],['cA','Кассета 1 (большая)'],['cB','Кассета 2 (маленькая)']].filter(([k])=>!(A.v=='1'&&k=='cKr')).map(([k,l])=>'<label>'+l+' '+inp(k,A[k],'9003',80).replace('<input','<input list="ralList"')+'</label>').join('')+'</div><datalist id="ralList">'+RAL.map(c=>'<option value="'+esc(c[0])+'">'+esc(c[1]||'')+'</option>').join('')+'</datalist></div>'+alikPickHtml(A);
-  if(g){h+='<div style="font-size:12px;color:var(--mut);margin:8px 0 4px;white-space:normal">Сумма длин полос: <b>'+fmt(Math.round(g.SL*100)/100)+' м</b> · в ряду: кассета 1 ('+fmt(num(DEFSEG.alPlA[2]))+' см) + кассета 2 ('+fmt(num(DEFSEG.alPlB[2]))+' см) = шаг '+fmt(Math.round(alikStep()*1000)/10)+' см · кассет: <b>'+g.N+' + '+g.N+' шт</b></div><table class="rtab">'+
+  if(g){h+='<div style="font-size:12px;color:var(--mut);margin:8px 0 4px;white-space:normal">Сумма длин полос: <b>'+fmt(Math.round(g.SL*100)/100)+' м</b> · в ряду: кассета 1 ('+fmt(alikFace('alPlA'))+' см)'+(alikFace('alPlB')?' + кассета 2 ('+fmt(alikFace('alPlB'))+' см)':'')+' = шаг '+fmt(Math.round(alikStep()*1000)/10)+' см · кассет: <b>'+g.N+(alikFace('alPlB')?' + '+g.N:'')+' шт</b></div><table class="rtab">'+
     g.P.map(x=>'<tr><td>'+x.nm+' <span class="who">'+esc(x.col)+'</span><div style="font-size:11px;color:var(--mut)">полосы + '+fmt(num(A.zap))+' м запас · '+x.div+' из ширины рулона</div></td><td><b>'+fmt(x.m)+' м</b><div style="font-size:11px;color:var(--mut)">рулона '+fmt(Math.round(x.m/x.div*10)/10)+' м</div></td></tr>').join('')+
     g.kas.map(x=>'<tr><td>'+x.nm+'</td><td><b>'+x.n+' шт</b></td></tr>').join('')+
     g.pa.map(x=>'<tr><td>'+x.nm+' <span class="who">'+esc(x.col)+'</span><div style="font-size:11px;color:var(--mut)">заготовка '+fmt(x.len)+' м (низ + борт 10 + загибы) · '+x.div+' из ширины</div></td><td><b>'+x.n+' шт</b><div style="font-size:11px;color:var(--mut)">рулона '+fmt(Math.round(x.n*x.len/x.div*10)/10)+' м</div></td></tr>').join('')+
@@ -1162,11 +1164,11 @@ document.addEventListener('focusout',()=>setTimeout(alikFlush,30));
 document.addEventListener('click',e=>{const av=e.target.closest('[data-av]');if(av){ALIK.v=av.dataset.av;ALIK.off=ALIK.v=='1'?String(koshReach()):String(koshReach()+karnReach());if(ALIK.v=='2')ALIK.plv='4';else if(ALIK.plv=='4')ALIK.plv='1';alikSave();alikRerender();return}if(e.target.closest('[data-arow-add]')){ALIK.rows.push({w:'',l:''});alikSave();alikRerender('w'+(ALIK.rows.length-1));return}
   const d=e.target.closest('[data-arow-del]');if(d){ALIK.rows.splice(+d.dataset.arowDel,1);alikSave();alikRerender()}});
 function alikAdd(quiet){const g=alikPlan();if(!g){if(!quiet)toast('Впишите ширину и длину полос');return}let n=0;const it=ic=>itByIcon(9,ic);order=order.filter(l=>l.auto!=9&&!emptyOf(l,9));
-  const push=(ic,name,len,qty,div,col)=>{const pk=alikPick(ic),x=pk||it(ic);if(!x||!qty)return;if(pk)name=pk.name+(name.match(/ — .*$/)||[''])[0];const l={uid:Date.now()+Math.random(),itemId:x.id+':'+name,icon:x.icon,name,unit:x.unit,len:len?String(len):'',qty:String(qty),note:[div>1?div+'б':'',col||''].filter(Boolean).join(' · '),auto:9};if(div>1)l.div=String(div);if(col)l.col=String(col);if(pk)l.seg=(DEFSEG[pk.icon]||[]).map(v=>fmt(v));else if(ic=='alPlint')l.seg=plinSeg().map(v=>fmt(v));order.push(l);n++};
+  const push=(ic,name,len,qty,div,col)=>{const pk=alikPick(ic),x=pk||it(ic);if(!x||!qty)return;if(pk)name=pk.name+(name.match(/ — .*$/)||[''])[0];const l={uid:Date.now()+Math.random(),itemId:x.id+':'+name,icon:x.icon,name,unit:x.unit,len:len?String(len):'',qty:String(qty),note:[div>1?div+'б':'',col||''].filter(Boolean).join(' · '),auto:9};if(div>1)l.div=String(div);if(col)l.col=String(col);if(pk)l.seg=(DEFSEG[pk.icon]||[]).map(v=>fmt(v));else if(ic=='alPlint')l.seg=plinSeg().map(v=>fmt(v));else if(/^alPl[AB]$/.test(ic)&&ALIK.segs&&ALIK.segs[ic])l.seg=alikSeg(ic).map(v=>fmt(v));order.push(l);n++};
   g.P.forEach(x=>{const k=Math.max(1,Math.ceil(x.m/MAXSHEET-1e-9)),each=Math.ceil(x.m/k*100-1e-6)/100;push(x.ic,x.nm,each,k,x.div,x.col)});
   g.kas.forEach(x=>push('alKas',x.nm,'',x.n,1,''));
   g.pa.forEach(x=>push('alPlA',x.nm,x.len,x.n,x.div,x.col));
-  g.pb.forEach(x=>push('alPlB',x.nm,x.len,x.n,x.div,x.col));
+  if(!(ALIK.pick&&ALIK.pick.alPlB=='none'))g.pb.forEach(x=>push('alPlB',x.nm,x.len,x.n,x.div,x.col));
   save();renderCat();renderOrd();badge();if(curTab=='cli')renderCli();if(!quiet)toast('Добавлено в заказ: '+n+' строк')}
 // ---------- расчёт по размерам помещения ----------
 const ROOMCATS=[7,9];
@@ -1366,7 +1368,7 @@ function faceText(l){const f=faceCalc(l);if(!f)return '';return 'Фасад '+fm
 // раскрой: результат деления режем на равные листы не длиннее 4 м
 const MAXSHEET=4;
 function cutPlan(l){ if(!(l.unit=='m'&&isGroup(l))) return null; const len=num(l.len),q=num(l.qty); if(!len||!q) return null; const d=divOf(l);
-  if(d<=1){ if(len<=MAXSHEET) return null; const t=meters(l),n=Math.ceil(t/MAXSHEET-1e-9);return {n,each:Math.ceil(t/n*100-1e-6)/100,pieces:true,parts:[[n,Math.ceil(t/n*100-1e-6)/100]]} }
+  if(d<=1){ if(len<=MAXSHEET+1e-9){const n=Math.round(q*noteNum(l));return razv(l)>0&&n?{n,each:len,div:1,parts:[[n,len]],m:n*len}:null} const t=meters(l),n=Math.ceil(t/MAXSHEET-1e-9);return {n,each:Math.ceil(t/n*100-1e-6)/100,pieces:true,parts:[[n,Math.ceil(t/n*100-1e-6)/100]]} }
   // кассеты цельные — лист режется на длину кассеты
   if(/^alPl[AB]$/.test(l.icon)&&len<=MAXSHEET+1e-9){const n=Math.ceil(q/d-1e-9);return {n,each:len,div:d,parts:[[n,len]],m:n*len}}
   // расход листа = общий метраж ÷ сколько полос из листа; листы не длиннее 4 м
@@ -2564,17 +2566,20 @@ function dilaPlansHtml(){if(!order.some(l=>l.auto==8))return '';const G=(DILA.ro
 
 // выбор своих деталей в Аликафоне: вместо стандартного коша/карниза/плинтуса — любая деталь с профилем из каталога (в т.ч. нарисованная)
 function alikPickHtml(A){const L=allItems().filter(i=>i.unit=='m'&&DEFSEG[i.icon]&&!i.hidden&&!/^alPl[AB]$|^alKas$/.test(i.icon));
-  const roles=[['alKosh','Кош'],['alKarn','Карниз'],['alPlint','Плинтус']].filter(([k])=>!(A.v=='1'&&k=='alKarn'));
+  const roles=[['alKosh','Кош'],['alKarn','Карниз'],['alPlint','Плинтус'],['alPlA','Кассета 1'],['alPlB','Кассета 2']].filter(([k])=>!(A.v=='1'&&k=='alKarn'));
   return '<div class="rpar" style="display:block;margin-top:6px"><div style="font-weight:700;margin:6px 0 4px">🧩 Детали дизайна</div><div style="display:flex;flex-wrap:wrap;gap:6px 12px">'+
-    roles.map(([k,n])=>'<label>'+n+' <select data-apick="'+k+'" style="max-width:220px"><option value="">стандартный</option>'+L.map(i=>'<option value="'+i.id+'"'+((A.pick||{})[k]==i.id?' selected':'')+'>'+esc(i.name)+' ('+fmt(DEFSEG[i.icon].reduce((a,v)=>a+num(v),0))+' см)</option>').join('')+'</select></label>').join('')+
-    '</div><div style="font-size:12px;color:var(--mut);margin-top:4px">Свою деталь сначала нарисуйте в каталоге («✏️ Нарисовать свою деталь»). Если ширина коша или карниза другая — поправьте «Кассета короче полосы на».</div></div>'}
+    roles.map(([k,n])=>'<label>'+n+' <select data-apick="'+k+'" style="max-width:220px"><option value="">стандартная</option>'+(k=='alPlB'?'<option value="none"'+((A.pick||{})[k]=='none'?' selected':'')+'>нет (только кассета 1)</option>':'')+L.map(i=>'<option value="'+i.id+'"'+((A.pick||{})[k]==i.id?' selected':'')+'>'+esc(i.name)+' ('+fmt(DEFSEG[i.icon].reduce((a,v)=>a+num(v),0))+' см)</option>').join('')+'</select>'+(/^alPl[AB]$/.test(k)&&!(A.pick||{})[k]?' <input data-aseg="'+k+'" value="'+esc((A.segs||{})[k]||(DEFSEG[k]||[]).join(' '))+'" title="размеры загибов, см" style="width:150px">':'')+'</label>').join('')+
+    '</div><div style="font-size:12px;color:var(--mut);margin-top:4px">У кассет рядом можно поменять размеры загибов (см, через пробел), например «1.5 3 60 3 1.5». Свою деталь можно нарисовать в каталоге («✏️ Нарисовать свою деталь»). Если ширина коша или карниза другая — поправьте «Кассета короче полосы на».</div></div>'}
 document.addEventListener('change',e=>{const t=e.target.closest('[data-apick]');if(!t)return;ALIK.pick=ALIK.pick||{};if(t.value)ALIK.pick[t.dataset.apick]=t.value;else delete ALIK.pick[t.dataset.apick];alikSave();
   document.querySelectorAll('[data-alik]').forEach(c=>{const op=!!c.querySelector('details[open]');c.outerHTML=alikHtml();if(op)document.querySelectorAll('[data-alik] details').forEach(d=>d.open=true)});toast('Деталь выбрана')});
+document.addEventListener('change',e=>{const t=e.target.closest('[data-aseg]');if(!t)return;ALIK.segs=ALIK.segs||{};const v=t.value.trim(),k=t.dataset.aseg;if(!v||v==(DEFSEG[k]||[]).join(' '))delete ALIK.segs[k];else ALIK.segs[k]=v;alikSave();
+  document.querySelectorAll('[data-alik]').forEach(c=>{const op=!!c.querySelector('details[open]');c.outerHTML=alikHtml();if(op)document.querySelectorAll('[data-alik] details').forEach(d=>d.open=true)});toast('Размер кассеты: '+(alikSeg(k).reduce((a,x)=>a+x,0))+' см')});
 // ===================== РИСУЕМ СВОЮ ДЕТАЛЬ (профиль): отрезок за отрезком =====================
 // каждый отрезок: длина в см + направление (8 стрелок). Сохраняется в каталог, видна всем, считается развёртка, листы, DXF.
 const DIRS=[['→',1,0],['↘',1,1],['↓',0,1],['↙',-1,1],['←',-1,0],['↖',-1,-1],['↑',0,-1],['↗',1,-1]];
 let DRW={id:'',name:'',cat:2,unit:'m',segs:[{v:'10',d:2},{v:'5',d:0}]};
-function drwPts(segs,box){let x=0,y=0;const P=[[0,0]];segs.forEach(sg=>{const D=DIRS[sg.d]||DIRS[0],k=(D[1]&&D[2])?Math.SQRT1_2:1,v=Math.max(0.3,num(sg.v)||1);x+=D[1]*k*v;y+=D[2]*k*v;P.push([x,y])});
+function drwPts(segs,box){let x=0,y=0;const P=[[0,0]];// длинные отрезки на рисунке укорачиваем, чтобы мелкие загибы были видны
+  segs.forEach(sg=>{const D=DIRS[sg.d]||DIRS[0],k=(D[1]&&D[2])?Math.SQRT1_2:1,v0=Math.max(0.3,num(sg.v)||1),v=v0<=12?v0:12+Math.sqrt(v0-12)*2.2;x+=D[1]*k*v;y+=D[2]*k*v;P.push([x,y])});
   const xs=P.map(p=>p[0]),ys=P.map(p=>p[1]),w=Math.max(...xs)-Math.min(...xs)||1,h=Math.max(...ys)-Math.min(...ys)||1,[BW,BH,M]=box||[60,40,5];
   const sc=Math.min((BW-2*M)/w,(BH-2*M)/h),ox=(BW-w*sc)/2-Math.min(...xs)*sc,oy=(BH-h*sc)/2-Math.min(...ys)*sc;return P.map(([a,b])=>[Math.round((a*sc+ox)*10)/10,Math.round((b*sc+oy)*10)/10])}
 function drwPreview(){const P=drwPts(DRW.segs,[300,200,26]);let e='<polyline points="'+P.map(p=>p.join(',')).join(' ')+'" fill="none" stroke="#1e1b4b" stroke-width="4" stroke-linejoin="round" stroke-linecap="round"/>';
