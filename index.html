@@ -2132,12 +2132,15 @@ function pmChips(cur,attr){return Object.keys(PM).map(k=>'<button type="button" 
 let USD=null,USD_DB=null;
 function dNum(d){const m=String(d||'').match(/(\d{1,2})\.(\d{1,2})\.(\d{4})/);return m?+m[3]*10000+ +m[2]*100+ +m[1]:0}
 function usdMerge(){const a=USD_AUTO&&USD_AUTO.rate?USD_AUTO:null,b=USD_DB&&USD_DB.rate?USD_DB:null;
-  USD=b&&(!a||dNum(b.date)>dNum(a.date))?{...b,auto:false}:a?{...(b||{}),rate:a.rate,date:a.date,auto:true}:b;if(USD&&a){USD.buy=a.buy;USD.sell=a.sell;USD.buyBank=a.buyBank;USD.sellBank=a.sellBank}usdShow();if(curTab=='home')renderHome()}
+  USD=b&&(!a||dNum(b.date)>=dNum(a.date))?{...b,auto:false}:a?{...(b||{}),rate:a.rate,date:a.date,auto:true}:b;if(USD&&a){USD.buy=a.buy;USD.sell=a.sell;USD.buyBank=a.buyBank;USD.sellBank=a.sellBank}usdShow();if(curTab=='home')renderHome()}
 function usdShow(){const b=$('usdB');if(!b)return;if(!USD||!USD.rate){b.innerHTML='$ курс<small>'+(IS_OWNER?'вписать':'—')+'</small>';b.classList.toggle('old',IS_OWNER);return}
   b.innerHTML='$1 = '+money(USD.rate)+'<small>'+(USD.auto?'ЦБ на '+esc(USD.date.slice(0,5)):USD.date==today()?'свой курс':'от '+esc(USD.date))+'</small>'+(USD.buy?'<small class="bs">покупка '+money(USD.buy)+' · продажа '+money(USD.sell)+'</small>':'');b.classList.toggle('old',!USD.auto&&dNum(USD.date)<dNum(today())-3)}
 setTimeout(()=>{try{if(!USD)usdMerge()}catch(_){}},0);
 (function(){const b=$('usdB'),sb=document.querySelector('header .sub');if(b&&sb&&sb.parentNode)sb.parentNode.insertBefore(b,sb.nextSibling)})();
-function usdStart(){usdMerge();if(!DB)return;DB.doc('sk_cfg/usd').onSnapshot(sn=>{USD_DB=sn.exists?sn.data():null;usdMerge()},()=>{})}
+// курс ЦБ прямо с сайта cbu.uz при открытии программы
+async function usdLive(){try{const a=await aicJ('https://cbu.uz/ru/arkhiv-kursov-valyut/json/USD/');const x=Array.isArray(a)?a[0]:a;const r=num(x&&x.Rate);if(!r)return null;
+    const d=String(x.Date||today());if(!USD_AUTO||dNum(d)>=dNum(USD_AUTO.date)){USD_AUTO.rate=r;USD_AUTO.date=d;usdMerge()}return {rate:r,date:d,diff:num(x.Diff)}}catch(_){return null}}
+function usdStart(){usdMerge();setTimeout(usdLive,2500);setInterval(()=>{if(!USD_AUTO||USD_AUTO.date!==today())usdLive()},30*60000);document.addEventListener('visibilitychange',()=>{if(!document.hidden&&(!USD_AUTO||USD_AUTO.date!==today()))usdLive()});if(!DB)return;DB.doc('sk_cfg/usd').onSnapshot(sn=>{USD_DB=sn.exists?sn.data():null;usdMerge()},()=>{})}
 $('usdB').onclick=()=>{if(!IS_OWNER){toast(USD&&USD.rate?'Курс ЦБ: 1 $ = '+money(USD.rate)+' сум ('+USD.date+')':'Курс ещё не вписан');return}
   skOpen('Курс доллара на '+today(),'<label>1 $ = сум<input id="fUsd" inputmode="decimal" value="'+(USD&&USD.rate||'')+'" placeholder="12 850"></label><div style="font-size:13px;color:var(--mut)">'+(USD&&USD.buy?'<div class="usdbs"><div><span>Банк покупает $</span><b>'+money(USD.buy)+'</b><i>'+esc(USD.buyBank||'')+'</i></div><div><span>Банк продаёт $</span><b>'+money(USD.sell)+'</b><i>'+esc(USD.sellBank||'')+'</i></div></div><div style="font-size:12px;color:var(--mut);margin-bottom:6px">Лучшие курсы коммерческих банков. В расчётах программа использует курс ЦБ (или ваш).</div>':'')+'Курс ЦБ подставляется сам каждое утро'+(USD&&USD.auto?' (сейчас: ЦБ на '+esc(USD.date)+')':'')+'. Если вписать свой курс, на сегодня будет использоваться он.</div>'+
    ((USD&&USD.hist||[]).length?'<div style="font-size:13px;margin-top:8px">'+(USD.hist||[]).slice(-7).reverse().map(h=>esc(h.d)+': <b>'+money(h.r)+'</b>').join('<br>')+'</div>':''),
@@ -3381,6 +3384,7 @@ async function aicFacts(q){q=String(q||'');const fm=n=>Number(n).toLocaleString(
   if(/курс|валют|kurs|valyuta|exchange|rate|сколько.*(доллар|евро|рубл)|(доллар|евро|рубл)\w* сколько/i.test(q)){
     let want=Object.keys(AIC_CUR).filter(k=>AIC_CUR[k].test(q));if(!want.length)want=['USD','EUR','RUB'];
     try{const a=await aicJ('https://cbu.uz/ru/arkhiv-kursov-valyut/json/');const L=want.map(k=>{const x=a.find(y=>y.Ccy==k);if(!x)return '';const d=Number(x.Diff);return '• 1 '+k+' = '+fm(x.Rate)+' сум'+(Number(x.Nominal)>1?' (за '+x.Nominal+')':'')+(d?(d>0?' ▲ +':' ▼ ')+fm(d):'')}).filter(Boolean);
+      try{const u=a.find(y=>y.Ccy=='USD');if(u&&(!USD_AUTO||dNum(u.Date)>=dNum(USD_AUTO.date))){USD_AUTO.rate=num(u.Rate);USD_AUTO.date=u.Date;usdMerge()}}catch(_){}
       if(L.length)return '💱 Курс ЦБ Узбекистана на '+(a[0]&&a[0].Date||today())+':\n'+L.join('\n')+'\n(источник: cbu.uz)'}catch(_){}
     try{const a=await aicJ('https://open.er-api.com/v6/latest/USD');const u=a.rates.UZS;const L=want.map(k=>a.rates[k]?'• 1 '+k+' ≈ '+fm(u/a.rates[k])+' сум':'').filter(Boolean);
       if(L.length)return '💱 Курс (рыночный, не ЦБ — сайт ЦБ не ответил):\n'+L.join('\n')+'\n(источник: open.er-api.com)'}catch(_){}
@@ -3396,6 +3400,13 @@ async function aicFacts(q){q=String(q||'');const fm=n=>Number(n).toLocaleString(
 async function aicSend(){const q=$('aicQ').value.trim();if((!q&&!AIC_IMG)||AIC_BUSY)return;const img=AIC_IMG;AIC_IMG=null;$('aicPrev').innerHTML='';$('aicQ').value='';
   AIC_H.push({r:'u',t:q||'(фото)',img});
   if(!img&&/^(привет|салом|салам|ассалому?|assalomu?|salom|hello|hi|здравствуй\w*|добр\w+ (утро|день|вечер))[\s,!.]*(джарвис|jarvis)?[\s!.]*$/i.test(q)){const h=new Date().getHours(),t=(h<12?'Доброе утро':h<18?'Добрый день':'Добрый вечер')+', Рахим! Я Джарвис. Чем помочь?';AIC_H.push({r:'a',t});aicRender();aicSay(t);return}
+  if(!img&&/курс|kurs/i.test(q)&&/постав|измени|установ|запиш|впиш|сделай|обнов|qo.?y|o.?zgart|yangila/i.test(q)){AIC_BUSY=true;aicRender();let t;
+    const mm=q.replace(/(\d)[\s ](?=\d{3}\b)/g,'$1').match(/(\d{4,6}(?:[.,]\d{1,2})?)/);
+    if(!IS_OWNER)t='Курс может менять только владелец.';
+    else if(mm){const r=num(mm[1].replace(',','.'));const hist=((USD&&USD.hist)||[]).filter(h=>h.d!=today()).concat([{d:today(),r}]).slice(-60);
+      try{await DB.doc('sk_cfg/usd').set({rate:r,date:today(),ts:Date.now(),hist});t='Готово. На главной теперь курс: 1 $ = '+money(r)+' сум (ваш курс на сегодня).'}catch(_){t='Не получилось сохранить курс — нет связи.'}}
+    else{const L=await usdLive();if(L){if(USD_DB&&dNum(USD_DB.date)>=dNum(L.date)){try{await DB.doc('sk_cfg/usd').set({...USD_DB,date:'01.01.2000',ts:Date.now()})}catch(_){}}t='Обновил курс на главной по ЦБ: 1 $ = '+money(L.rate)+' сум на '+L.date+'.'}else t='Сайт ЦБ сейчас не ответил. Скажите число, например: «Джарвис, поставь курс 12 100».'}
+    AIC_H.push({r:'a',t});AIC_BUSY=false;aicRender();aicSay(t);return}
   if(!img){const qq=q;AIC_BUSY=true;aicRender();let f=null;try{f=await aicFacts(qq)}catch(_){}if(f){AIC_H.push({r:'a',t:f});AIC_BUSY=false;aicRender();aicSay(f.replace(/\(.*?\)/g,''));return}AIC_BUSY=false}
   AIC_BUSY=true;aicRender();
   const hist=AIC_H.slice(-8,-1).map(m=>(m.r=='u'?'Пользователь: ':'Помощник: ')+m.t).join('\n');
