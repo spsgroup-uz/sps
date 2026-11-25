@@ -3391,7 +3391,7 @@ function aiCtx(q){q=String(q||'').toLowerCase();const W=re=>re.test(q);const nee
   let stock=[];try{if(IS_OWNER&&W(/склад|рулон|остал|остат|металл|тонн|ombor|rulon|stock/))stock=SK_ITEMS.map(it=>{const m=skBal(it.id);return {name:skName(it),balance:Math.round(m*100)/100,unit:skUnit(it),tons:it.kind=='coil'?Math.round(skTons(it,m)*1000)/1000:undefined}})}catch(_){}
   let staff=[];try{staff=(TW.list||[]).map(w=>({name:w.name,pos:w.pos}))}catch(_){}
   // табель: кто пришёл / не пришёл, опоздания (только руководителю)
-  let attendance=null;try{if(IS_OWNER&&typeof recOf=='function'&&W(/пришёл|пришел|пришли|опозд|сотрудн|рабоч|табел|персонал|кто на работе|не вышел|болел|keldi|xodim|staff|late/)){const lbl=r=>!r||!r.st?'не отмечен (не пришёл или не нажал «Я пришёл»)':(ST[r.st]?ST[r.st][0].replace(/^\S+\s/,''):r.st);
+  let attendance=null;try{if(IS_OWNER&&typeof recOf=='function'&&W(/приш|опозд|опазд|сотрудн|рабоч|работник|табел|персон|кто на работе|не выш|болел|отпрос|ушёл|ушел|ушол|ушли|kel|xodim|ishchi|staff|late|absent/)){const lbl=r=>!r||!r.st?'не отмечен (не пришёл или не нажал «Я пришёл»)':(ST[r.st]?ST[r.st][0].replace(/^\S+\s/,''):r.st);
     const day=d=>{const k=dKey(d);return (TW.list||[]).map(w=>{const r=recOf(w,k)||{};return {name:w.name,pos:w.pos,status:lbl(r),came:r.in||null,left:r.out||null,late:!!isLate(r)}})};
     const now=new Date(),y=new Date(now.getTime()-864e5),m0=new Date(now.getFullYear(),now.getMonth(),1);const month=(TW.list||[]).map(w=>{let wd=0,ab=0,late=0;for(let d=new Date(m0);d<=now;d=new Date(d.getTime()+864e5)){const r=recOf(w,dKey(d));if(!r||!r.st)continue;if(r.st=='w'){wd++;if(isLate(r))late++}if(r.st=='a')ab++}return {name:w.name,worked_days:wd,absent_days:ab,late_days:late}});
     attendance={work_start:TW.start,today:day(now),yesterday:day(y),this_month:month}}}catch(_){}
@@ -3405,7 +3405,20 @@ function aicOpen(){let w=$('aiChat');if(!w){w=document.createElement('div');w.id
 // мгновенные факты без ИИ и без лимитов: курс ЦБ Узбекистана и погода
 async function aicJ(u,ms){const c=new AbortController();const t=setTimeout(()=>c.abort(),ms||6000);try{const r=await fetch(u,{signal:c.signal,cache:'no-store'});if(!r.ok)throw new Error(r.status);return await r.json()}finally{clearTimeout(t)}}
 const AIC_CUR={USD:/доллар|dollar|\$|usd/i,EUR:/евро|euro|eur/i,RUB:/рубл|rubl|rub/i,KZT:/тенге|tenge|kzt/i,CNY:/юан|yuan|cny/i,TRY:/лир|lira|try/i,GBP:/фунт|pound|gbp/i};
-async function aicFacts(q){q=String(q||'');const fm=n=>Number(n).toLocaleString('ru-RU',{maximumFractionDigits:2});
+async function aicFacts(q){q=String(q||'');
+  if(IS_OWNER&&typeof tbStartDb=='function'&&!TW_OK){try{tbStartDb()}catch(_){}for(let i=0;i<20&&!TW_OK;i++)await new Promise(r=>setTimeout(r,150))}
+  if(IS_OWNER&&typeof recOf=='function'&&(TW.list||[]).length&&/(кто|сколько|kim|who).{0,25}(приш|опозд|опазд|не выш|не приш|на работе|ушёл|ушел|ушол|ушли|болел|kel)|табел|персонал сегодня|кто на работе|кто опоздал/i.test(q)){
+    const yest=/вчера|kecha|yesterday/i.test(q),d=new Date(Date.now()-(yest?864e5:0)),k=dKey(d);
+    const came=[],late=[],no=[],off=[],left=[];
+    (TW.list||[]).forEach(w=>{const r=recOf(w,k)||{},n=w.name||'без имени';
+      if(r.st=='w'){(isLate(r)?late:came).push(n+(r.in?' — '+r.in:'')+(r.out?', ушёл '+r.out:''));if(r.out)left.push(n)}
+      else if(r.st=='o')off.push(n+' (выходной)');else if(r.st=='s')off.push(n+' (болеет)');else if(r.st=='a')no.push(n+' (не вышел)');else no.push(n)});
+    const L=[(yest?'Вчера':'Сегодня')+', '+d.toLocaleDateString('ru-RU')+' (начало работы '+(TW.start||'—')+'):'];
+    if(came.length)L.push('✅ Пришли вовремя ('+came.length+'): '+came.join('; '));
+    if(late.length)L.push('⏰ Опоздали ('+late.length+'): '+late.join('; '));
+    if(no.length)L.push('❌ Не отметились ('+no.length+'): '+no.join(', '));
+    if(off.length)L.push('🏖 '+off.join(', '));
+    return L.join('\n')}const fm=n=>Number(n).toLocaleString('ru-RU',{maximumFractionDigits:2});
   if(/курс|валют|kurs|valyuta|exchange|rate|сколько.*(доллар|евро|рубл)|(доллар|евро|рубл)\w* сколько/i.test(q)){
     let want=Object.keys(AIC_CUR).filter(k=>AIC_CUR[k].test(q));if(!want.length)want=['USD','EUR','RUB'];
     try{const a=await aicJ('https://cbu.uz/ru/arkhiv-kursov-valyut/json/');const L=want.map(k=>{const x=a.find(y=>y.Ccy==k);if(!x)return '';const d=Number(x.Diff);return '• 1 '+k+' = '+fm(x.Rate)+' сум'+(Number(x.Nominal)>1?' (за '+x.Nominal+')':'')+(d?(d>0?' ▲ +':' ▼ ')+fm(d):'')}).filter(Boolean);
