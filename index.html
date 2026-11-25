@@ -937,11 +937,11 @@ const aiSample={async json(prompt,opt){await appCheckOn();if(!RECAPTCHA_SITE_KEY
     catch(e){last=e;const s=String(e&&e.message||e);if(/\[429|quota|RESOURCE_EXHAUSTED|not found|404|is not supported|unknown model/i.test(s))dead.add(m);if(/not found|404|is not supported|unknown model|\[50[03]|\[429|high demand|overloaded|unavailable|RESOURCE_EXHAUSTED/i.test(s))continue;throw e}}}
   throw last},
   // живой голос Джарвиса: Gemini TTS → PCM 24 кГц → проигрывание
-  async speak(text,voice){await appCheckOn();const {getAI,getGenerativeModel,GoogleAIBackend}=await import('https://www.gstatic.com/firebasejs/12.19.0/firebase-ai.js');
+  async speak(text,voice,style){await appCheckOn();const {getAI,getGenerativeModel,GoogleAIBackend}=await import('https://www.gstatic.com/firebasejs/12.19.0/firebase-ai.js');
     const ai=getAI(await aiApp(),{backend:new GoogleAIBackend()});let last=null;
     for(const m of ['gemini-3.1-flash-tts-preview','gemini-2.5-flash-preview-tts']){try{
       const model=getGenerativeModel(ai,{model:m,generationConfig:{responseModalities:['AUDIO'],speechConfig:{voiceConfig:{prebuiltVoiceConfig:{voiceName:voice||'Charon'}}}}});
-      const r=await model.generateContent('Скажи спокойно, уверенно и дружелюбно, как вежливый личный помощник, в обычном темпе: '+text);
+      const r=await model.generateContent((style||'Скажи спокойно, уверенно и дружелюбно, как вежливый личный помощник, в обычном темпе')+': '+text);
       const parts=(r.response.candidates&&r.response.candidates[0]&&r.response.candidates[0].content.parts)||[];const p=parts.find(x=>x.inlineData);if(!p)throw new Error('нет аудио');
       return {data:p.inlineData.data,mime:p.inlineData.mimeType||'audio/pcm;rate=24000'}}catch(e){last=e;continue}}
     throw last},
@@ -3398,7 +3398,7 @@ function aiCtx(q){q=String(q||'').toLowerCase();const W=re=>re.test(q);const nee
   return {today:today(),program_mode:MODE=='tun'?'тунукабонд':'кровля',user:IS_OWNER?'руководитель (владелец)':'сотрудник',orders:so,stock,staff,attendance,
     catalog:(W(/сделай|добав|заказ|деталь|карниз|конёк|конек|планк|профнастил|черепиц|штук|шт\b|метр|qo.sh|order/)?allItems().filter(i=>!i.hidden):[]).map(i=>i.id+' | '+i.name+' | '+(i.unit=='m'?'м×шт':i.unit)),
     current_order_on_screen:{client:$('hClient').value,phone:$('hPhone').value,lines:order.map(l=>l.name+(l.len?' '+l.len+'м':'')+(l.qty?' ×'+l.qty:''))}}}
-function aicRender(){const b=$('aicMsgs');if(!b)return;b.innerHTML=(AIC_H.length?'':'<div class="aic-hi">✦ Салом! Я <b>Джарвис</b> — ваш ИИ-помощник. Спросите что угодно — по программе (долги, заказы, склад, сотрудники) или любой другой вопрос.<br>Свежее из интернета (новости, курс, погода) — тоже ищу в Google.<br>Или скажите: «сделай заказ: карниз 2 м 5 штук, конёк 3 м 2 штуки».<br><small>🎤 — голосом · 📷 — с фото</small><div class="aicq">'+['Кто сегодня пришёл и кто нет?','Кто опоздал?','Какой заказ на каком этапе?','Что сейчас на лазере и гибке?','Кто должен больше всех?','Что осталось на складе?'].map(q=>'<button data-aicq="'+q+'">'+q+'</button>').join('')+'</div></div>')+
+function aicRender(){const b=$('aicMsgs');if(!b)return;b.innerHTML=(AIC_H.length?'':'<div class="aic-hi">✦ Салом! Я <b>Джарвис</b> — ваш ИИ-помощник. Спросите что угодно — по программе (долги, заказы, склад, сотрудники) или любой другой вопрос.<br>Свежее из интернета (новости, курс, погода) — тоже ищу в Google.<br>Или скажите: «сделай заказ: карниз 2 м 5 штук, конёк 3 м 2 штуки».<br><small>🎤 — голосом · 📷 — с фото</small><div class="aicq">'+['Кто сегодня пришёл и кто нет?','Кто опоздал?','Какой заказ на каком этапе?','Что сейчас на лазере и гибке?','Кто должен больше всех?','Что осталось на складе?'].map(q=>'<button data-aicq="'+q+'">'+q+'</button>').join('')+'<button data-aicvn>🎙 Выбрать голос Джарвиса</button></div></div>')+
   AIC_H.map((m,i)=>'<div class="aic-m '+(m.r=='u'?'u':'a')+'">'+(m.r=='a'?'<small class="aicn">✦ Джарвис</small>':'')+(m.img?'<img src="'+m.img+'">':'')+esc(m.t).replace(/\n/g,'<br>')+(m.order&&m.order.lines&&m.order.lines.length&&!m.done?'<button class="aic-act" data-aicadd="'+i+'">➕ Добавить в заказ ('+m.order.lines.length+' стр.)</button>':'')+(m.open?'<button class="aic-act" data-aicopen="'+m.open+'">Открыть →</button>':'')+(m.web?'<div class="aicw">'+(m.web.sources&&m.web.sources.length?'<div class="aics">🌐 Источники: '+m.web.sources.slice(0,5).map(x=>'<a href="'+esc(x.uri)+'" target="_blank" rel="noopener">'+esc(x.title||'ссылка')+'</a>').join(' · ')+'</div>':'')+(m.web.rendered?'<div class="aicg">'+m.web.rendered+'</div>':'')+'</div>':'')+'</div>').join('')+(AIC_BUSY?'<div class="aic-m a"><small class="aicn">✦ Джарвис</small><span class="aicwait">думаю…</span></div>':'');b.scrollTop=b.scrollHeight}
 function aicOpen(){let w=$('aiChat');if(!w){w=document.createElement('div');w.id='aiChat';w.innerHTML='<div class="aic-bar"><b><span class="aich">✦</span> Джарвис <small style="font-weight:600;opacity:.7;font-size:12px">ИИ-помощник</small></b><button data-aicwake title="Слушать слово «Джарвис»" id="aicWake">👂</button><button data-aicvoice title="голос" id="aicVoice">🔊</button><button data-aicclr title="очистить">🧹</button><button data-aicx>✕</button></div><div id="aicMsgs"></div><div id="aicLive" style="display:none"></div><div id="aicPrev"></div><div class="aic-in"><label class="aic-b" title="фото">📷<input type="file" accept="image/*" id="aicFile" hidden></label><textarea id="aicQ" rows="1" placeholder="Спросите Джарвиса…"></textarea><button class="aic-b" id="aicMic" title="голосом">🎤</button><button class="aic-b go" id="aicGo">➤</button></div>';document.body.appendChild(w)}
   w.classList.add('show');aicVoiceBtn();aicWakeUI();if(!(window.SpeechRecognition||window.webkitSpeechRecognition))$('aicMic').style.display=navigator.mediaDevices?'':'none';aicRender();setTimeout(()=>$('aicQ').focus(),100)}
@@ -3445,6 +3445,7 @@ async function aicSend(){const q=$('aicQ').value.trim();if((!q&&!AIC_IMG)||AIC_B
       try{await DB.doc('sk_cfg/usd').set({rate:r,date:today(),ts:Date.now(),hist});t='Готово. На главной теперь курс: 1 $ = '+money(r)+' сум (ваш курс на сегодня).'}catch(_){t='Не получилось сохранить курс — нет связи.'}}
     else{const L=await usdLive();if(L){if(USD_DB&&dNum(USD_DB.date)>=dNum(L.date)){try{await DB.doc('sk_cfg/usd').set({...USD_DB,date:'01.01.2000',ts:Date.now()})}catch(_){}}t='Обновил курс на главной по ЦБ: 1 $ = '+money(L.rate)+' сум на '+L.date+'.'}else t='Сайт ЦБ сейчас не ответил. Скажите число, например: «Джарвис, поставь курс 12 100».'}
     AIC_H.push({r:'a',t});AIC_BUSY=false;aicRender();aicSay(t);return}
+  if(!img&&/(смен|помен|друг|выбер|измени).{0,12}голос|голос.{0,10}(смен|помен|друг)|ovoz/i.test(q)){aicNextVoice();return}
   if(!img){const qq=q;AIC_BUSY=true;aicRender();let f=null;try{f=await aicFacts(qq)}catch(_){}if(f){AIC_H.push({r:'a',t:f});AIC_BUSY=false;aicRender();aicSay(f.replace(/\(.*?\)/g,''));return}AIC_BUSY=false}
   AIC_BUSY=true;aicRender();
   const hist=AIC_H.slice(-8,-1).map(m=>(m.r=='u'?'Пользователь: ':'Помощник: ')+m.t).join('\n');
@@ -3474,8 +3475,14 @@ let AIC_AC=null,AIC_SRC=null,AIC_SEQ=0,AIC_SPK=0,AIC_LIVE=false,AIC_LT=null,AIC_
 function aicAudio(){try{if(!AIC_AC)AIC_AC=new (window.AudioContext||window.webkitAudioContext)();if(AIC_AC.state=='suspended')AIC_AC.resume()}catch(_){}return AIC_AC}
 function aicStop(){AIC_SEQ++;AIC_SPK=0;try{if(AIC_SRC)AIC_SRC.stop()}catch(_){}AIC_SRC=null;try{speechSynthesis.cancel()}catch(_){}}
 // живой голос Gemini; если не вышло — голос телефона
+// голос Джарвиса: мужские голоса Gemini + манера «ИИ-дворецкий»
+const AIC_VOICES=[['Charon','Спокойный, глубокий'],['Iapetus','Чёткий, ровный'],['Rasalgethi','Деловой'],['Sadaltager','Умный, мягкий'],['Algenib','С хрипотцой'],['Schedar','Ровный, тихий'],['Orus','Твёрдый'],['Alnilam','Низкий, уверенный']];
+const AIC_STYLE='Говори как интеллигентный ИИ-помощник в стиле английского дворецкого: спокойно, вежливо, с лёгкой иронией, очень чётко, низким ровным голосом, без спешки';
+function aicVoice(){let v='';try{v=localStorage.getItem('sps_voice')||''}catch(_){}return AIC_VOICES.find(x=>x[0]==v)||AIC_VOICES[0]}
+function aicNextVoice(){const cur=aicVoice(),i=AIC_VOICES.indexOf(cur),n=AIC_VOICES[(i+1)%AIC_VOICES.length];try{localStorage.setItem('sps_voice',n[0])}catch(_){}
+  const t='Голос '+(AIC_VOICES.indexOf(n)+1)+' из '+AIC_VOICES.length+' — «'+n[1]+'». Добрый день, сэр. Джарвис к вашим услугам. Нажмите ещё раз, чтобы услышать следующий.';AIC_H.push({r:'a',t});aicRender();AIC_VOICE=true;aicSay(t.replace(/^.*?»\. /,''))}
 async function aicSay(t){if(!AIC_VOICE||!t)return;aicStop();const my=AIC_SEQ;AIC_SPK=Date.now();const clean=String(t).replace(/[✦✅⏳✔🚚📥🔆✂️🔧💵💳🏦•*_#>`]/g,' ').replace(/\s+/g,' ').trim().slice(0,900);
-  try{const sm=await aiSm();if(sm&&sm.speak){const r=await sm.speak(clean);if(my!==AIC_SEQ)return;const ac=aicAudio();if(!ac)throw 0;
+  try{const sm=await aiSm();if(sm&&sm.speak){const V=aicVoice();const r=await sm.speak(clean,V[0],AIC_STYLE);if(my!==AIC_SEQ)return;const ac=aicAudio();if(!ac)throw 0;
       const bin=atob(r.data),n=bin.length>>1,buf=ac.createBuffer(1,n,(r.mime.match(/rate=(\d+)/)||[0,24000])[1]*1),ch=buf.getChannelData(0);
       for(let i=0;i<n;i++){let v=bin.charCodeAt(2*i)|(bin.charCodeAt(2*i+1)<<8);if(v>32767)v-=65536;ch[i]=v/32768}
       const src=ac.createBufferSource();src.buffer=buf;src.connect(ac.destination);AIC_SRC=src;src.onended=()=>{if(my===AIC_SEQ)AIC_SPK=0};src.start();return}}catch(_){if(my!==AIC_SEQ)return}
@@ -3573,6 +3580,7 @@ document.addEventListener('click',e=>{if(e.target.closest('#aiFab')){aicOpen();r
   if(e.target.closest('[data-aicwake]')){AIC_WAKE=!AIC_WAKE;try{localStorage.setItem('sps_wake',AIC_WAKE?'1':'')}catch(_){}aicAudio();aicWakeUI();if(AIC_WAKE){toast('👂 Скажите «Джарвис» — он ответит без кнопки (пока программа открыта)');aicWakeStart()}else aicWakeStop();return}
   if(e.target.closest('[data-aicvoice]')){AIC_VOICE=!AIC_VOICE;store.set('rz_aivoice',AIC_VOICE);aicVoiceBtn();aicAudio();if(!AIC_VOICE)aicStop();else aicSay('Голос включён');return}
   if(e.target.closest('#aicGo')){aicAudio();aicSend();return}
+  if(e.target.closest('[data-aicvn]')){aicAudio();aicNextVoice();return}
   const qq=e.target.closest('[data-aicq]');if(qq){aicAudio();$('aicQ').value=qq.dataset.aicq;aicSend();return}
   if(e.target.closest('#aicMic')){aicAudio();aicMic();return}
   const a=e.target.closest('[data-aicadd]');if(a){aicAddOrder(+a.dataset.aicadd);return}
