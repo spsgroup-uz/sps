@@ -1975,7 +1975,7 @@ function renderCli(){
   if($('cliDes'))$('cliDes').innerHTML=[[7,'Дизайн Скат'],[8,'Дизайн Дила'],[10,'Дизайн Палма'],[9,'Аликафон шапка']].map(([c,n])=>'<button class="chip'+(CLI_DES==c?' on':'')+'" data-cdes="'+c+'">'+n+(order.some(l=>l.auto==c)?' ✓':'')+'</button>').join('');
   if($('cliRoom')&&!$('cliRoom').querySelector('input:focus')) $('cliRoom').innerHTML=CLI_DES==9?alikHtml():CLI_DES==8?dilaHtml():CLI_DES==10?palmaHtml():roomHtml(7);
   for(const k in CMAP) $(k).value=$(CMAP[k]).value;
-  if(!order.length){$('cliList').innerHTML='<div class="card empty">Нажмите «+ Добавить строку» и выберите деталь.</div>';renderCliTot();return}
+  if(!order.length){$('cliList').innerHTML='<div class="card empty">Нажмите «+ Добавить строку» и выберите деталь.</div>'+jalCliHtml();renderCliTot();return}
   const idx=order.map((l,i)=>i), A=idx.filter(i=>isSheet(order[i])), B=idx.filter(i=>isGroup(order[i])), C=idx.filter(i=>!isSheet(order[i])&&!isGroup(order[i])&&order[i].unit!='face'), F=idx.filter(i=>order[i].unit=='face');
   let h='';
   if(A.length){ h+='<div class="sh">Черепица и профнастил</div>'; idsOf(A).forEach(id=>{h+=sizeCard(id,A.filter(i=>order[i].itemId==id),true)}) }
@@ -1985,7 +1985,7 @@ function renderCli(){
   if(B.length) h+=gtotH;
   if(F.length) h+='<div class="sh">Тунукабонд — кассеты</div>'+F.map(i=>cliCard(order[i],i)).join('');
   if(C.length) h+='<div class="sh">'+(MODE=='tun'?'Расходные':'Штучные и крепёж')+'</div>'+(!B.length&&hasPc?gtotH:'')+C.map(i=>cliCard(order[i],i)).join('')+'<div class="card cl gtot" id="pTot">'+pTotHtml()+'</div>';
-  $('cliList').innerHTML=h;
+  $('cliList').innerHTML=h+jalCliHtml();
   if(store.get('rz_pre',null)!=null&&!$('cliPre').value) $('cliPre').value=store.get('rz_pre','');
   if(!$('cliDisc').value) $('cliDisc').value=store.get('rz_disc','');
   if(!$('cliDel').value) $('cliDel').value=store.get('rz_del','');
@@ -3138,11 +3138,35 @@ function jalDxf(kind){const t=jalDxfText(kind);if(!t){toast('Впишите ра
   (async()=>{try{if(!dl){try{dl=await window.claude.use('downloads')}catch(_){}}if(!dl){toast('Скачивание недоступно');return}
     await dl.save({filename:name+'.dxf',data:new Blob([cp1251(t)],{type:'application/dxf'})});toast('DXF жалюзи готов')}catch(e){if(!(e&&e.code=='declined'))toast('Ошибка: '+(e&&e.message||e))}})()}
 function jalPrice(C){const p=num(JAL.pm2),pb=Math.round(p*C.blank/1000),ps=Math.round(p*C.sw/1000);const b=pb*C.L/1000*C.n,s=ps*C.H/1000*2;return {pb,ps,b:Math.round(b),s:Math.round(s),t:Math.round(b+s)}}
-function jalToOrder(){const C=jalCalc();if(!C.n){toast('Впишите размеры проёма');return}const P=jalPrice(C),id=Date.now(),cfg={...JAL},tag='проём '+fmt(num(JAL.W))+'×'+fmt(num(JAL.H))+' см';
+function jalToOrder(quiet){const C=jalCalc();if(!C.n){toast('Впишите размеры проёма');return}const P=jalPrice(C),id=Date.now(),cfg={...JAL},tag='проём '+fmt(num(JAL.W))+'×'+fmt(num(JAL.H))+' см';
   order.push({uid:id+Math.random(),itemId:'free:Жалюзи — ламель '+Math.round(C.blank)+' мм',icon:'own',name:'Жалюзи межстенные — ламель (развёртка '+Math.round(C.blank)+' мм)',unit:'m',len:String(Math.round(C.L)/1000),qty:String(C.n),note:tag,jalId:id});
   order.push({uid:id+1+Math.random(),itemId:'free:Жалюзи — стойка П '+C.fl+'+'+C.web+'+'+C.fl,icon:'own',name:'Жалюзи межстенные — стойка П '+C.fl+'+'+C.web+'+'+C.fl+' с прорезями',unit:'m',len:String(Math.round(C.H)/1000),qty:'2',note:tag+' · '+C.n+' прорезей',jalId:id});
-  order.push({uid:id+2+Math.random(),itemId:'free:Жалюзи межстенные (изделие)',icon:'own',name:'Жалюзи межстенные — '+tag+' (изделие под ключ)',unit:'pcs',len:'',qty:'1',note:C.n+' ламелей + 2 стойки',price:P.t||null,jal:cfg,jalId:id});
-  save();renderCat();renderOrd();badge();$('mSk').classList.remove('show');toast('Жалюзи добавлены в заказ'+(P.t?' — '+money(P.t)+' сум':'')+'. Печать → «Для клиента»: будет лист с рисунком');try{tab('ord')}catch(_){}}
+  order.push({uid:id+2+Math.random(),itemId:'free:Жалюзи межстенные (изделие)',icon:'own',name:'Жалюзи межстенные — '+tag+' (изделие под ключ)',unit:'pcs',len:'',qty:'1',note:C.n+' ламелей + 2 стойки',price:P.t||null,jalAuto:P.t||null,jal:cfg,jalId:id});
+  save();renderCat();renderOrd();badge();if(quiet){try{renderCli()}catch(_){}return id}$('mSk').classList.remove('show');toast('Жалюзи добавлены в заказ'+(P.t?' — '+money(P.t)+' сум':'')+'. Печать → «Для клиента»: будет лист с рисунком');try{tab('ord')}catch(_){}}
+// правка проёма прямо в «Клиенте»: строки заказа пересчитываются сами
+function jalWith(cfg,fn){const k=JAL;JAL={...JAL_DEF,...cfg};try{return fn()}finally{JAL=k}}
+function jalApply(jid){const L=order.filter(l=>l.jalId==jid),it=L.find(l=>l.jal);if(!it)return;const C=jalWith(it.jal,jalCalc),P=jalWith(it.jal,()=>jalPrice(C));
+  const tag='проём '+fmt(num(it.jal.W))+'×'+fmt(num(it.jal.H))+' см';const [lb,ls]=L.filter(l=>!l.jal);
+  if(lb){lb.len=String(Math.round(C.L)/1000);lb.qty=String(C.n);lb.note=tag;lb.name='Жалюзи межстенные — ламель (развёртка '+Math.round(C.blank)+' мм)'}
+  if(ls){ls.len=String(Math.round(C.H)/1000);ls.note=tag+' · '+C.n+' прорезей'}
+  it.name='Жалюзи межстенные — '+tag+' (изделие под ключ)';it.note=C.n+' ламелей + 2 стойки';
+  if(it.price==null||num(it.price)==num(it.jalAuto)){it.price=P.t||null}it.jalAuto=P.t||null;return {C,P}}
+function jalCliHtml(){if(MODE=='tun')return '';const G=order.filter(l=>l.jal);
+  return '<div class="card cl" id="jalCli" style="border:2px solid #99f6e4"><div class="mh" style="justify-content:space-between"><b>🪟 Жалюзи межстенные</b><button class="chip on" data-jcadd style="background:#0f766e;border-color:#0f766e">+ Проём</button></div>'+
+   (G.length?G.map(l=>{const C=jalWith(l.jal,jalCalc),P=jalWith(l.jal,()=>jalPrice(C));return '<div class="rw" data-jid="'+l.jalId+'" style="flex-wrap:wrap;gap:6px;margin-top:6px;padding-top:6px;border-top:1px dashed #cbd5e1">Проём <input data-jw inputmode="decimal" value="'+esc(String(l.jal.W))+'" style="width:64px;text-align:center"> × <input data-jh inputmode="decimal" value="'+esc(String(l.jal.H))+'" style="width:64px;text-align:center"> см'+
+     '<span data-jinfo style="font-size:12px;color:var(--mut)">'+(C.n?C.n+' ламелей × '+fmt(C.L/1000)+' м':'—')+'</span><b data-jsum style="margin-left:auto">'+(num(l.price)?money(num(l.price))+' сум':'')+'</b><button class="x" data-jdel title="удалить">✕</button>'+(C.warn.length?'<div style="flex-basis:100%;font-size:12px;color:#b91c1c">'+C.warn[0]+'</div>':'')+'</div>'}).join(''):'<div style="font-size:13px;color:var(--mut);margin-top:4px">Нажмите «+ Проём» и впишите ширину × высоту — детали и цена сами появятся в заказе.</div>')+
+   '<div class="rw" style="margin-top:6px;font-size:13px">цена за м² развёртки <input data-jpm inputmode="numeric" value="'+esc(String(JAL.pm2||''))+'" placeholder="0" style="width:96px;text-align:center"> сум</div></div>'}
+let JC_T=null;
+function jalCliRefresh(){const a=document.activeElement,keep=a&&a.closest&&a.closest('#jalCli')?{jid:(a.closest('[data-jid]')||{}).dataset?.jid,k:a.hasAttribute('data-jw')?'jw':a.hasAttribute('data-jh')?'jh':a.hasAttribute('data-jpm')?'jpm':'',pos:a.selectionStart}:null;
+  save();renderOrd();badge();renderCli();
+  if(keep&&keep.k){const box=$('jalCli');const row=keep.jid?box&&box.querySelector('[data-jid="'+keep.jid+'"]'):box;const n=row&&row.querySelector('[data-'+keep.k+']');if(n){n.focus();try{n.setSelectionRange(keep.pos,keep.pos)}catch(_){}}}}
+document.addEventListener('input',e=>{const t=e.target;if(!t.closest||!t.closest('#jalCli'))return;
+  if(t.hasAttribute('data-jpm')){JAL.pm2=t.value.replace(/\D/g,'');jalSave();order.filter(l=>l.jal).forEach(l=>{l.jal.pm2=JAL.pm2;jalApply(l.jalId)})}
+  else{const r=t.closest('[data-jid]');if(!r)return;const jid=+r.dataset.jid,it=order.find(l=>l.jalId==jid&&l.jal);if(!it)return;it.jal[t.hasAttribute('data-jw')?'W':'H']=t.value.replace(',','.');jalApply(jid)}
+  clearTimeout(JC_T);JC_T=setTimeout(jalCliRefresh,450)});
+document.addEventListener('click',e=>{const t=e.target;if(!t.closest||!t.closest('#jalCli'))return;
+  if(t.closest('[data-jcadd]')){jalToOrder(true);setTimeout(()=>{const rows=document.querySelectorAll('#jalCli [data-jid]');const n=rows.length&&rows[rows.length-1].querySelector('[data-jw]');if(n){n.focus();n.select()}},60);return}
+  const d=t.closest('[data-jdel]');if(d){const jid=+d.closest('[data-jid]').dataset.jid;for(let i=order.length-1;i>=0;i--)if(order[i].jalId==jid)order.splice(i,1);save();renderCat();renderOrd();badge();renderCli();toast('Проём удалён из заказа')}});
 function jalFront(C){const sc=Math.min(280/C.W,260/C.H),w=C.W*sc,h=C.H*sc,ox=62,oy=14,pw=Math.max(5,C.fl*sc);let e='<rect x="'+ox+'" y="'+oy+'" width="'+w+'" height="'+h+'" fill="#f1f5f9" stroke="#334155"/>';
   e+='<rect x="'+ox+'" y="'+oy+'" width="'+pw+'" height="'+h+'" fill="#94a3b8"/><rect x="'+(ox+w-pw)+'" y="'+oy+'" width="'+pw+'" height="'+h+'" fill="#94a3b8"/>';
   for(let k=0;k<C.n;k++){const y=oy+(C.mg+k*C.st)*sc;e+='<rect x="'+(ox+pw)+'" y="'+y.toFixed(1)+'" width="'+(w-2*pw).toFixed(1)+'" height="'+Math.max(1.5,C.hgt*sc*0.55).toFixed(1)+'" fill="#0f766e" opacity=".85"/>'}
