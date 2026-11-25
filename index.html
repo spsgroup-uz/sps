@@ -580,6 +580,7 @@ body.worker:not(.sales) #bnav{display:none!important}
 .langsw{display:flex;align-items:center;gap:4px;margin:0 6px 10px}.langsw span{font-size:16px;margin-right:2px}.langsw button{flex:1;border:1px solid rgba(148,163,184,.4);background:transparent;color:inherit;border-radius:9px;padding:6px 0;font-weight:800;font-size:13px;font-family:inherit;cursor:pointer}.langsw button.on{background:#4f46e5;border-color:#4f46e5;color:#fff}
 
 #prodList .prshb{display:inline-flex;gap:4px;margin-left:6px;vertical-align:middle}#prodList .prshb button{border:1px solid #99f6e4;background:#fff;color:#0f766e;border-radius:8px;padding:3px 8px;font-size:12px;font-weight:700}#prodList .prshb button.on{background:#0f766e;color:#fff;border-color:#0f766e}
+#pwaBar{display:flex;align-items:center;gap:8px;margin:8px auto 0;max-width:520px;padding:10px 12px;border-radius:14px;background:linear-gradient(135deg,#4f46e5,#7c3aed);color:#fff;font-size:13px;font-weight:600;box-shadow:0 4px 14px #4f46e540}#pwaBar[hidden]{display:none}#pwaBar span{flex:1}#pwaGo{background:#fff;color:#4f46e5;border:0;border-radius:10px;padding:8px 12px;font-weight:800}#pwaX{background:none;border:0;color:#fff;font-size:16px;opacity:.8}
 #aiFab.wake::after{content:'';position:absolute;top:2px;right:2px;width:13px;height:13px;border-radius:50%;background:#22c55e;border:2px solid #fff;animation:stp 1.6s infinite}
 #aiFab{position:fixed;right:14px;bottom:calc(132px + env(safe-area-inset-bottom));z-index:8;width:58px;height:58px;border-radius:50%;border:0;display:flex;align-items:center;justify-content:center;background:transparent;box-shadow:0 10px 26px rgba(124,58,237,.5);cursor:pointer;padding:0;overflow:visible}
 #aiFab::after{content:'';position:absolute;inset:0;border-radius:50%;background:conic-gradient(from 0deg,#6366f1,#a855f7,#ec4899,#f59e0b,#6366f1);animation:aispin 6s linear infinite;z-index:0}
@@ -663,6 +664,7 @@ body.worker.tsex main>#vProd{display:block!important}body.worker.tsex main>#vPro
   <button class="dl own-only" data-dtab="bak">💾 Копия / перенос данных</button>
 </nav>
 
+<div id="pwaBar" hidden><span id="pwaTxt">📲 Установите программу на телефон — будет значок SPS Group</span><button id="pwaGo">Установить</button><button id="pwaX" aria-label="закрыть">✕</button></div>
 <main>
   <button id="inboxBan" class="own-only" hidden></button>
   <section id="vCat">
@@ -2932,11 +2934,20 @@ regOwn();
 // ---------- установка как приложение (значок на телефоне / компьютере) ----------
 let PWA_EVT=null;const PWA_STANDALONE=()=>window.matchMedia&&matchMedia('(display-mode: standalone)').matches||navigator.standalone===true;
 const PWA_IOS=/iphone|ipad|ipod/i.test(navigator.userAgent);
-function pwaShow(){const b=$('pwaBtn');if(b)b.hidden=PWA_STANDALONE()||!(PWA_EVT||PWA_IOS)}
+const PWA_INAPP=/Telegram|Instagram|FBAN|FBAV|WhatsApp|; wv\)/i.test(navigator.userAgent);
+function pwaShow(){const b=$('pwaBtn');if(b)b.hidden=PWA_STANDALONE();
+  const bar=$('pwaBar');if(!bar)return;let x=0;try{x=+localStorage.getItem('sps_pwax')||0}catch(_){}
+  bar.hidden=PWA_STANDALONE()||Date.now()-x<3*864e5;
+  $('pwaTxt').textContent=PWA_INAPP?'📲 Чтобы установить: нажмите ⋮ или «…» вверху → «Открыть в Chrome» (в браузере)':'📲 Установите программу на телефон — будет значок SPS Group';
+  $('pwaGo').hidden=PWA_INAPP}
 window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();PWA_EVT=e;pwaShow();if(!store.get('rz_pwa_asked',0)){store.set('rz_pwa_asked',1);setTimeout(()=>toast('📲 Программу можно установить на телефон: меню → «Установить приложение»'),4000)}});
 window.addEventListener('appinstalled',()=>{PWA_EVT=null;pwaShow();toast('Приложение SPS Group установлено ✓')});
-document.addEventListener('click',async e=>{if(!e.target.closest('#pwaBtn'))return;try{drawer(false)}catch(_){}
-  if(PWA_EVT){PWA_EVT.prompt();try{await PWA_EVT.userChoice}catch(_){}PWA_EVT=null;pwaShow();return}
+document.addEventListener('click',e=>{if(e.target.closest('#pwaX')){try{localStorage.setItem('sps_pwax',Date.now())}catch(_){}pwaShow()}});
+document.addEventListener('click',async e=>{if(!e.target.closest('#pwaBtn,#pwaGo'))return;try{drawer(false)}catch(_){}
+  if(PWA_EVT){const ev=PWA_EVT;PWA_EVT=null;let ch=null;try{ev.prompt();ch=await ev.userChoice}catch(_){}pwaShow();
+    if(ch&&ch.outcome=='accepted'){ask('Устанавливается…','Подождите 10–20 секунд. Значок «SPS Group» появится в списке всех приложений телефона (смахните вверх на главном экране). На Samsung он может не появиться на главном экране сам — найдите его в списке приложений, зажмите и перетащите на экран.',()=>{});return}
+    if(ch)return}
+  if(!PWA_IOS){ask('Установить приложение','В Chrome нажмите ⋮ (три точки вверху справа) → «Установить приложение» или «Добавить на главный экран» → «Установить». Если такого пункта нет — откройте ссылку именно в Chrome, а не в Telegram.',()=>{});return}
   if(PWA_IOS)ask('Установить на iPhone','Внизу Safari нажмите «Поделиться» (квадрат со стрелкой ↑) → «На экран „Домой“» → «Добавить». Появится значок SPS Group.',()=>{})});
 setTimeout(pwaShow,500);
 // ===================== УГОЛ КАРНИЗА: развёртка двух половинок с косым резом по профилю =====================
