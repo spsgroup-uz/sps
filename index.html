@@ -930,10 +930,10 @@ async function appCheckOn(){if(APPCHK||!RECAPTCHA_SITE_KEY)return;const ap=await
 const aiSample={async json(prompt,opt){await appCheckOn();if(!RECAPTCHA_SITE_KEY)throw new Error('app-check: нет ключа reCAPTCHA');const {getAI,getGenerativeModel,GoogleAIBackend}=await import('https://www.gstatic.com/firebasejs/12.19.0/firebase-ai.js');
   const ai=getAI(await aiApp(),{backend:new GoogleAIBackend()});const parts=[{text:String(prompt)}];
   for(const b of (opt&&opt.images)||[])parts.push({inlineData:{data:await b64of(b),mimeType:b.type||'image/jpeg'}});
-  let last=null;const order=window.__AI_MODEL?[window.__AI_MODEL,...AI_MODELS.filter(x=>x!==window.__AI_MODEL)]:AI_MODELS;
+  let last=null;const order=opt&&opt.models?[...opt.models,...AI_MODELS.filter(x=>!opt.models.includes(x))]:window.__AI_MODEL?[window.__AI_MODEL,...AI_MODELS.filter(x=>x!==window.__AI_MODEL)]:AI_MODELS;
   const dead=new Set();for(let round=0;round<3;round++){if(round)await new Promise(r=>setTimeout(r,2500*round));
   for(const m of order){if(dead.has(m))continue;try{const model=getGenerativeModel(ai,{model:m,generationConfig:{responseMimeType:'application/json',temperature:0.1,...(/2\.5/.test(m)?{thinkingConfig:{thinkingBudget:0}}:{})}});
-      const r=await Promise.race([model.generateContent({contents:[{role:'user',parts}]}),new Promise((_,no)=>setTimeout(()=>no(new Error('[503] timeout high demand')),25000))]);let t=r.response.text().trim().replace(/^```(?:json)?\s*/,'').replace(/```\s*$/,'');window.__AI_MODEL=m;return JSON.parse(t)}
+      const r=await Promise.race([model.generateContent({contents:[{role:'user',parts}]}),new Promise((_,no)=>setTimeout(()=>no(new Error('[503] timeout high demand')),25000))]);let t=r.response.text().trim().replace(/^```(?:json)?\s*/,'').replace(/```\s*$/,'');if(!(opt&&opt.models))window.__AI_MODEL=m;return JSON.parse(t)}
     catch(e){last=e;const s=String(e&&e.message||e);if(/\[429|quota|RESOURCE_EXHAUSTED|not found|404|is not supported|unknown model/i.test(s))dead.add(m);if(/not found|404|is not supported|unknown model|\[50[03]|\[429|high demand|overloaded|unavailable|RESOURCE_EXHAUSTED/i.test(s))continue;throw e}}}
   throw last},
   // живой голос Джарвиса: Gemini TTS → PCM 24 кГц → проигрывание
@@ -3437,7 +3437,7 @@ async function aicFacts(q){q=String(q||'');
   return null}
 async function aicSend(){const q=$('aicQ').value.trim();if((!q&&!AIC_IMG)||AIC_BUSY)return;const img=AIC_IMG;AIC_IMG=null;$('aicPrev').innerHTML='';$('aicQ').value='';
   AIC_H.push({r:'u',t:q||'(фото)',img});
-  if(!img&&/^(привет|салом|салам|ассалому?|assalomu?|salom|hello|hi|здравствуй\w*|добр\w+ (утро|день|вечер))[\s,!.]*(джарвис|jarvis)?[\s!.]*$/i.test(q)){const h=new Date().getHours(),t=(h<12?'Доброе утро':h<18?'Добрый день':'Добрый вечер')+', Рахим! Я Джарвис. Чем помочь?';AIC_H.push({r:'a',t});aicRender();aicSay(t);return}
+  if(!img&&/^(привет|салом|салам|ассалому?|assalomu?|salom|hello|hi|здравствуй\w*|добр\w+ (утро|день|вечер))[\s,!.]*(джарвис|jarvis)?[\s!.]*$/i.test(q)){const h=new Date().getHours(),t=(h<12?'Доброе утро':h<18?'Добрый день':'Добрый вечер')+', сэр. Джарвис к вашим услугам. Чем могу помочь?';AIC_H.push({r:'a',t});aicRender();aicSay(t);return}
   if(!img&&/курс|kurs/i.test(q)&&/постав|измени|установ|запиш|впиш|сделай|обнов|qo.?y|o.?zgart|yangila/i.test(q)){AIC_BUSY=true;aicRender();let t;
     const mm=q.replace(/(\d)[\s ](?=\d{3}\b)/g,'$1').match(/(\d{4,6}(?:[.,]\d{1,2})?)/);
     if(!IS_OWNER)t='Курс может менять только владелец.';
@@ -3450,6 +3450,7 @@ async function aicSend(){const q=$('aicQ').value.trim();if((!q&&!AIC_IMG)||AIC_B
   AIC_BUSY=true;aicRender();
   const hist=AIC_H.slice(-8,-1).map(m=>(m.r=='u'?'Пользователь: ':'Помощник: ')+m.t).join('\n');
   const P='Тебя зовут Джарвис. Ты — ИИ-помощник внутри программы SPS Group (табель сотрудников: кто пришёл, кто не пришёл, опоздания — в attendance; этапы заказов: Заказ принят → Лазер принял/передал → Резка → Гибка → Готов → Отгружен — поле stage и stage_since у каждого заказа) (кровля, доборные элементы, тунукабонд — металлические потолки и фасады; склад рулонов; заказы; долги клиентов; сотрудники). '+
+   'ХАРАКТЕР: ты как ИИ-дворецкий из кино про изобретателя — безупречно вежливый, спокойный, уверенный, с тонким сухим юмором и лёгкой иронией; к владельцу (Рахим) обращайся «сэр» (по-узбекски «жаноб», по-английски «sir»); фразы короткие, чёткие, элегантные, например: «Слушаю, сэр.», «Уже сделано, сэр.», «Позволю себе заметить…», «Как пожелаете.». Без смайликов и без лишней болтовни. '+
    'Отвечай КОРОТКО и по делу, на том же языке, на котором спросили (русский, узбекский кириллица/латиница или английский). Суммы — в сумах с пробелами между тысячами. На вопросы про заказы, долги, склад, сотрудников, этапы опирайся ТОЛЬКО на данные программы ниже (если там нет — так и скажи, не выдумывай). На ЛЮБЫЕ другие вопросы (общие знания, советы, расчёты, металл и кровля, перевод, бизнес, жизнь) отвечай свободно из своих знаний, как умный помощник. Если для ответа нужны СВЕЖИЕ данные из интернета (новости, курсы валют и цены на сегодня, погода, адреса и телефоны компаний, события) — поставь "web":true и в "search" напиши, что искать (НЕ пиши «запрашиваю» и не переспрашивай — сразу ставь web:true).\n'+
    'Если пользователь просит СДЕЛАТЬ/ДОБАВИТЬ заказ — заполни order: подбери детали из catalog (id), длину len в метрах и количество qty. Если просит открыть раздел — open: одно из home, log, sk, cli, ord, cat, des, tab, pl, cl.\n'+
    (img?'К вопросу приложено фото — используй его.\n':'')+
@@ -3476,21 +3477,24 @@ function aicAudio(){try{if(!AIC_AC)AIC_AC=new (window.AudioContext||window.webki
 function aicStop(){AIC_SEQ++;AIC_SPK=0;try{if(AIC_SRC)AIC_SRC.stop()}catch(_){}AIC_SRC=null;try{speechSynthesis.cancel()}catch(_){}}
 // живой голос Gemini; если не вышло — голос телефона
 // голос Джарвиса: мужские голоса Gemini + манера «ИИ-дворецкий»
-const AIC_VOICES=[['Charon','Спокойный, глубокий'],['Iapetus','Чёткий, ровный'],['Rasalgethi','Деловой'],['Sadaltager','Умный, мягкий'],['Algenib','С хрипотцой'],['Schedar','Ровный, тихий'],['Orus','Твёрдый'],['Alnilam','Низкий, уверенный']];
+const AIC_VOICES=[['phone','⚡ Быстрый — голос телефона (без задержки)'],['Charon','Спокойный, глубокий'],['Iapetus','Чёткий, ровный'],['Rasalgethi','Деловой'],['Sadaltager','Умный, мягкий'],['Algenib','С хрипотцой'],['Schedar','Ровный, тихий'],['Orus','Твёрдый'],['Alnilam','Низкий, уверенный']];
 const AIC_STYLE='Говори как интеллигентный ИИ-помощник в стиле английского дворецкого: спокойно, вежливо, с лёгкой иронией, очень чётко, низким ровным голосом, без спешки';
 function aicVoice(){let v='';try{v=localStorage.getItem('sps_voice')||''}catch(_){}return AIC_VOICES.find(x=>x[0]==v)||AIC_VOICES[0]}
 function aicNextVoice(){const cur=aicVoice(),i=AIC_VOICES.indexOf(cur),n=AIC_VOICES[(i+1)%AIC_VOICES.length];try{localStorage.setItem('sps_voice',n[0])}catch(_){}
-  const t='Голос '+(AIC_VOICES.indexOf(n)+1)+' из '+AIC_VOICES.length+' — «'+n[1]+'». Добрый день, сэр. Джарвис к вашим услугам. Нажмите ещё раз, чтобы услышать следующий.';AIC_H.push({r:'a',t});aicRender();AIC_VOICE=true;aicSay(t.replace(/^.*?»\. /,''))}
+  const t='Голос '+(AIC_VOICES.indexOf(n)+1)+' из '+AIC_VOICES.length+' — «'+n[1]+'»'+(n[0]=='phone'?'':' (красивый голос Google: говорит с задержкой 2–4 сек, лимит ~15 ответов в день)')+'. Добрый день, сэр. Джарвис к вашим услугам. Нажмите ещё раз, чтобы услышать следующий.';AIC_H.push({r:'a',t});aicRender();AIC_VOICE=true;aicSay(t.replace(/^.*?\. Добрый/,'Добрый'))}
 async function aicSay(t){if(!AIC_VOICE||!t)return;aicStop();const my=AIC_SEQ;AIC_SPK=Date.now();const clean=String(t).replace(/[✦✅⏳✔🚚📥🔆✂️🔧💵💳🏦•*_#>`]/g,' ').replace(/\s+/g,' ').trim().slice(0,900);
-  try{const sm=await aiSm();if(sm&&sm.speak){const V=aicVoice();const r=await sm.speak(clean,V[0],AIC_STYLE);if(my!==AIC_SEQ)return;const ac=aicAudio();if(!ac)throw 0;
+  try{const sm=await aiSm();if(sm&&sm.speak){const V=aicVoice();if(V[0]=='phone')throw 'phone';const r=await sm.speak(clean,V[0],AIC_STYLE);if(my!==AIC_SEQ)return;const ac=aicAudio();if(!ac)throw 0;
       const bin=atob(r.data),n=bin.length>>1,buf=ac.createBuffer(1,n,(r.mime.match(/rate=(\d+)/)||[0,24000])[1]*1),ch=buf.getChannelData(0);
       for(let i=0;i<n;i++){let v=bin.charCodeAt(2*i)|(bin.charCodeAt(2*i+1)<<8);if(v>32767)v-=65536;ch[i]=v/32768}
       const src=ac.createBufferSource();src.buffer=buf;src.connect(ac.destination);AIC_SRC=src;src.onended=()=>{if(my===AIC_SEQ)AIC_SPK=0};src.start();return}}catch(_){if(my!==AIC_SEQ)return}
+  if(aicVoice()[0]!='phone'&&Date.now()-(window.__ttsw||0)>600000){window.__ttsw=Date.now();toast('🔈 Голос Google сейчас недоступен (лимит) — временно говорю голосом телефона')}
   aicSayPhone(clean);setTimeout(()=>{if(my===AIC_SEQ)AIC_SPK=0},300)}
 function aicSayPhone(t){try{if(!AIC_VOICE||!window.speechSynthesis||!t)return;speechSynthesis.cancel();const clean=String(t).replace(/[✦✅⏳✔🚚📥🔆✂️🔧💵💳🏦•*_#>`]/g,' ').replace(/\s+/g,' ').trim();
   const isUz=/[ўқғҳ]/i.test(clean)||/\b(va|uchun|qilish|bor|yo'q)\b/i.test(clean),isEn=/^[\x00-\x7F\s\d.,!?:;'"()\-–—%$]+$/.test(clean);
-  const want=isEn?'en':isUz?'uz':'ru',V=speechSynthesis.getVoices();const v=V.find(x=>x.lang&&x.lang.toLowerCase().startsWith(want))||V.find(x=>x.lang&&x.lang.toLowerCase().startsWith('ru'));
-  for(const part of clean.match(/[^.!?]{1,220}[.!?]?/g)||[clean]){const u=new SpeechSynthesisUtterance(part);if(v){u.voice=v;u.lang=v.lang}else u.lang=want=='en'?'en-US':'ru-RU';u.rate=1.05;speechSynthesis.speak(u)}}catch(_){}}
+  const want=isEn?'en':isUz?'uz':'ru',V=speechSynthesis.getVoices(),L=k=>V.filter(x=>x.lang&&x.lang.toLowerCase().replace('_','-').startsWith(k));
+  const male=a=>a.find(x=>/\bmale\b|мужск|dmitr|pavel|yuri|maxim|ruc|rud|ruf|-ruh|daniel|george|ryan|guy|arthur|fred/i.test(x.name+' '+x.voiceURI)&&!/female|женск/i.test(x.name));
+  const C=L(want).length?L(want):L('ru');const v=male(C)||C[0];
+  for(const part of clean.match(/[^.!?]{1,220}[.!?]?/g)||[clean]){const u=new SpeechSynthesisUtterance(part);if(v){u.voice=v;u.lang=v.lang}else u.lang=want=='en'?'en-US':'ru-RU';u.rate=0.98;u.pitch=male(C)?0.95:0.8;speechSynthesis.speak(u)}}catch(_){}}
 function aicVoiceBtn(){const b=$('aicVoice');if(b){b.textContent=AIC_VOICE?'🔊':'🔇';b.title=AIC_VOICE?'Джарвис говорит вслух':'Голос выключен'}}
 try{if(window.speechSynthesis)speechSynthesis.getVoices();speechSynthesis.onvoiceschanged=()=>{}}catch(_){}
 // тихий микрофон: без писка Android — свой детектор голоса + распознавание через Gemini
@@ -3521,13 +3525,13 @@ function aicWav(frames,sr){const R=16000,ratio=sr/R;let n=0;frames.forEach(f=>n+
   for(let i=0;i<m;i++){let x=all[Math.floor(i*ratio)]*g;x=Math.max(-1,Math.min(1,x));v.setInt16(44+i*2,x<0?x*32768:x*32767,true)}
   return new Blob([buf],{type:'audio/wav'})}
 async function aicVadClip(frames,sr,mode){VAD.sending=true;aicLiveUI();let t='';
-  try{const sm=await aiSm();const r=await sm.json('Это короткая запись голоса. Перепиши ДОСЛОВНО, что сказал человек (русский, узбекский или английский). Имя помощника пиши как «Джарвис». Обычно говорят про фирму SPS Group: заказы, клиенты, долги, рулоны, склад, карниз, конёк, профнастил, этапы (лазер, резка, гибка), кто пришёл на работу, курс доллара, погода. Если речи нет, только шум, музыка или неразборчиво — верни пустую строку. Ответь JSON {"text":"..."}',{images:[aicWav(frames,sr)]});t=String(r&&r.text||'').trim()}
+  try{const sm=await aiSm();const r=await sm.json('Это короткая запись голоса. Перепиши ДОСЛОВНО, что сказал человек (русский, узбекский или английский). Имя помощника пиши как «Джарвис». Обычно говорят про фирму SPS Group: заказы, клиенты, долги, рулоны, склад, карниз, конёк, профнастил, этапы (лазер, резка, гибка), кто пришёл на работу, курс доллара, погода. Если речи нет, только шум, музыка или неразборчиво — верни пустую строку. Ответь JSON {"text":"..."}',{images:[aicWav(frames,sr)],models:['gemini-2.5-flash-lite','gemini-flash-lite-latest','gemini-2.0-flash']});t=String(r&&r.text||'').trim()}
   catch(e){const s=String(e&&e.message||e);if(/\[429|quota|RESOURCE_EXHAUSTED/i.test(s)&&Date.now()-AIC_QWARN>60000){AIC_QWARN=Date.now();toast('⚠️ Лимит Google на распознавание голоса — подождите минуту')}}
   finally{VAD.sending=false;aicLiveUI()}
   if(!t||/^[\s.…-]*$/.test(t))return;
   if(mode=='wake'){if(AIC_LIVE)return;const m=t.match(AIC_WW);if(!m)return;aicWoke(null,t.slice(m.index+m[0].length).trim());return}
   if(!AIC_LIVE)return;AIC_LASTACT=Date.now();const q=$('aicQ');
-  if(/^(стоп|хватит|отключись|выключись|пока|спасибо,? пока|tamom|bas|stop)[\s!.]*$/i.test(t)){AIC_H.push({r:'u',t},{r:'a',t:'Хорошо, отключаюсь.'});aicRender();aicSay('Хорошо, отключаюсь');aicLiveOff();return}
+  if(/^(стоп|хватит|отключись|выключись|пока|спасибо,? пока|tamom|bas|stop)[\s!.]*$/i.test(t)){AIC_H.push({r:'u',t},{r:'a',t:'Как пожелаете, сэр. Отключаюсь.'});aicRender();aicSay('Как пожелаете, сэр. Отключаюсь.');aicLiveOff();return}
   if(q){q.value=t.replace(/^(джарвис|jarvis)[\s,.!?]+(?=\S)/i,'');AIC_BYVOICE=true;aicSend()}}
 document.addEventListener('visibilitychange',()=>{try{aicVadTick()}catch(_){}});
 ['pointerdown','touchstart','keydown'].forEach(ev=>document.addEventListener(ev,()=>{try{if(VAD.ac&&VAD.ac.state!=='running')VAD.ac.resume();if(AIC_AC&&AIC_AC.state!=='running')AIC_AC.resume()}catch(_){}},{capture:true,passive:true}));
@@ -3553,7 +3557,7 @@ function aicWakeTick(){if(!AIC_WAKE){aicWakeStop();return}
   AIC_WREC=r;try{r.start()}catch(_){AIC_WREC=null;AIC_PAUSE=Date.now()+1500}}
 function aicWoke(r,rest){if(r){if(AIC_WREC!==r)return;AIC_WREC=null;r.onend=null;try{r.abort()}catch(_){}}
   aicOpen();aicAudio();AIC_LIVE=true;AIC_BYWAKE=true;AIC_EMPTY=0;AIC_LASTACT=Date.now();clearInterval(AIC_LT);AIC_LT=setInterval(aicLiveTick,350);
-  if(rest&&rest.length>1){$('aicQ').value=rest;AIC_BYVOICE=true;aicSend()}else{const t='Слушаю';AIC_H.push({r:'a',t:'Слушаю, Рахим 🙂'});aicRender();aicSay(t)}
+  if(rest&&rest.length>1){$('aicQ').value=rest;AIC_BYVOICE=true;aicSend()}else{const t='Слушаю, сэр.';AIC_H.push({r:'a',t});aicRender();aicSay(t)}
   aicLiveUI()}
 // разговорный режим: нажал 🎤 один раз — Джарвис слушает постоянно, нажал ещё раз — выключил
 function aicSpeaking(){if(AIC_SPK&&Date.now()-AIC_SPK>90000)AIC_SPK=0;return !!AIC_SPK||(window.speechSynthesis&&speechSynthesis.speaking)}
