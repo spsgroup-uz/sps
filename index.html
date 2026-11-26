@@ -3024,7 +3024,12 @@ regOwn();
 let PWA_EVT=null;const PWA_STANDALONE=()=>window.matchMedia&&matchMedia('(display-mode: standalone)').matches||navigator.standalone===true;
 const PWA_IOS=/iphone|ipad|ipod/i.test(navigator.userAgent);
 const PWA_INAPP=/Telegram|Instagram|FBAN|FBAV|WhatsApp|; wv\)/i.test(navigator.userAgent);
-function pwaShow(){const b=$('pwaBtn');if(b)b.hidden=PWA_STANDALONE();
+const APK_URL='https://github.com/spsgroup-uz/sps/releases/latest/download/SPS-Group.apk',IS_ANDR=/Android/i.test(navigator.userAgent),IN_APK=!!(window.Capacitor&&Capacitor.isNativePlatform&&Capacitor.isNativePlatform());
+function apkGet(){try{window.open(APK_URL,'_blank')}catch(_){location.href=APK_URL}
+  ask('📲 Приложение SPS Group для Android','Файл SPS-Group.apk скачивается. Когда скачается: откройте его → «Разрешить установку из этого источника» → «Установить» (если появится Play Защита — «Всё равно установить»). Потом войдите тем же логином, нажмите «Согласен» и разрешите местоположение «Всегда» и уведомления.',()=>{})}
+function pwaShow(){const b=$('pwaBtn');if(b){b.hidden=IN_APK||(!IS_ANDR&&PWA_STANDALONE());b.textContent=IS_ANDR?'📲 Скачать приложение (Android)':'📲 Установить приложение'}
+  if(IS_ANDR){const bar=$('pwaBar');if(!bar)return;let x=0;try{x=+localStorage.getItem('sps_pwax')||0}catch(_){}bar.hidden=IN_APK||Date.now()-x<3*864e5;
+    $('pwaTxt').textContent='📲 Скачайте приложение SPS Group для Android — отметка прихода/ухода работает только в нём';$('pwaGo').textContent='Скачать';$('pwaGo').hidden=false;return}
   const bar=$('pwaBar');if(!bar)return;let x=0;try{x=+localStorage.getItem('sps_pwax')||0}catch(_){}
   bar.hidden=PWA_STANDALONE()||Date.now()-x<3*864e5;
   $('pwaTxt').textContent=PWA_INAPP?'📲 Чтобы установить: нажмите ⋮ или «…» вверху → «Открыть в Chrome» (в браузере)':'📲 Установите программу на телефон — будет значок SPS Group';
@@ -3033,6 +3038,7 @@ window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();PWA_EVT=e;p
 window.addEventListener('appinstalled',()=>{PWA_EVT=null;pwaShow();toast('Приложение SPS Group установлено ✓')});
 document.addEventListener('click',e=>{if(e.target.closest('#pwaX')){try{localStorage.setItem('sps_pwax',Date.now())}catch(_){}pwaShow()}});
 document.addEventListener('click',async e=>{if(!e.target.closest('#pwaBtn,#pwaGo'))return;try{drawer(false)}catch(_){}
+  if(IS_ANDR&&!IN_APK){apkGet();return}
   if(PWA_EVT){const ev=PWA_EVT;PWA_EVT=null;let ch=null;try{ev.prompt();ch=await ev.userChoice}catch(_){}pwaShow();
     if(ch&&ch.outcome=='accepted'){ask('Устанавливается…','Подождите 10–20 секунд. Значок «SPS Group» появится в списке всех приложений телефона (смахните вверх на главном экране). На Samsung он может не появиться на главном экране сам — найдите его в списке приложений, зажмите и перетащите на экран.',()=>{});return}
     if(ch)return}
