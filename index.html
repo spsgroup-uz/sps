@@ -242,7 +242,7 @@ header{position:sticky}
   body.navhide header,body.navhide main,body.navhide .bar{margin-left:0}
   body.navhide header .tabs{display:flex}
 }
-body.worker .own-only{display:none!important}
+body.worker .own-only{display:none!important}body.worker:not(.sales) .cl-nav{display:none!important}
 .clst{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.clst div{background:#f1f5f9;border-radius:12px;padding:10px;text-align:center}.clst b{display:block;font-size:18px}.clst span{font-size:12px;color:var(--mut)}.clst .r b{color:#dc2626}
 .clc{padding:12px;cursor:pointer}.clc .t{display:flex;gap:8px;align-items:flex-start}.clc .t .d{margin-left:auto;text-align:right;white-space:nowrap}.clc .d b{color:#dc2626;font-size:17px}.clc .d .ok{color:#16a34a;font-weight:800}.clc .m{font-size:13px;color:var(--mut);margin-top:3px}.clc a{color:#2563eb;text-decoration:none;font-weight:700}
 .clo{margin-top:10px;border-top:1px solid var(--line);padding-top:8px}.clo .r{display:flex;gap:8px;align-items:center;padding:6px 0;border-bottom:1px dashed var(--line);font-size:14px}.clo .r .s{margin-left:auto;text-align:right}
@@ -653,7 +653,7 @@ body.worker.tsex main>#vProd{display:block!important}body.worker.tsex main>#vPro
   <div class="dsec own-only">Деньги и склад</div>
   <button class="dl own-only" data-dtab="sk">📦 Склад и отчёт</button>
   <button class="dl own-only" data-dtab="pl">📈 Прибыль и расходы</button>
-  <button class="dl own-only" data-dtab="cl">📇 Клиенты и должники</button>
+  <button class="dl cl-nav" data-dtab="cl">📇 Клиенты</button>
   <div class="dsec">Команда</div>
   <button class="dl own-only" data-dtab="tab">🕒 Табель персонала</button>
   <button class="dl own-only" data-dtab="rate">🏆 Рейтинг продавцов</button>
@@ -668,7 +668,7 @@ body.worker.tsex main>#vProd{display:block!important}body.worker.tsex main>#vPro
 <main>
   <button id="inboxBan" class="own-only" hidden></button>
   <section id="vCat">
-    <input class="search" id="q" placeholder="Поиск детали…">
+    <div style="display:flex;gap:6px;align-items:center"><input class="search" id="q" placeholder="Поиск детали…" style="flex:1;min-width:0"><button class="chip own-only" id="renBtn" title="Переименовать детали" style="white-space:nowrap">✏️ Названия</button></div><div id="renBar" hidden style="margin:6px 0;padding:8px 10px;border-radius:10px;background:#fef3c7;color:#92400e;font-size:13px;font-weight:600">✏️ Нажмите на деталь, чтобы переименовать. Готово — снова «✏️ Названия».</div>
     <div id="catList"></div>
   </section>
   <section id="vOrd" hidden>
@@ -757,8 +757,8 @@ body.worker.tsex main>#vProd{display:block!important}body.worker.tsex main>#vPro
   <section id="vPl" hidden><div id="plBody"></div></section>
   <section id="vCl" hidden>
     <div class="card"><div class="clst" id="clStat"></div>
-      <div class="rw2" style="margin-top:8px"><button class="chip on" data-clf="all">Все</button><button class="chip" data-clf="debt">💰 Должники</button><button class="chip" data-clf="ok">Без долгов</button></div>
-      <div class="rw2" style="margin-top:6px"><input id="clQ" placeholder="Имя или телефон" style="flex:1;min-width:0"><select id="clSort"><option value="debt">по долгу</option><option value="sum">по сумме</option><option value="last">по дате</option><option value="name">по имени</option></select></div>
+      <div class="rw2" style="margin-top:8px"><button class="chip on" data-clf="all">Все</button><button class="chip" data-clf="debt">💰 Должники</button><button class="chip" data-clf="ok">Без долгов</button><button class="chip" data-clf="usto">🧰 Усто</button><button class="chip" data-clf="firma">🏢 Фирмы</button></div>
+      <div class="rw2" style="margin-top:6px"><input id="clQ" placeholder="Имя, телефон или адрес" style="flex:1;min-width:0"><select id="clSort"><option value="debt">по долгу</option><option value="sum">по сумме</option><option value="last">по дате</option><option value="name">по имени</option></select></div>
       <div class="rw2" style="margin-top:6px"><button class="chip" id="clAdd">+ Клиент</button><button class="chip" id="clCopy">Копировать должников</button><button class="chip on" id="clPdf">🖨 PDF должников</button></div></div>
     <div id="clList"></div>
   </section>
@@ -817,7 +817,7 @@ body.worker.tsex main>#vProd{display:block!important}body.worker.tsex main>#vPro
   <button id="bPrint" class="pri">🖨 Печать</button>
 </div>
 
-<nav id="bnav"><button data-bn="home" class="own-only">🏠<span>Главная</span></button><button data-bn="me" class="wk-only">📍<span>Отметка</span></button><button data-bn="order">🧾<span>Заказ</span><b class="bnb" id="badge3"></b></button><button data-bn="des">📐<span>Дизайны</span></button><button data-bn="log">📒<span>Журнал</span></button><button data-bn="more">☰<span>Ещё</span></button></nav>
+<nav id="bnav"><button data-bn="home" class="own-only">🏠<span>Главная</span></button><button data-bn="me" class="wk-only">📍<span>Отметка</span></button><button data-bn="order">🧾<span>Заказ</span><b class="bnb" id="badge3"></b></button><button data-bn="des">📐<span>Дизайны</span></button><button data-bn="log">📒<span>Журнал</span></button><button data-bn="cl" class="cl-nav">👥<span>Клиенты</span></button><button data-bn="more">☰<span>Ещё</span></button></nav>
 <div class="toast" id="toast"></div>
 
 <div class="modal" id="mOwn"><div class="box">
@@ -1173,7 +1173,7 @@ const CATS = ['Металлочерепица','Профнастил','Добо�
 const MODE=(location.hash=='#tun')?'tun':'roof';
 window.addEventListener('hashchange',()=>{if((location.hash=='#tun')!=(MODE=='tun'))location.reload()});
 CATS[10]='Детали по чертежам SPS';
-const GROUPS=MODE=='tun'?[{n:'Тунукабонд',c:[7,8,9,10]}]:[{n:'Профнастил',c:[0,1,2,3,4,5]}];
+const GROUPS=MODE=='tun'?[{n:'Тунукабонд',c:[7,8,9,10]},{n:'Кровля',c:[0,1,2,3,4,5]}]:[{n:'Кровля',c:[0,1,2,3,4,5]},{n:'Тунукабонд',c:[7,8,9,10]}];
 const BASE = [
  ['tile350','Металлочерепица (шаг 350)','m',0,1],
  ['tile200','Металлочерепица (шаг 200)','m',0,1],
@@ -1274,14 +1274,14 @@ const BASE = [
  ['lbNzP','Кассета Низомака 62 × 110 с перфорацией','m',10],
  ['lbNs','Пластина Низомака 35 × 88','m',10],
  ['lbNsZ','Пластина Низомака 35 × 88 зубчатая','m',10],
- ['lbP175','Профиль 17.5 (гибы 1-2-4-5)','m',10],
- ['lbP150','Профиль 15','m',10],
- ['lbP200','Профиль 20','m',10],
- ['lbP221','Профиль 22.1','m',10],
- ['lbP208','Профиль 20.8 с язычком','m',10],
- ['lbP239','Профиль 23.9','m',10],
- ['lbP242','Профиль 24.2','m',10],
- ['lbP279','Профиль 27.9','m',10],
+ ['lbP175','Плинтус 17.5','m',10],
+ ['lbP150','Плинтус 15','m',10],
+ ['lbP200','Плинтус 20','m',10],
+ ['lbP221','Стыковка 22.1','m',10],
+ ['lbP208','Стыковка односторонняя 20.8','m',10],
+ ['lbP239','Карниз 23.9','m',10],
+ ['lbP242','Карниз 24.2','m',10],
+ ['lbP279','Карниз внутренний айвон 27.9','m',10],
  ['lbP309','Профиль 30.9','m',10],
  ['lbP310','Профиль 31','m',10],
  ['lbP355','Профиль 35.5','m',10],
@@ -1292,15 +1292,27 @@ const BASE = [
 ].map((a,i)=>({id:'b'+i,icon:a[0],name:a[1],unit:a[2],cat:a[3],hidden:a[4]}));
 
 const UNIT = {m:'м × шт',pcs:'шт',kg:'кг',face:'м²'};
+// один заказ на кровлю и тунукабонд: строки заказа и шапка общие для обоих разделов
+const ST_SHARED=new Set(['rz_order','rz_head','rz_cur','rz_pre','rz_disc','rz_del','rz_prem','rz_curcol','rz_draw']);
+const stKey=k=>(MODE=='tun'&&!ST_SHARED.has(k)?'tn_':'')+k;
 const store = {
-  get(k,d){try{const v=localStorage.getItem((MODE=='tun'?'tn_':'')+k);return v?JSON.parse(v):d}catch(e){return d}},
-  set(k,v){try{localStorage.setItem((MODE=='tun'?'tn_':'')+k,JSON.stringify(v))}catch(e){}}
+  get(k,d){try{const v=localStorage.getItem(stKey(k));return v?JSON.parse(v):d}catch(e){return d}},
+  set(k,v){try{localStorage.setItem(stKey(k),JSON.stringify(v))}catch(e){}},
+  other(k,d){try{const v=localStorage.getItem((MODE=='tun'?'':'tn_')+k);return v?JSON.parse(v):d}catch(e){return d}}
 };
-let own = store.get('rz_own',[]);
+try{if(!localStorage.getItem('sps_mix1')){const t=JSON.parse(localStorage.getItem('tn_rz_order')||'[]'),b=JSON.parse(localStorage.getItem('rz_order')||'[]');
+  if(t.length){localStorage.setItem('rz_order',JSON.stringify(b.concat(t.map(l=>({...l,fam:'tun'})))));if(!b.length)['rz_head','rz_cur','rz_pre','rz_disc','rz_del'].forEach(k=>{const v=localStorage.getItem('tn_'+k);if(v!=null)localStorage.setItem(k,v)})}
+  localStorage.setItem('sps_mix1','1')}}catch(_){}
+let own = store.get('rz_own',[]);{const ids=new Set(own.map(x=>x.id));store.other('rz_own',[]).forEach(x=>{if(!ids.has(x.id))own.push(x)})}
 let order = store.get('rz_order',[]);
 let head = store.get('rz_head',null);
 const $ = id=>document.getElementById(id);
 const allItems = ()=>BASE.concat(own);
+// свои названия деталей каталога (руководитель меняет — видят все)
+let NAMES={};try{NAMES=JSON.parse(localStorage.getItem('sps_names')||'{}')}catch(_){}
+function applyNames(){BASE.forEach(i=>{if(i._n0==null)i._n0=i.name;i.name=NAMES[i.id]||i._n0})}
+applyNames();
+let REN=false;
 const save = ()=>{store.set('rz_order',order);store.set('rz_own',own);store.set('rz_head',readHead())};
 
 function toast(t){const e=$('toast');e.textContent=t;e.classList.add('show');clearTimeout(e._t);e._t=setTimeout(()=>e.classList.remove('show'),1600)}
@@ -1316,6 +1328,13 @@ function rowHtml(i){
   const cnt=order.filter(o=>o.itemId==i.id).length;
   return '<div class="lrow'+(cnt?' has':'')+'" data-add="'+i.id+'"><span class="ln">'+esc(i.name)+'</span>'+(cnt?'<button class="lm" data-minus="'+i.id+'">−</button><b class="lc">'+cnt+'</b>':'')+'<span class="lp">+</span>'+(i.id[0]=='o'?'<button class="del2" data-delown="'+i.id+'">✕</button>':'')+'</div>';
 }
+function renOpen(it){const own0=it.id[0]=='o';skOpen('✏️ Название детали','<label>Название<input id="fRn" value="'+esc(it.name)+'"></label>'+(!own0&&it._n0&&it._n0!=it.name?'<div style="font-size:12px;color:var(--mut)">Было: '+esc(it._n0)+' — оставьте пустым, чтобы вернуть</div>':''),
+  async()=>{const v=skVal('fRn').trim();
+    if(own0){if(!v){toast('Впишите название');return}it.name=v;save()}
+    else{if(!v||v==it._n0)delete NAMES[it.id];else NAMES[it.id]=v;try{localStorage.setItem('sps_names',JSON.stringify(NAMES))}catch(_){}applyNames();if(DB)try{await DB.doc('sk_cfg/names').set({m:NAMES,ts:Date.now()})}catch(_){toast('Сохранено на этом телефоне (нет связи)')}}
+    order.forEach(l=>{if(l.itemId==it.id)l.name=it.name});save();$('mSk').classList.remove('show');renderCat();renderOrd();toast('Название изменено')},'💾 Сохранить')}
+document.addEventListener('click',e=>{if(e.target.id!='renBtn')return;REN=!REN;$('renBar').hidden=!REN;e.target.classList.toggle('on',REN)});
+function namesStart(){if(!DB||namesStart.on)return;namesStart.on=true;DB.doc('sk_cfg/names').onSnapshot(d=>{const m=d.exists&&d.data()&&d.data().m||{};NAMES=m;try{localStorage.setItem('sps_names',JSON.stringify(NAMES))}catch(_){}applyNames();try{renderCat()}catch(_){}},()=>{})}
 function itemsHtml(arr,ci){
   const cards=arr.filter(i=>!isPlain(i)), rows=arr.filter(isPlain);
   return (cards.length||ci!=null?'<div class="grid">'+cards.map(itemHtml).join('')+(ci!=null?'<div class="item add-own" data-own="'+ci+'">✏️ Нарисовать свою деталь</div>':'')+'</div>':'')+
@@ -1531,6 +1550,7 @@ function catClick(e,qid){
   if(rg){roomAdd(+rg.dataset.rgo);return}
   if(e.target.closest('[data-room]'))return;
   const a=e.target.closest('[data-add]');
+  if(a&&REN){const it=allItems().find(i=>i.id==a.dataset.add);if(it)renOpen(it);return}
   if(a){addLine(a.dataset.add); if(curTab=='cli')renderCli()}
 }
 $('catList').addEventListener('click',e=>catClick(e,'q'));
@@ -1717,7 +1737,7 @@ $('menuBtn').onclick=()=>{if(innerWidth>=900){const h=!document.body.classList.c
 if(store.get('rz_navhide',0))document.body.classList.add('navhide'); $('drawerBg').onclick=()=>drawer(false);
 $('drawer').addEventListener('click',e=>{const b=e.target.closest('[data-dtab]');if(b&&b.dataset.dtab=='dxf'){drawer(false);dxfOpen();return}if(b&&b.dataset.dtab=='jal'){drawer(false);jalOpen();return}if(b&&b.dataset.dtab=='ugol'){drawer(false);ugOpen();return}if(b&&b.dataset.dtab=='bak'){drawer(false);bakOpen();return}if(b&&b.dataset.dtab=='rate'){drawer(false);TB_SEG='rate';tab('tab');renderTab();return}if(b&&b.dataset.dtab=='mst'){drawer(false);TB_SEG='mst';tab('tab');renderTab();return}if(b&&b.dataset.dtab=='usr'){drawer(false);USR_OPEN=true;renderSk();tab('sk');renderUsers();setTimeout(()=>{const u=$('usrBox');if(u){u.scrollIntoView({behavior:'smooth',block:'start'});u.style.outline='3px solid #2563eb';setTimeout(()=>u.style.outline='',2500)}},120);return}
   if(b&&['tab','me','cl','pl','home','des','prod'].includes(b.dataset.dtab)){tab(b.dataset.dtab);drawer(false);return}if(b){({cat:'tCat',ord:'tOrd',cli:'tCli',log:'tLog',sk:'tSk'})[b.dataset.dtab]&&$(({cat:'tCat',ord:'tOrd',cli:'tCli',log:'tLog',sk:'tSk'})[b.dataset.dtab]).click();drawer(false)} if(e.target.closest('[data-dmode]'))drawer(false)});
-function tab(w){if(typeof IS_OWNER!='undefined'&&!IS_OWNER){const ok=document.body.classList.contains('sales')?['me','cat','ord','cli','log','des','prod']:['me'];if(!ok.includes(w))w='me'}curTab=w;$('vProd').hidden=w!='prod';if(w=='prod')renderProd();if(['cat','ord','cli'].includes(w))store.set('rz_step',w);$('vDes').hidden=w!='des';if(w=='des'){const rb=$('cliRoomBox');if(rb){if(rb.parentNode!==$('desBody')){$('desBody').appendChild(rb);rb.open=true}renderCli()}else $('desBody').innerHTML='<div class="card" style="text-align:center"><div style="font-weight:800;margin-bottom:8px">Скат, Дила, Палма и Аликафон считаются в режиме Тунукабонд</div><a class="pri" href="#tun" style="display:inline-block;padding:12px 18px;border-radius:12px;text-decoration:none">🧩 Перейти в Тунукабонд</a></div>'}document.body.classList.toggle('stepv',['cat','ord','cli'].includes(w));document.querySelectorAll('[data-step]').forEach(x=>x.classList.toggle('on',x.dataset.step==w));document.querySelectorAll('[data-bn]').forEach(x=>x.classList.toggle('on',x.dataset.bn==w||(x.dataset.bn=='order'&&['cat','ord','cli'].includes(w))));$('vTab').hidden=w!='tab';if(w=='tab')renderTab();$('vMe').hidden=w!='me';if(w=='me')renderMe();$('vCl').hidden=w!='cl';if(w=='cl')renderCl();$('vPl').hidden=w!='pl';if(w=='pl')renderPl();$('vHome').hidden=w!='home';if(w=='home')renderHome();setTimeout(drawerSync,0);$('vSk').hidden=w!='sk';$('tSk').classList.toggle('on',w=='sk');$('vCat').hidden=w!='cat';$('vOrd').hidden=w!='ord';$('vLog').hidden=w!='log';$('vCli').hidden=w!='cli';$('tCat').classList.toggle('on',w=='cat');$('tOrd').classList.toggle('on',w=='ord');$('tLog').classList.toggle('on',w=='log');$('tCli').classList.toggle('on',w=='cli');document.querySelector('.bar').hidden=['log','sk','tab','me','cl','pl','home','des','prod'].includes(w);window.scrollTo(0,0)}
+function tab(w){try{namesStart()}catch(_){}try{if(['cli','ord','cat','cl'].includes(w))clStart()}catch(_){}if(typeof IS_OWNER!='undefined'&&!IS_OWNER){const ok=document.body.classList.contains('sales')?['me','cat','ord','cli','log','des','prod','cl']:['me'];if(!ok.includes(w))w='me'}curTab=w;$('vProd').hidden=w!='prod';if(w=='prod')renderProd();if(['cat','ord','cli'].includes(w))store.set('rz_step',w);$('vDes').hidden=w!='des';if(w=='des'){const rb=$('cliRoomBox');if(rb){if(rb.parentNode!==$('desBody')){$('desBody').appendChild(rb);rb.open=true}renderCli()}else $('desBody').innerHTML='<div class="card" style="text-align:center"><div style="font-weight:800;margin-bottom:8px">Скат, Дила, Палма и Аликафон считаются в режиме Тунукабонд</div><a class="pri" href="#tun" style="display:inline-block;padding:12px 18px;border-radius:12px;text-decoration:none">🧩 Перейти в Тунукабонд</a></div>'}document.body.classList.toggle('stepv',['cat','ord','cli'].includes(w));document.querySelectorAll('[data-step]').forEach(x=>x.classList.toggle('on',x.dataset.step==w));document.querySelectorAll('[data-bn]').forEach(x=>x.classList.toggle('on',x.dataset.bn==w||(x.dataset.bn=='order'&&['cat','ord','cli'].includes(w))));$('vTab').hidden=w!='tab';if(w=='tab')renderTab();$('vMe').hidden=w!='me';if(w=='me')renderMe();$('vCl').hidden=w!='cl';if(w=='cl')renderCl();$('vPl').hidden=w!='pl';if(w=='pl')renderPl();$('vHome').hidden=w!='home';if(w=='home')renderHome();setTimeout(drawerSync,0);$('vSk').hidden=w!='sk';$('tSk').classList.toggle('on',w=='sk');$('vCat').hidden=w!='cat';$('vOrd').hidden=w!='ord';$('vLog').hidden=w!='log';$('vCli').hidden=w!='cli';$('tCat').classList.toggle('on',w=='cat');$('tOrd').classList.toggle('on',w=='ord');$('tLog').classList.toggle('on',w=='log');$('tCli').classList.toggle('on',w=='cli');document.querySelector('.bar').hidden=['log','sk','tab','me','cl','pl','home','des','prod'].includes(w);window.scrollTo(0,0)}
 $('tLog').onclick=()=>{renderLog();tab('log')};
 document.addEventListener('click',e=>{const st=e.target.closest('[data-step]');if(st){({cat:'tCat',ord:'tOrd',cli:'tCli'})[st.dataset.step]&&$(({cat:'tCat',ord:'tOrd',cli:'tCli'})[st.dataset.step]).click();return}
   const bn=e.target.closest('[data-bn]');if(bn){const w=bn.dataset.bn;if(w=='more'){drawer(true);return}if(w=='order'){const s0=store.get('rz_step','cat');$(({cat:'tCat',ord:'tOrd',cli:'tCli'})[s0]||'tCat').click();return}if(w=='log'){$('tLog').click();return}tab(w);return}
@@ -1766,20 +1786,22 @@ function buildSheet(){
 
 // ---------- 📝 заказ с бумаги: фото рукописного листа + клиент + сумма → в журнал с этапами ----------
 let PAPER_IMG='';
-function paperForm(){PAPER_IMG='';skOpen('📝 Заказ с бумаги',
+function paperForm(pref){PAPER_IMG='';pref=pref||{};setTimeout(()=>{if(pref.name&&$('ppC'))$('ppC').value=pref.name;if(pref.phone&&$('ppP'))$('ppP').value=pref.phone},30);skOpen(pref.old?'📝 Старый заказ клиента':'📝 Заказ с бумаги',
   '<label class="drwbtn" style="display:block;text-align:center;margin-bottom:8px;background:linear-gradient(135deg,#7c3aed,#2563eb);color:#fff">📷 Сфотографировать лист заказа<input type="file" accept="image/*" capture="environment" id="ppFile" class="fileHid"></label><div id="ppPrev"></div>'+
   '<div class="two"><label>Клиент<input id="ppC" placeholder="Имя"></label><label>Телефон<input id="ppP" inputmode="tel" placeholder="+998…"></label></div>'+
   '<label>Толщина / цвет<input id="ppCol" placeholder="0.45 RAL 7024"></label>'+
   '<div class="two"><label>Сумма заказа, сум<input id="ppT" inputmode="numeric" placeholder="0"></label><label>Предоплата, сум<input id="ppPre" inputmode="numeric" placeholder="0"></label></div>'+
   '<div class="two"><label>Как оплатил<select id="ppM"><option value="cash">💵 Наличные</option><option value="card">💳 Карта</option><option value="bank">🏦 Перечисление</option></select></label><label>Дата<input id="ppD" value="'+today()+'"></label></div>'+
   '<label>Примечание<input id="ppN" placeholder="срок, адрес, что заказал коротко"></label>'+
-  '<label style="flex-direction:row;align-items:center;gap:8px;font-size:15px;color:var(--ink)"><input type="checkbox" id="ppAI" checked style="width:22px;height:22px"> ✦ Джарвис прочитает строки с фото (для цеха и склада)</label>',
+  '<label style="flex-direction:row;align-items:center;gap:8px;font-size:15px;color:var(--ink)"><input type="checkbox" id="ppAI" '+(pref.old?'':'checked')+' style="width:22px;height:22px"> ✦ Джарвис прочитает строки с фото (для цеха и склада)</label>'+
+  '<label style="flex-direction:row;align-items:center;gap:8px;font-size:15px;color:var(--ink)"><input type="checkbox" id="ppOld" '+(pref.old?'checked':'')+' style="width:22px;height:22px"> Старый заказ — уже сделан и отгружен (в цех не пойдёт)</label>',
   async()=>{const c=skVal('ppC').trim();if(!c&&!PAPER_IMG){toast('Впишите клиента или сфотографируйте лист');return}if(!DB){toast('Сохранение недоступно');return}
     const tot=num(String(skVal('ppT')).replace(/\s/g,'')),pre=String(skVal('ppPre')).replace(/\s/g,''),useAI=$('skForm').querySelector('#ppAI').checked;
-    const data={mode:MODE,ts:Date.now(),date:skVal('ppD')||today(),client:c,phone:skVal('ppP'),color:skVal('ppCol'),note:skVal('ppN'),paper:true,photo:PAPER_IMG||'',
-      cli:{pre,preM:pre?skVal('ppM'):'',disc:'',del:'',prices:{}},total:tot||0,lines:[],sum:{area:0,stripM:0,met:{},pcs:{},kg:{}},sf:0,stH:[{f:0,d:today(),t:new Date().toTimeString().slice(0,5),ts:Date.now(),by:UID||''}]};
+    const old=$('skForm').querySelector('#ppOld')&&$('skForm').querySelector('#ppOld').checked;const dd=String(skVal('ppD')||today()).match(/(\d{1,2})\.(\d{1,2})\.(\d{4})/);const ots=old&&dd?new Date(+dd[3],+dd[2]-1,+dd[1],12).getTime():Date.now();
+    const data={mode:MODE,ts:ots,date:skVal('ppD')||today(),client:c,phone:skVal('ppP'),color:skVal('ppCol'),note:skVal('ppN'),paper:true,photo:PAPER_IMG||'',
+      cli:{pre,preM:pre?skVal('ppM'):'',disc:'',del:'',prices:{}},total:tot||0,lines:[],sum:{area:0,stripM:0,met:{},pcs:{},kg:{}},sf:old?8:0,old:old||false,stH:[{f:old?8:0,d:today(),t:new Date().toTimeString().slice(0,5),ts:Date.now(),by:UID||''}]};
     $('skOk').disabled=true;
-    try{const col=ordCol(),ref=DB.collection(col).doc();await ref.set(data);prodSync({...data,id:ref.id,_col:col,_by:IS_OWNER?'':UID},{sf:0,stH:data.stH});$('mSk').classList.remove('show');toast('📝 Заказ с бумаги сохранён — этапы в Журнале');
+    try{const col=ordCol(),ref=DB.collection(col).doc();await ref.set(data);if(!old)prodSync({...data,id:ref.id,_col:col,_by:IS_OWNER?'':UID},{sf:0,stH:data.stH});$('mSk').classList.remove('show');toast('📝 Заказ с бумаги сохранён — этапы в Журнале');
       if(useAI&&PAPER_IMG)paperAI(col,ref.id,PAPER_IMG)}catch(e){toast('Не сохранилось: '+(e&&e.message||''))}finally{$('skOk').disabled=false}},'💾 Сохранить в журнал')}
 async function paperAI(col,id,img){try{const cat=allItems().filter(i=>!i.hidden).map(i=>i.id+' | '+i.name+' | '+(i.unit=='m'?'м × шт':i.unit)).join('\n');const sm=await aiSm();
   const r=await sm.json('Это фото рукописного заказа металлических деталей. Найди позиции и сопоставь с каталогом. Для «м × шт» — len (м) и qty. Если нет в каталоге — id=null, name как написано.\nКАТАЛОГ:\n'+cat+'\nОтветь ТОЛЬКО JSON: {"lines":[{"id":"","name":"","len":2,"qty":5}]}',{images:[dataToBlob(img)],modelTier:'default'});
@@ -1853,9 +1875,9 @@ function savedSheets(o){const paperImg=o.paper&&o.photo?'<div class="shvw shimg"
   try{order=JSON.parse(JSON.stringify(o.lines||[]));DRAW=o.drawing||'';if(o.room)ROOM=JSON.parse(JSON.stringify(o.room));
     window.__RH=({hClient:o.client||'',hPhone:o.phone||'',hColor:o.color||'',hDate:o.date||'',hNote:o.note||''});
     buildSheet();out.push($('sheet').innerHTML);if(sumRows().length){buildList();out.push($('sheet').innerHTML)}
-    {const k=o.cli||{};$('cliPre').value=k.pre||'';$('cliDisc').value=k.disc||'';$('cliDel').value=k.del||'';if(k.gp!=null)GP=k.gp;if(k.gs!=null)GS=k.gs;if(k.prices)Object.assign(PRICES,k.prices);buildCliSheet();out.unshift($('sheet').innerHTML)}}
+    {const k=o.cli||{};$('cliPre').value=k.pre||'';$('cliDisc').value=k.disc||'';$('cliDel').value=k.del||'';if(k.gp!=null)GP=k.gp;if(k.gs!=null)GS=k.gs;GP2_OVR=k.gp2!=null&&(k.gpm||MODE)==MODE?k.gp2:null;if(k.prices)Object.assign(PRICES,k.prices);buildCliSheet();out.unshift($('sheet').innerHTML)}}
   catch(e){out=['<div style="padding:10px">Не удалось показать лист</div>']}
-  finally{GP=bk.GP;GS=bk.GS;for(const x in PRICES)delete PRICES[x];Object.assign(PRICES,JSON.parse(bk.PR));['cliPre','cliDisc','cliDel'].forEach((k,i)=>$(k).value=bk.cv[i]);order=bk.order;DRAW=bk.DRAW;ROOM=bk.ROOM;window.__RH=null;$('sheet').innerHTML=bk.sh}
+  finally{GP2_OVR=null;GP=bk.GP;GS=bk.GS;for(const x in PRICES)delete PRICES[x];Object.assign(PRICES,JSON.parse(bk.PR));['cliPre','cliDisc','cliDel'].forEach((k,i)=>$(k).value=bk.cv[i]);order=bk.order;DRAW=bk.DRAW;ROOM=bk.ROOM;window.__RH=null;$('sheet').innerHTML=bk.sh}
   return paperImg+out.map(h=>'<div class="shvw"><div class="shv">'+h+'</div></div>').join('')}
 function shvFit(box){box.querySelectorAll('.shvw:not(.shimg)').forEach(w=>{const v=w.firstChild,k=Math.min(1,w.clientWidth/794);v.style.transform='scale('+k+')';w.style.height=Math.ceil(v.offsetHeight*k)+'px'})}
 window.addEventListener('resize',()=>{document.querySelectorAll('.shvbox').forEach(shvFit);const f=$('shvFull');if(f)shvZoom(0)});
@@ -1931,7 +1953,7 @@ $('prGo').onclick=async()=>{
 };
 
 // ---------- заказ клиента (с ценами) ----------
-let PRICES=store.get('rz_prices',{});
+let PRICES=Object.assign({},store.other('rz_prices',{}),store.get('rz_prices',{}));
 function money(n){return Math.round(n).toString().replace(/\B(?=(\d{3})+(?!\d))/g,' ')}
 function qBase(l){ if(l.unit=='m') return [meters(l),'м']; if(l.unit=='face'){const f=faceCalc(l);return [f?f.area:0,'м²']} return [num(l.qty),l.unit=='kg'?'кг':'шт'] }
 function qText(l){
@@ -1941,20 +1963,22 @@ function qText(l){
   return fmt(num(l.qty))+(l.unit=='kg'?' кг':' шт');
 }
 let GP=store.get('rz_gp','');
+function famOf(l){if(l.fam)return l.fam;const it=allItems().find(x=>x.id==l.itemId);return it?(it.cat>=7?'tun':'roof'):MODE}
 function isSheet(l){const it=allItems().find(x=>x.id==l.itemId);return !!it&&(it.cat==0||it.cat==1)}
 function isGroup(l){return l.unit=='m'&&!isSheet(l)}
 function grpMeters(){return order.filter(isGroup).reduce((a,l)=>a+meters(l),0)}
-let DIVS=store.get('rz_divs',{}), GS=store.get('rz_gs','');
+let DIVS=Object.assign({},store.other('rz_divs',{}),store.get('rz_divs',{})), GS=store.get('rz_gs','');
 function divOf(l){ if(l.div==null&&DIVS[l.itemId]!=null) l.div=DIVS[l.itemId]; let d=num(l.div); if(!d&&l.unit=='m'&&isGroup(l)){const r=razv(l);if(r>0)d=Math.max(1,Math.floor(125/r+1e-9))} return d||1 }
 function lmat(l){return Math.round(meters(l)/divOf(l)*100)/100}
-let PERPC=store.get('rz_perpc',{});
+let PERPC=Object.assign({},store.other('rz_perpc',{}),store.get('rz_perpc',{}));
 function pcOf(l){ if(l.unit!='pcs') return 0; if(l.pc==null&&PERPC[l.itemId]!=null) l.pc=PERPC[l.itemId]; return num(l.pc) }
 function pcqText(l){const m=pcMat(l);return m?fmt(num(l.qty))+' шт × '+fmt(pcOf(l))+' м'+(num(l.div)>1?' ÷ '+fmt(num(l.div)):'')+' = '+fmt(m)+' м в расход материала':''}
 function pcMat(l){const p=pcOf(l);return p?Math.round(num(l.qty)*p/(num(l.div)||1)*100)/100:0}
-function grpMat(){return order.filter(isGroup).reduce((a,l)=>a+lmat(l),0)+order.reduce((a,l)=>a+pcMat(l),0)}
-function grpSum(){return grpMat()*(num(GP)+num(GS))}
+function grpMat(f){f=f||MODE;const L=order.filter(l=>famOf(l)==f);return L.filter(isGroup).reduce((a,l)=>a+lmat(l),0)+L.reduce((a,l)=>a+pcMat(l),0)}
+let GP2_OVR=null;function grpOtherPrice(){return GP2_OVR!=null?num(GP2_OVR):num(store.other('rz_gp',''))+num(store.other('rz_gs',''))}
+function grpSum(){const o=MODE=='tun'?'roof':'tun';return grpMat()*(num(GP)+num(GS))+grpMat(o)*grpOtherPrice()}
 function eqText(l){const q=meters(l);if(!q)return '';return isGroup(l)&&divOf(l)!=1?fmt(q)+' → '+fmt(lmat(l))+' м':'= '+fmt(q)+' м'}
-function linePrice(l){ if(isGroup(l)||pcOf(l)||(MODE=='tun'&&l.unit=='pcs')) return 0; if(isSheet(l)) return num(PRICES[l.itemId]); if(l.price==null&&PRICES[l.itemId]!=null) l.price=PRICES[l.itemId]; return num(l.price) }
+function linePrice(l){ if(isGroup(l)||pcOf(l)||(famOf(l)=='tun'&&l.unit=='pcs')) return 0; if(isSheet(l)) return num(PRICES[l.itemId]); if(l.price==null&&PRICES[l.itemId]!=null) l.price=PRICES[l.itemId]; return num(l.price) }
 function lineSum(l){return qBase(l)[0]*linePrice(l)}
 function itemsTotal(){return order.reduce((a,l)=>a+lineSum(l),0)+grpSum()}
 const nv=id=>num(String($(id).value).replace(/\s/g,''));
@@ -1972,7 +1996,7 @@ function cliCard(l,i){
     '<div class="rw">'+size+' (<input data-cf="note" value="'+v('note')+'" style="width:44px">)</div>'+
     (l.unit=='pcs'?'<div class="rw pcr">металл на 1 шт <input class="pc" data-cf="pc" inputmode="decimal" placeholder="0.00" value="'+(l.pc!=null?v('pc'):'')+'" style="width:64px"> м ÷<input data-cf="div" inputmode="decimal" placeholder="1" value="'+(l.div!=null?v('div'):'')+'" style="width:44px"></div><div class="q2" data-pcq>'+pcqText(l)+'</div>':'')+
     '<div class="q2" data-q>'+(q?'= '+fmt(q)+' '+u:'')+'</div>'+
-    (g||isSheet(l)||pcOf(l)||(MODE=='tun'&&l.unit=='pcs')?'':'<div class="rw">цена за '+u+' <input class="pc" data-cf="price" inputmode="numeric" placeholder="0" value="'+(l.price!=null?v('price'):'')+'"><b class="sm" data-sm style="margin-left:auto;color:var(--ink)">'+(lineSum(l)?money(lineSum(l)):'—')+'</b></div>')+'</div>';
+    (g||isSheet(l)||pcOf(l)||(famOf(l)=='tun'&&l.unit=='pcs')?'':'<div class="rw">цена за '+u+' <input class="pc" data-cf="price" inputmode="numeric" placeholder="0" value="'+(l.price!=null?v('price'):'')+'"><b class="sm" data-sm style="margin-left:auto;color:var(--ink)">'+(lineSum(l)?money(lineSum(l)):'—')+'</b></div>')+'</div>';
 }
 function sizeCard(id,ii,withTot){
   const l0=order[ii[0]],u='м';
@@ -1994,6 +2018,7 @@ function gFormula(){const m=grpMat();return fmt(m)+' м × ('+money(num(GP))+' +
 function grpTotHtml(){const m=grpMat();return '<div class="gl" id="gList">'+gListHtml()+'</div><span>'+(MODE=='tun'?'Расход материала':'Расход материала (доборные)')+'</span><b>'+fmt(m)+' м</b>'+
   '<div class="rw" style="grid-column:1/-1">материал за м <input class="pc" id="gPrice" inputmode="numeric" placeholder="0" value="'+esc(GP)+'"></div>'+
   '<div class="rw" style="grid-column:1/-1">услуга за м <input class="pc" id="gServ" inputmode="numeric" placeholder="0" value="'+esc(GS)+'"></div>'+
+  (()=>{const o=MODE=='tun'?'roof':'tun',m2=grpMat(o);if(!m2)return '';const p=grpOtherPrice();return '<div class="rw" style="grid-column:1/-1;font-size:13px;color:var(--mut)">+ '+(o=='tun'?'тунукабонд':'кровля')+': '+fmt(m2)+' м × '+(p?money(p):'<b style="color:#dc2626">цена не задана</b>')+' = '+money(Math.round(m2*p))+' <span style="font-size:11px">(цена — в разделе «'+(o=='tun'?'Тунукабонд':'Кровля')+'»)</span></div>'})()+
   '<div class="rw" style="grid-column:1/-1"><span id="gForm" style="font-weight:400">'+gFormula()+'</span><b id="gSum" style="margin-left:auto;font-size:17px;color:var(--ink)">'+(grpSum()?money(grpSum()):'—')+'</b></div>'}
 function pcsLines(){return order.filter(l=>!isSheet(l)&&!isGroup(l)&&l.unit!='face')}
 function pTotHtml(){const L=pcsLines();const t=L.reduce((a,l)=>a+lineSum(l),0);
@@ -2137,8 +2162,9 @@ function pubBal(){if(!IS_OWNER||!DB)return;clearTimeout(window.__pb);window.__pb
 })();
 function snapshotOrder(){
   const h=readHead(),S=summary();
-  return {mode:MODE,ts:Date.now(),date:h.hDate,client:h.hClient,phone:h.hPhone,color:h.hColor,note:h.hNote,
-    cli:{pre:$('cliPre').value,preM:PRE_M,disc:$('cliDisc').value,del:$('cliDel').value,gp:GP,gs:GS,prices:Object.fromEntries(order.map(l=>[l.itemId,PRICES[l.itemId]]).filter(x=>x[1]!=null))},
+  const fams=new Set(order.map(famOf));
+  return {mode:fams.size>1?'mix':(fams.size?[...fams][0]:MODE),ts:Date.now(),date:h.hDate,client:h.hClient,phone:h.hPhone,color:h.hColor,note:h.hNote,
+    cli:{pre:$('cliPre').value,preM:PRE_M,disc:$('cliDisc').value,del:$('cliDel').value,gp:GP,gs:GS,gp2:grpOtherPrice(),gpm:MODE,prices:Object.fromEntries(order.map(l=>[l.itemId,PRICES[l.itemId]]).filter(x=>x[1]!=null))},
     drawing:DRAW&&DRAW.length<180000?DRAW:'',
     room:JSON.parse(JSON.stringify(ROOM)),
     total:cliTotal(),lines:JSON.parse(JSON.stringify(order)),sum:{area:S.area,stripM:S.stripM,met:S.met,pcs:S.pcs,kg:S.kg}};
@@ -2260,7 +2286,8 @@ document.addEventListener('click',async e=>{const d=e.target.closest('[data-cd]'
 document.addEventListener('click',e=>{const b=e.target.closest('[data-payper]');if(!b)return;PAY_PER=b.dataset.payper;renderPayBox()});
 function oPaid(o){return num(String((o.cli||{}).pre||'').replace(/\s/g,''))+(o.pays||[]).reduce((a,p)=>a+num(p.sum),0)}
 function oDebt(o){return Math.max(0,Math.round((o.total||0)-oPaid(o)))}
-function debtHtml(){const L=saved.filter(o=>(o.mode||'roof')==MODE&&oDebt(o)>0).sort((a,b)=>b.ts-a.ts);const tot=L.reduce((a,o)=>a+oDebt(o),0);
+function modeIs(o){const m=o.mode||'roof';return m==MODE||m=='mix'}
+function debtHtml(){const L=saved.filter(o=>modeIs(o)&&oDebt(o)>0).sort((a,b)=>b.ts-a.ts);const tot=L.reduce((a,o)=>a+oDebt(o),0);
   if(!L.length) return '<div class="dt"><span>💰 Долги клиентов</span><b class="okc">нет ✓</b></div>';
   return '<div class="dt"><span>💰 Долги клиентов ('+L.length+')</span><b>'+money(tot)+' сум</b></div>'+L.map(o=>'<div class="dr" data-o="'+o.id+'"><div><b>'+esc(o.client||'без имени')+'</b>'+(o.phone?' · '+esc(o.phone):'')+'<br><span>'+esc(o.date||'')+' · заказ '+money(o.total)+' · оплачено '+money(oPaid(o))+'</span></div><div class="dv">'+money(oDebt(o))+'</div><button class="pay" data-pay="'+o.id+'">+ Оплата</button></div>').join('')}
 function payForm(o){const lm=store.get('rz_lastpm','cash');skOpen('Оплата: '+(o.client||'без имени'),'<div class="skcalc">Заказ '+money(o.total)+' сум · оплачено '+money(oPaid(o))+' · <b>долг '+money(oDebt(o))+' сум</b></div><label>Сумма оплаты, сум<input id="fPay" inputmode="numeric" value="'+oDebt(o)+'"></label><div class="pmw" id="fPm" data-v="'+lm+'"><span style="font-size:12px;color:var(--mut)">Как оплатил:</span>'+pmChips(lm,'data-paym')+'</div><label>Примечание<input id="fPn" placeholder="№ счёта, кто платил"></label>'+
@@ -2276,8 +2303,8 @@ function renderLog(){
   if(IS_OWNER){const us=['',...Object.keys(STAFF)];$('fUsr').innerHTML='<option value="*">Все</option>'+us.map(u=>'<option value="'+u+'"'+(u==fu?' selected':'')+'>'+esc(u?(((TW.list||[]).find(x=>x.uid==u)||{}).name||uName(u)):'Вы (руководитель)')+'</option>').join('')}
   // заказы по продавцам: владелец и его вход продавца — одна строка
   const mw=typeof meWorker=='function'?meWorker():null,myU=new Set(['',UID,mw&&mw.uid].filter(x=>x!=null)),who=o=>myU.has(o._by||'')?'':o._by;
-  const mine=saved.filter(o=>(o.mode||'roof')==MODE&&(fu=='*'||who(o)==fu));
-  if(IS_OWNER&&$('logWho')){const per=$('fPer').value,base=saved.filter(o=>(o.mode||'roof')==MODE&&inPeriod(o,per));const G={};base.forEach(o=>{const k=who(o);(G[k]=G[k]||{n:0,t:0}).n++;G[k].t+=o.total||0});
+  const mine=saved.filter(o=>modeIs(o)&&(fu=='*'||who(o)==fu));
+  if(IS_OWNER&&$('logWho')){const per=$('fPer').value,base=saved.filter(o=>modeIs(o)&&inPeriod(o,per));const G={};base.forEach(o=>{const k=who(o);(G[k]=G[k]||{n:0,t:0}).n++;G[k].t+=o.total||0});
     Object.keys(ROLES).filter(u=>ROLES[u]=='sales'&&!myU.has(u)).forEach(u=>{G[u]=G[u]||{n:0,t:0}});G['']=G['']||{n:0,t:0};
     const nm=k=>k?((TW.list.find(x=>x.uid==k)||{}).name||uName(k)):(mw?mw.name:'Рахим')+' (вы)';
     $('logWho').innerHTML='<button class="chip'+(fu=='*'?' on':'')+'" data-lwho="*">Все · '+base.length+'</button>'+Object.keys(G).sort((a,b)=>G[b].t-G[a].t).map(k=>'<button class="chip'+(fu==k?' on':'')+'" data-lwho="'+k+'">👤 '+esc(nm(k))+' · '+G[k].n+(G[k].t?' · '+money(G[k].t):'')+'</button>').join('')}
@@ -3817,33 +3844,77 @@ $('inboxBan').onclick=()=>tab('sk');
 // ---------- база клиентов и должники ----------
 let CL_F='all',CL_OPEN='',CL_MAN=[],CL_ON=false;
 function clKey(name,phone){const d=String(phone||'').replace(/\D/g,'');return d.length>=7?'p'+d.slice(-9):'n'+String(name||'').trim().toLowerCase().replace(/\s+/g,' ')}
-function clStart(){if(CL_ON||!DB||!IS_OWNER)return;CL_ON=true;DB.collection('own/clients/list').onSnapshot(sn=>{CL_MAN=sn.docs.map(d=>({...d.data(),id:d.id}));if(curTab=='cl')renderCl()},()=>{})}
+function clCan(){return typeof IS_OWNER!='undefined'&&(IS_OWNER||document.body.classList.contains('sales'))}
+// общая база клиентов (видят руководитель и продавцы); старые записи руководителя переносятся один раз
+function clStart(){if(CL_ON||!DB||!clCan())return;CL_ON=true;DB.collection('clients').onSnapshot(sn=>{CL_MAN=sn.docs.map(d=>({...d.data(),id:d.id}));clDL();if(curTab=='cl')renderCl()},()=>{});
+  if(IS_OWNER&&!localStorage.getItem('sps_clmig')){DB.collection('own/clients/list').get().then(async sn=>{for(const d of sn.docs){try{await DB.doc('clients/'+d.id).set(d.data(),{merge:true})}catch(_){}}try{localStorage.setItem('sps_clmig','1')}catch(_){}}).catch(()=>{})}}
+const CL_TYPES={chast:'🏠 Частный',usto:'🧰 Усто (мастер)',firma:'🏢 Фирма',prorab:'👷 Прораб'};
+function clType(x){return x.type||(/(^|\s)(усто|usto|уста)(\s|$)/i.test(x.name||'')?'usto':'chast')}
+function clDL(){let d=$('clDL');if(!d){d=document.createElement('datalist');d.id='clDL';document.body.appendChild(d);const h=$('hClient');if(h)h.setAttribute('list','clDL')}
+  try{d.innerHTML=clBase().filter(x=>x.name).slice(0,400).map(x=>'<option value="'+esc(x.name)+'">'+esc(x.phone||'')+'</option>').join('')}catch(_){}}
+function clForm(x){x=x||{};const t=clType(x),mn=mstOf({client:'усто '+String(x.name||'').replace(/(^|\s)(усто|usto|уста)(\s|$)/ig,' ').trim()});
+  skOpen(x.k?'✏️ Клиент':'Новый клиент','<label>Имя<input id="fCn" value="'+esc(x.name||'')+'" placeholder="Имя или фирма"></label>'+
+   '<label>Кто это<select id="fCy">'+Object.entries(CL_TYPES).map(([k,v])=>'<option value="'+k+'"'+(k==t?' selected':'')+'>'+v+'</option>').join('')+'</select></label>'+
+   '<label>Телефон<input id="fCp" inputmode="tel" value="'+esc(x.phone||'')+'" placeholder="+998…"></label><label>Телефон 2<input id="fCp2" inputmode="tel" value="'+esc(x.phone2||'')+'" placeholder="+998…"></label>'+
+   '<label>Адрес<input id="fCa" value="'+esc(x.addr||'')+'" placeholder="город, махалля, улица"></label>'+
+   '<label>Место на карте<div class="rw2"><input id="fCl" value="'+esc(x.loc||'')+'" placeholder="ссылка Google/Yandex карт" style="flex:1;min-width:0"><button type="button" class="chip" id="fClHere">📍 Я здесь</button></div></label>'+
+   (IS_OWNER?'<label id="fCpctL" style="'+(t=='usto'?'':'display:none')+'">Премия мастеру, %<input id="fCpct" inputmode="decimal" value="'+esc(String(mn&&MST.m[mn]&&MST.m[mn].pct||''))+'" placeholder="'+esc(String(MST.def||1))+'"></label>':'')+
+   '<label>Примечание<input id="fCt" value="'+esc(x.note||'')+'" placeholder="откуда узнал, что строит…"></label>',
+   async()=>{const n=skVal('fCn').trim();if(!n){toast('Впишите имя');return}const ty=skVal('fCy');
+     const doc={name:n,type:ty,phone:skVal('fCp').trim(),phone2:skVal('fCp2').trim(),addr:skVal('fCa').trim(),loc:skVal('fCl').trim(),note:skVal('fCt').trim(),ts:x.ts||Date.now(),upd:Date.now(),by:UID||''};
+     try{if(x.man)await DB.doc('clients/'+x.man).set(doc,{merge:true});else await DB.collection('clients').add(doc);
+       if(IS_OWNER&&ty=='usto'&&$('fCpct')){const m2=mstOf({client:'усто '+n.replace(/(^|\s)(усто|usto|уста)(\s|$)/ig,' ').trim()});if(m2){MST.m[m2]=MST.m[m2]||{};MST.m[m2].pct=$('fCpct').value.trim();if(doc.phone)MST.m[m2].phone=doc.phone;mstSave()}}
+       $('mSk').classList.remove('show');toast(x.man?'Сохранено':'Клиент добавлен')}catch(_){toast('Не сохранилось — нет связи или доступа')}},'💾 Сохранить')}
+document.addEventListener('change',e=>{if(e.target.id=='fCy'){const l=$('fCpctL');if(l)l.style.display=e.target.value=='usto'?'':'none'}
+  if(e.target.id=='hClient'){const v=e.target.value.trim().toLowerCase();if(!v||$('hPhone').value.trim())return;const x=clBase().find(c=>(c.name||'').toLowerCase()==v);if(x&&x.phone){$('hPhone').value=x.phone;try{save()}catch(_){}toast('📇 Телефон клиента подставлен')}}});
+document.addEventListener('click',e=>{if(e.target.id=='fClHere'){if(!navigator.geolocation){toast('Геолокация недоступна');return}toast('Определяю место…');navigator.geolocation.getCurrentPosition(p=>{$('fCl').value='https://maps.google.com/?q='+p.coords.latitude.toFixed(6)+','+p.coords.longitude.toFixed(6);toast('📍 Место записано')},()=>toast('Не удалось — разрешите геолокацию'),{enableHighAccuracy:true,timeout:15000})}});
+function clNewOrder(x){const go=()=>{order=[];curId=null;store.set('rz_cur',null);['cliPre','cliDisc','cliDel'].forEach(k=>{if($(k))$(k).value=''});store.set('rz_pre','');store.set('rz_disc','');store.set('rz_del','');
+    $('hClient').value=x.name||'';$('hPhone').value=x.phone||'';$('hNote').value='';$('hDate').value=today();save();renderOrd();renderCat();badge();$('tCat').click();toast('🧾 Новый заказ: '+(x.name||''))};
+  if(order.length)ask('Новый заказ для «'+(x.name||'')+'»?','Текущие строки в работе будут очищены. Сохранённые заказы в журнале останутся.',go);else go()}
 function clBase(){const M={};const g=(n,ph)=>{const k=clKey(n,ph);return M[k]||(M[k]={k,name:'',phone:'',orders:[],total:0,paid:0,debt:0,last:0,first:0,oldDebt:0,note:''})};
-  CL_MAN.forEach(c=>{const x=g(c.name,c.phone);x.name=x.name||c.name;x.phone=x.phone||c.phone;x.note=c.note||'';x.man=c.id});
+  CL_MAN.forEach(c=>{const x=g(c.name,c.phone);x.name=x.name||c.name;x.phone=x.phone||c.phone;x.note=c.note||'';x.man=c.id;['type','phone2','addr','loc','ts'].forEach(k=>{if(c[k])x[k]=c[k]})});
   saved.forEach(o=>{if(!o.client&&!o.phone)return;const x=g(o.client,o.phone);if(!x.name||o.ts>x.last)x.name=o.client||x.name;x.phone=o.phone||x.phone;
     x.orders.push(o);x.total+=o.total||0;x.paid+=Math.min(oPaid(o),o.total||0);const d=oDebt(o);x.debt+=d;if(d&&(!x.oldDebt||o.ts<x.oldDebt))x.oldDebt=o.ts;
     if(o.ts>x.last)x.last=o.ts;if(!x.first||o.ts<x.first)x.first=o.ts});
+  // один и тот же человек: «Шахзод усто» = «Усто Шахзод», заказ без телефона = клиент с телефоном
+  const nk=n=>String(n||'').toLowerCase().replace(/[^a-zа-яёўқғҳ0-9 ]/gi,' ').split(/\s+/).filter(Boolean).sort().join(' ');const byN={};
+  Object.values(M).forEach(x=>{if(x.k[0]=='p'&&x.name){const k=nk(x.name);if(!byN[k])byN[k]=x}});
+  Object.values(M).forEach(x=>{if(x.k[0]!='n')return;const t=byN[nk(x.name)];if(!t||t===x)return;
+    t.orders.push(...x.orders);t.total+=x.total;t.paid+=x.paid;t.debt+=x.debt;if(x.oldDebt&&(!t.oldDebt||x.oldDebt<t.oldDebt))t.oldDebt=x.oldDebt;t.last=Math.max(t.last,x.last);if(x.first&&(!t.first||x.first<t.first))t.first=x.first;if(!t.man&&x.man)t.man=x.man;delete M[x.k]});
   return Object.values(M)}
 function daysAgo(ts){return ts?Math.floor((Date.now()-ts)/864e5):0}
 function clFiltered(){const q=$('clQ').value.trim().toLowerCase(),qd=q.replace(/\D/g,'');let L=clBase();
-  if(CL_F=='debt')L=L.filter(x=>x.debt>0);if(CL_F=='ok')L=L.filter(x=>!x.debt);
+  if(CL_F=='debt')L=L.filter(x=>x.debt>0);if(CL_F=='ok')L=L.filter(x=>!x.debt);if(CL_F=='usto')L=L.filter(x=>clType(x)=='usto');if(CL_F=='firma')L=L.filter(x=>clType(x)=='firma');
+  if(q)L=L.filter(x=>x.name.toLowerCase().includes(q)||(qd.length>=3&&String(x.phone).replace(/\D/g,'').includes(qd))||String(x.addr||'').toLowerCase().includes(q));else
   if(q)L=L.filter(x=>x.name.toLowerCase().includes(q)||(qd.length>=3&&String(x.phone).replace(/\D/g,'').includes(qd)));
   const so=$('clSort').value;L.sort((a,b)=>so=='sum'?b.total-a.total:so=='last'?b.last-a.last:so=='name'?a.name.localeCompare(b.name):(b.debt-a.debt)||(b.last-a.last));return L}
-function renderCl(){if(!IS_OWNER)return;clStart();const all=clBase(),dl=all.filter(x=>x.debt>0);
+function renderCl(){if(!clCan())return;clStart();const all=clBase(),dl=all.filter(x=>x.debt>0);
   $('clStat').innerHTML='<div><b>'+all.length+'</b><span>клиентов</span></div><div class="r"><b>'+dl.length+'</b><span>должников</span></div><div class="r"><b>'+money(dl.reduce((a,x)=>a+x.debt,0))+'</b><span>долг, сум</span></div>';
   if(typing($('clList')))return;const L=clFiltered();
-  $('clList').innerHTML=L.map(x=>'<div class="card clc" data-cl="'+esc(x.k)+'"><div class="t"><div><b style="font-size:16px">'+esc(x.name||'без имени')+'</b>'+
+  $('clList').innerHTML=L.map(x=>'<div class="card clc" data-cl="'+esc(x.k)+'"><div class="t"><div><b style="font-size:16px">'+esc(x.name||'без имени')+'</b> <span class="who">'+CL_TYPES[clType(x)].split(' ')[0]+'</span>'+
     '<div class="m">'+(x.phone?'<a href="tel:'+esc(String(x.phone).replace(/[^\d+]/g,''))+'">📞 '+esc(x.phone)+'</a> · ':'')+'заказов: '+x.orders.length+(x.total?' · на '+money(x.total)+' сум':'')+'</div>'+
     '<div class="m">'+(x.last?'последний заказ: '+new Date(x.last).toLocaleDateString('ru-RU'):'заказов нет')+(x.note?' · '+esc(x.note):'')+'</div></div>'+
     '<div class="d">'+(x.debt?'<b>'+money(x.debt)+'</b><div class="m">долг '+daysAgo(x.oldDebt)+' дн.</div>':(x.orders.length?'<span class="ok">оплачено ✓</span>':''))+'</div></div>'+
-    (CL_OPEN==x.k?'<div class="clo">'+x.orders.slice().sort((a,b)=>b.ts-a.ts).map(o=>'<div class="r"><div>'+esc(o.date||'')+' · '+((o.mode||'roof')=='tun'?'тунукабонд':'кровля')+(o._by?' <span class="who">👤 '+esc(uName(o._by))+'</span>':'')+'<div class="m">'+esc(o.color||'')+'</div></div><div class="s">'+money(o.total||0)+'<div class="m">'+(oDebt(o)?'<span style="color:#dc2626">долг '+money(oDebt(o))+'</span>':'оплачено')+'</div></div>'+(oDebt(o)?'<button class="pay" data-pay="'+o.id+'">+ Оплата</button>':'')+'</div>').join('')+
-      (x.man?'<div class="rw2" style="margin-top:8px"><button class="chip" data-cldel="'+x.man+'">Удалить из базы</button></div>':'')+'</div>':'')+'</div>').join('')||'<div class="card empty">Никого не найдено</div>'}
+    (CL_OPEN==x.k?'<div class="clo">'+clDetail(x)+x.orders.slice().sort((a,b)=>b.ts-a.ts).map(o=>'<div class="r" data-clo="'+esc(o.id)+'" style="cursor:pointer"><div>'+esc(o.date||'')+' · '+(typeof oSf=='function'?'<span class="who">'+esc((FLOW[oSf(o)]||[])[1]||'')+'</span> ':'')+'<span style="color:#4f46e5;font-size:12px">📄 лист ›</span> · '+((o.mode||'roof')=='tun'?'тунукабонд':'кровля')+(o._by?' <span class="who">👤 '+esc(uName(o._by))+'</span>':'')+'<div class="m">'+esc(o.color||'')+'</div></div><div class="s">'+money(o.total||0)+'<div class="m">'+(oDebt(o)?'<span style="color:#dc2626">долг '+money(oDebt(o))+'</span>':'оплачено')+'</div></div>'+(oDebt(o)?'<button class="pay" data-pay="'+o.id+'">+ Оплата</button>':'')+'</div>').join('')+
+      (x.man&&IS_OWNER?'<div class="rw2" style="margin-top:8px"><button class="chip" data-cldel="'+x.man+'">Удалить из базы</button></div>':'')+'</div>':'')+'</div>').join('')||'<div class="card empty">Никого не найдено</div>'}
 document.addEventListener('click',e=>{const f=e.target.closest('[data-clf]');if(f){CL_F=f.dataset.clf;document.querySelectorAll('[data-clf]').forEach(b=>b.classList.toggle('on',b==f));renderCl();return}
-  const d=e.target.closest('[data-cldel]');if(d){ask('Удалить клиента из базы?','Его заказы останутся в журнале.',async()=>{try{await DB.doc('own/clients/list/'+d.dataset.cldel).delete();toast('Удалено')}catch(_){toast('Не удалось')}});return}
+  const d=e.target.closest('[data-cldel]');if(d){ask('Удалить клиента из базы?','Его заказы останутся в журнале.',async()=>{try{await DB.doc('clients/'+d.dataset.cldel).delete();try{await DB.doc('own/clients/list/'+d.dataset.cldel).delete()}catch(_){}toast('Удалено')}catch(_){toast('Не удалось')}});return}
   if(e.target.closest('a,button'))return;const c=e.target.closest('[data-cl]');if(c){CL_OPEN=CL_OPEN==c.dataset.cl?'':c.dataset.cl;renderCl()}});
 $('clQ').oninput=renderCl;$('clSort').onchange=renderCl;
-$('clAdd').onclick=()=>skOpen('Новый клиент','<label>Имя<input id="fCn" placeholder="Имя или фирма"></label><label>Телефон<input id="fCp" inputmode="tel" placeholder="+998…"></label><label>Примечание<input id="fCt" placeholder="адрес, откуда узнал"></label>',
-  async()=>{const n=skVal('fCn').trim();if(!n){toast('Впишите имя');return}try{await DB.collection('own/clients/list').add({name:n,phone:skVal('fCp').trim(),note:skVal('fCt').trim(),ts:Date.now()});$('mSk').classList.remove('show');toast('Клиент добавлен')}catch(_){toast('Не сохранилось')}});
+$('clAdd').onclick=()=>clForm(null);
+function clDetail(x){const t=clType(x),tel=p=>'<a class="chip" href="tel:'+esc(String(p).replace(/[^\d+]/g,''))+'">📞 '+esc(p)+'</a>';
+  let h='<div class="rw2" style="gap:6px;flex-wrap:wrap;margin:4px 0 8px"><button class="chip on" data-clnew style="background:#16a34a;border-color:#16a34a">🧾 Новый заказ</button><button class="chip" data-cledit>✏️ Изменить</button><button class="chip" data-clold>📝 Старый заказ</button>'+(x.phone?tel(x.phone):'')+(x.phone2?tel(x.phone2):'')+
+    (x.loc?'<a class="chip" target="_blank" rel="noopener" href="'+esc(/^https?:/.test(x.loc)?x.loc:'https://maps.google.com/?q='+encodeURIComponent(x.loc))+'">🗺 Карта</a>':x.addr?'<a class="chip" target="_blank" rel="noopener" href="https://maps.google.com/?q='+encodeURIComponent(x.addr)+'">🗺 Карта</a>':'')+'</div>'+
+    '<div class="m" style="margin-bottom:6px">'+CL_TYPES[t]+(x.addr?' · 📍 '+esc(x.addr):'')+(x.first?' · клиент с '+new Date(x.first).toLocaleDateString('ru-RU'):'')+(x.total&&x.orders.length?' · средний заказ '+money(Math.round(x.total/x.orders.length)):'')+'</div>';
+  if(t=='usto'&&IS_OWNER){const mn=mstOf({client:'усто '+String(x.name||'').replace(/(^|\s)(усто|usto|уста)(\s|$)/ig,' ').trim()}),r=mn&&mstData('y').find(z=>z.n==mn);
+    if(r)h+='<div class="skcalc" style="margin-bottom:8px">🧰 Мастер <b>'+esc(mn)+'</b>: премия '+fmt(r.pct)+'% · заказов за год '+r.cnt+' на '+money(r.rev)+' · к выдаче <b style="color:'+(r.due?'#dc2626':'inherit')+'">'+money(r.due)+'</b>'+(r.due?' <button class="chip on" data-clgive="'+esc(mn)+'">💵 Выдать</button>':'')+'</div>'}
+  return h}
+document.addEventListener('click',e=>{const c=e.target.closest('[data-cl]');if(!c)return;const fx=()=>clBase().find(z=>z.k==c.dataset.cl);
+  const ro=e.target.closest('[data-clo]');if(ro&&!e.target.closest('button')){const o=saved.find(z=>z.id==ro.dataset.clo);if(o){e.stopPropagation();shvFull(o)}return}
+  if(e.target.closest('[data-clnew]')){const x=fx();if(x)clNewOrder(x);return}
+  if(e.target.closest('[data-cledit]')){const x=fx();if(x)clForm(x);return}
+  if(e.target.closest('[data-clold]')){const x=fx();if(x)paperForm({name:x.name,phone:x.phone,old:true});return}
+  const g=e.target.closest('[data-clgive]');if(g){tab('tab');setTimeout(()=>{try{document.querySelector('[data-tseg=mst]').click();setTimeout(()=>{const b=document.querySelector('[data-mst="'+g.dataset.clgive+'"] [data-mgive]');if(b)b.click()},200)}catch(_){}},100);return}},true);
 function debtList(){return clBase().filter(x=>x.debt>0).sort((a,b)=>b.debt-a.debt)}
 $('clCopy').onclick=async()=>{const L=debtList();const t='SPS Group — ДОЛЖНИКИ на '+today()+'\n\n'+L.map((x,i)=>(i+1)+'. '+(x.name||'без имени')+(x.phone?' ('+x.phone+')':'')+' — '+money(x.debt)+' сум, '+daysAgo(x.oldDebt)+' дн.').join('\n')+'\n\nИтого: '+money(L.reduce((a,x)=>a+x.debt,0))+' сум';
   try{await navigator.clipboard.writeText(t);toast('Скопировано')}catch(_){toast('Не удалось скопировать')}};
