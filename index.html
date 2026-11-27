@@ -3123,7 +3123,8 @@ const UG_DIR=[['→',0],['↘',45],['↓',90],['↙',135],['←',180],['↖',225
 function ugHtml(){const f=(k,ph,w)=>'<input data-ugf="'+k+'" inputmode="decimal" value="'+esc(String(UG[k]??''))+'" placeholder="'+(ph||'')+'" style="width:'+(w||70)+'px;text-align:center">';
   const ch=(k,v,t)=>'<button class="chip'+(String(UG[k])==String(v)?' on':'')+'" data-ugc="'+k+'" data-v="'+v+'">'+t+'</button>';
   const fromCat=allItems().filter(i=>i.unit=='m'&&PTS[i.icon]&&DEFSEG[i.icon]);
-  return '<label>Название<input data-ugf="name" value="'+esc(UG.name||'')+'"></label>'+
+  return '<label class="chip on" style="display:inline-block;cursor:pointer;margin-bottom:8px;background:#7c3aed;border-color:#7c3aed">📷 Профиль с фото эскиза (Джарвис)<input type="file" id="ugPhoto" accept="image/*" hidden></label> <button class="chip on" data-ugboth style="background:#16a34a;border-color:#16a34a">⬇️ Наружный + внутренний DXF</button>'+
+   '<label>Название<input data-ugf="name" value="'+esc(UG.name||'')+'"></label>'+
    '<div class="rw2" style="gap:6px;flex-wrap:wrap;margin:6px 0">'+ch('typ','out','⌐ Наружный')+ch('typ','in','⌙ Внутренний')+ch('wall','L','Стена слева')+ch('wall','R','Стена справа')+'</div>'+
    '<div class="two"><label>Угол стен, °'+f('ang','90')+'</label><label>Длина по стене, мм'+f('L','300')+'</label></div>'+
    '<div class="two"><label>Углов, шт'+f('n','1')+'</label><label>Соединение '+ch('lock',1,'🔒 Замок')+ch('lock',0,'нет')+'</label></div>'+
@@ -3424,10 +3425,29 @@ function ugDxfText(){const G=ugGeo(UG.segs);if(!G.W)return null;const B=ugBlank(
   const h0=readHead(),th=curTh()||'',c=curCol(),col=c?c[0]:'';
   tx(0,fy+(Math.max(...ys)-Math.min(...ys))+60,40,(th?th+'*':'')+(col||'')+'  '+(UG.name||'Ugol')+' - '+(UG.typ=='in'?'vnutrenniy':'narujniy')+' '+fmt(num(UG.ang))+' gr - '+fmt(num(UG.L))+' mm  '+(h0.hClient||'')+' '+(h0.hDate||today()));
   a(0,'ENDSEC',0,'EOF');return o.join('\r\n')+'\r\n'}
-function ugDxf(){const t=ugDxfText();if(!t){toast('Впишите профиль');return}const h0=readHead();
-  const name=lat('Ugol_'+(UG.name||'karniz').slice(0,30)+'_'+(h0.hClient||'')+'_'+(h0.hDate||today())).replace(/[\\/:*?"<>|\s]+/g,'_');
+// оба угла сразу: наружный и внутренний — два файла
+async function ugBoth(){const keep=UG.typ;for(const t of ['out','in']){UG.typ=t;await ugDxf(true);await new Promise(r=>setTimeout(r,700))}UG.typ=keep;ugRe();toast('Готово: наружный и внутренний угол')}
+// эскиз с фото → отрезки профиля (Джарвис читает рисунок)
+const UG_D8={right:0,'down-right':45,down:90,'down-left':135,left:180,'up-left':225,up:270,'up-right':315};
+function ugFromAI(r){const S=[];const ang=d=>typeof d=='number'?d:(UG_D8[String(d||'').toLowerCase().trim()]??0);
+  (r.segs||[]).forEach(g=>{const L=num(g.len_cm)*10;if(!(L>0))return;
+    if(g.type=='arc'){const a0=ang(g.from),a1=ang(g.to);let t=((a1-a0+540)%360)-180;if(Math.abs(t)<1)t=90;const th=Math.abs(t)*Math.PI/180,R=L/th,ch=2*R*Math.sin(th/2),sag=R*(1-Math.cos(th/2));
+      S.push({v:Math.round(ch*10)/10,a:Math.round(((a0+t/2)+360)%360),h:Math.round((t>0?-sag:sag)*10)/10})}
+    else S.push({v:Math.round(L*10)/10,a:ang(g.dir),h:0})});return S}
+async function ugPhoto(file){const b=$('ugBox');if(!b)return;toast('✦ Джарвис читает эскиз…');
+  const P='Это эскиз профиля металлического карниза (поперечное сечение), нарисованный от руки. Цифры — размеры в САНТИМЕТРАХ. Жирные кривые линии — ДУГИ (цифра у дуги — длина дуги по металлу). Маленькие закорючки на концах — загибы (подгибы) примерно 1 см назад. '+
+   'Опиши профиль как цепочку отрезков от ОДНОГО конца до другого, по порядку, без пропусков. Направления на рисунке: right, left, up, down, up-right, up-left, down-right, down-left (вверх — к верху листа). '+
+   'Для прямого: {"type":"line","len_cm":число,"dir":"..."}. Для дуги: {"type":"arc","len_cm":длина,"from":"направление в начале дуги","to":"направление в конце дуги"}. Загиб на конце — отдельный отрезок {"type":"line","len_cm":1,"dir":"противоположно предыдущему"}. '+
+   'Определи, с какой стороны стена (куда крепится деталь): "wall":"L" или "R". Дай короткое название. Ответь JSON {"name":"...","wall":"L|R","segs":[...],"note":"что неясно на рисунке"}';
+  try{const sm=await aiSm();const r=await sm.json(P,{images:[file]});const S=ugFromAI(r);if(S.length<2){toast('Джарвис не разобрал эскиз — попробуйте фото чётче');return}
+    UG.segs=S;if(r.wall=='L'||r.wall=='R')UG.wall=r.wall;if(r.name)UG.name=String(r.name).slice(0,40);ugSave();ugRe();
+    toast('✦ Профиль с эскиза готов — проверьте рисунок и цифры'+(r.note?': '+String(r.note).slice(0,120):''))}catch(e){toast('Джарвис: '+aiWhy(e))}}
+document.addEventListener('change',e=>{if(e.target.id=='ugPhoto'&&e.target.files[0]){ugPhoto(e.target.files[0]);e.target.value=''}});
+document.addEventListener('click',e=>{if(e.target.closest&&e.target.closest('[data-ugboth]')){ugBoth()}});
+function ugDxf(quiet){const t=ugDxfText();if(!t){toast('Впишите профиль');return}const h0=readHead();
+  const name=lat('Ugol_'+(UG.typ=='in'?'vnutr_':'naruzh_')+(UG.name||'karniz').slice(0,30)+'_'+(h0.hClient||'')+'_'+(h0.hDate||today())).replace(/[\\/:*?"<>|\s]+/g,'_');
   (async()=>{try{if(!dl){try{dl=await window.claude.use('downloads')}catch(_){}}if(!dl){toast('Скачивание недоступно');return}
-    await dl.save({filename:name+'.dxf',data:new Blob([cp1251(t)],{type:'application/dxf'})});toast('DXF угла готов')}catch(e){if(!(e&&e.code=='declined'))toast('Ошибка: '+(e&&e.message||e))}})()}
+    await dl.save({filename:name+'.dxf',data:new Blob([cp1251(t)],{type:'application/dxf'})});if(!quiet)toast('DXF угла готов')}catch(e){if(!(e&&e.code=='declined'))toast('Ошибка: '+(e&&e.message||e))}})()}
 // ===================== ДИЗАЙН ДИЛА (потолок): рамка из Дил по периметру + поле кессонов =====================
 // Правила взяты из проекта «Golibaka 19.11.2026»: отступ от стены 200, Дила 485, зазоры 100,
 // длинная Дила в ряду ≤ 3000, боковая — пока заготовка ≤ 4 м, поле: две рамки по 100, кессоны с шагом ~930 × 720.
