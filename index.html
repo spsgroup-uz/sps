@@ -2026,6 +2026,8 @@ let GP=store.get('rz_gp','');
 function famOf(l){if(l.fam)return l.fam;const it=allItems().find(x=>x.id==l.itemId);return it?(it.cat>=7?'tun':'roof'):MODE}
 function isSheet(l){const it=allItems().find(x=>x.id==l.itemId);return !!it&&(it.cat==0||it.cat==1)}
 function isGroup(l){return l.unit=='m'&&!isSheet(l)}
+// своя цена за м: деталь не идёт в расход материала, считается метры × цена
+function ownP(l){return l.unit=='m'&&!isSheet(l)&&num(l.fp)>0}
 function grpMeters(){return order.filter(isGroup).reduce((a,l)=>a+meters(l),0)}
 let DIVS=Object.assign({},store.other('rz_divs',{}),store.get('rz_divs',{})), GS=store.get('rz_gs','');
 function divOf(l){ if(l.div==null&&DIVS[l.itemId]!=null) l.div=DIVS[l.itemId]; let d=num(l.div); if(!d&&l.unit=='m'&&isGroup(l)){const r=razv(l);if(r>0)d=Math.max(1,Math.floor(125/r+1e-9))} return d||1 }
@@ -2034,11 +2036,11 @@ let PERPC=Object.assign({},store.other('rz_perpc',{}),store.get('rz_perpc',{}));
 function pcOf(l){ if(l.unit!='pcs') return 0; if(l.pc==null&&PERPC[l.itemId]!=null) l.pc=PERPC[l.itemId]; return num(l.pc) }
 function pcqText(l){const m=pcMat(l);return m?fmt(num(l.qty))+' шт × '+fmt(pcOf(l))+' м'+(num(l.div)>1?' ÷ '+fmt(num(l.div)):'')+' = '+fmt(m)+' м в расход материала':''}
 function pcMat(l){const p=pcOf(l);return p?Math.round(num(l.qty)*p/(num(l.div)||1)*100)/100:0}
-function grpMat(f){f=f||MODE;const L=order.filter(l=>famOf(l)==f);return L.filter(isGroup).reduce((a,l)=>a+lmat(l),0)+L.reduce((a,l)=>a+pcMat(l),0)}
+function grpMat(f){f=f||MODE;const L=order.filter(l=>famOf(l)==f);return L.filter(l=>isGroup(l)&&!ownP(l)).reduce((a,l)=>a+lmat(l),0)+L.reduce((a,l)=>a+pcMat(l),0)}
 let GP2_OVR=null;function grpOtherPrice(){return GP2_OVR!=null?num(GP2_OVR):num(store.other('rz_gp',''))+num(store.other('rz_gs',''))}
 function grpSum(){const o=MODE=='tun'?'roof':'tun';return grpMat()*(num(GP)+num(GS))+grpMat(o)*grpOtherPrice()}
 function eqText(l){const q=meters(l);if(!q)return '';return isGroup(l)&&divOf(l)!=1?fmt(q)+' → '+fmt(lmat(l))+' м':'= '+fmt(q)+' м'}
-function linePrice(l){ if(isGroup(l)||pcOf(l)||(famOf(l)=='tun'&&l.unit=='pcs')) return 0; if(isSheet(l)) return num(PRICES[l.itemId]); if(l.price==null&&PRICES[l.itemId]!=null) l.price=PRICES[l.itemId]; return num(l.price) }
+function linePrice(l){ if(ownP(l)) return num(l.fp); if(isGroup(l)||pcOf(l)||(famOf(l)=='tun'&&l.unit=='pcs')) return 0; if(isSheet(l)) return num(PRICES[l.itemId]); if(l.price==null&&PRICES[l.itemId]!=null) l.price=PRICES[l.itemId]; return num(l.price) }
 function lineSum(l){return qBase(l)[0]*linePrice(l)}
 function itemsTotal(){return order.reduce((a,l)=>a+lineSum(l),0)+grpSum()}
 const nv=id=>num(String($(id).value).replace(/\s/g,''));
@@ -2064,6 +2066,7 @@ function sizeCard(id,ii,withTot){
   ii.forEach((i,k)=>{const l=order[i];tileFix(l);if(isGroup(l)&&!num(l.qty))l.qty='1';if(isGroup(l)&&divOf(l)>1&&!/\d/.test(l.note||''))l.note=fmt(divOf(l))+'б';const v=f=>esc(l[f]==null?'':l[f]);const q=meters(l);
     h+='<div class="rw sz" data-ci="'+i+'"><span class="no">'+(k+1)+'.</span><input data-cf="len" inputmode="decimal" placeholder="длина" value="'+v('len')+'">'+(isGroup(l)?(num(l.qty)>1?' ×'+fmt(num(l.qty))+'шт':' м')+' ÷<input data-cf="div" inputmode="decimal" placeholder="1" value="'+(divOf(l)&&l.div!=null?v('div'):'')+'" style="width:40px">':' ×<input data-cf="qty" inputmode="decimal" placeholder="шт" value="'+v('qty')+'"> (<input data-cf="note" value="'+v('note')+'" style="width:40px">)')+' <span class="eq" data-q>'+eqText(l)+'</span><button class="x" data-crm>✕</button></div>'});
   h+='<button class="addsz" data-adds="'+ii[ii.length-1]+'">+ ещё размер</button>';
+  if(!withTot){const fp=l0.fp||'',ms=ii.reduce((a,i)=>a+meters(order[i]),0);h+='<div class="rw fpr" style="grid-column:1/-1">своя цена за м <input class="pc" data-fp="'+esc(id)+'" inputmode="numeric" placeholder="расход" value="'+esc(fp)+'"><b data-fps="'+esc(id)+'" style="margin-left:auto;font-size:16px">'+(num(fp)?money(ms*num(fp))+' сум':'<span style="font-weight:500;font-size:12px;color:var(--mut)">пусто → в расход материала</span>')+'</b></div>'}
   if(withTot){const m=itemMeters(id),p=num(PRICES[id]);h+='<div class="tt"><span>Всего</span><b data-im>'+fmt(m)+' м</b></div><div class="rw" style="grid-column:1/-1">цена за м <input class="pc" data-ip="'+esc(id)+'" inputmode="numeric" placeholder="0" value="'+esc(PRICES[id]==null?'':PRICES[id])+'"><b data-is style="margin-left:auto;font-size:17px;color:var(--ink)">'+(m*p?money(m*p):'—')+'</b></div>'}
   return h+'</div>';
 }
@@ -2071,7 +2074,7 @@ function idsOf(arr){return [...new Set(arr.map(i=>order[i].itemId))]}
 function itemMeters(id){return order.filter(l=>l.itemId==id).reduce((a,l)=>a+meters(l),0)}
 function itemTotHtml(id,name){const m=itemMeters(id),p=num(PRICES[id]);return '<span>Всего: '+esc(name)+'</span><b data-im>'+fmt(m)+' м</b><div class="rw" style="grid-column:1/-1">цена за м <input class="pc" data-ip="'+esc(id)+'" inputmode="numeric" placeholder="0" value="'+esc(PRICES[id]==null?'':PRICES[id])+'"><b data-is style="margin-left:auto;font-size:17px;color:var(--ink)">'+(m*p?money(m*p):'—')+'</b></div>'}
 function sheetIds(){return [...new Set(order.filter(isSheet).map(l=>l.itemId))]}
-function grpList(){const B=order.filter(isGroup),ids=[...new Set(B.map(l=>l.itemId))];const r=ids.map(id=>{const L=B.filter(l=>l.itemId==id);return [L[0].name,L.reduce((a,l)=>a+meters(l),0),L.reduce((a,l)=>a+lmat(l),0)]});
+function grpList(){const B=order.filter(l=>isGroup(l)&&!ownP(l)),ids=[...new Set(B.map(l=>l.itemId))];const r=ids.map(id=>{const L=B.filter(l=>l.itemId==id);return [L[0].name,L.reduce((a,l)=>a+meters(l),0),L.reduce((a,l)=>a+lmat(l),0)]});
   order.filter(l=>pcMat(l)).forEach(l=>r.push([l.name+' ('+fmt(num(l.qty))+' шт × '+fmt(pcOf(l))+' м'+(num(l.div)>1?' ÷ '+fmt(num(l.div)):'')+')',pcMat(l),pcMat(l)]));return r}
 function gListHtml(){return grpList().map(x=>'<div><span>'+esc(x[0])+'</span><span>'+fmt(x[1])+' м'+(Math.abs(x[1]-x[2])>0.005?' → <b>'+fmt(x[2])+' м</b>':'')+'</span></div>').join('')}
 function gFormula(){const m=grpMat();return fmt(m)+' м × ('+money(num(GP))+' + '+money(num(GS))+')'}
@@ -2111,6 +2114,9 @@ function updItems(){document.querySelectorAll('[data-it]').forEach(c=>{const id=
 function updGrp(){updItems();const t=$('gTot');if(!t)return;$('gList').innerHTML=gListHtml();t.querySelector(':scope>b').textContent=fmt(grpMat())+' м';$('gForm').textContent=gFormula();$('gSum').textContent=grpSum()?money(grpSum()):'—'}
 $('cliList').addEventListener('input',e=>{
   if(e.target.dataset.gname!=null){const id=e.target.dataset.gname;order.forEach(l=>{if(l.itemId==id)l.name=e.target.value});save();updGrp();return}
+  if(e.target.dataset.fp){const id=e.target.dataset.fp,v=e.target.value.replace(/\s/g,'');let ms=0;order.forEach(l=>{if(l.itemId==id&&l.unit=='m'&&!isSheet(l)){l.fp=v;ms+=meters(l)}});save&&save();
+    const b=document.querySelector('[data-fps="'+id+'"]');if(b)b.innerHTML=num(v)?money(ms*num(v))+' сум':'<span style="font-weight:500;font-size:12px;color:var(--mut)">пусто → в расход материала</span>';
+    const g=$('gTot');if(g)g.innerHTML=grpTotHtml();renderCliTot();return}
   if(e.target.dataset.ip){PRICES[e.target.dataset.ip]=e.target.value.replace(/\s/g,'');store.set('rz_prices',PRICES);updItems();renderCliTot();return}
   if(e.target.id=='gServ'){GS=e.target.value.replace(/\s/g,'');store.set('rz_gs',GS);updGrp();renderCliTot();return}
   if(e.target.id=='gPrice'){GP=e.target.value.replace(/\s/g,'');store.set('rz_gp',GP);updGrp();renderCliTot();return}
@@ -2147,7 +2153,7 @@ $('cliDisc').addEventListener('input',()=>{store.set('rz_disc',$('cliDisc').valu
 $('cliDel').addEventListener('input',()=>{store.set('rz_del',$('cliDel').value);renderCliTot()});
 function cliText(){
   const h=readHead();let t='SPS Group\nЗАКАЗ КЛИЕНТА  '+h.hDate+'\n'+(h.hClient?'Клиент: '+h.hClient+'\n':'')+(h.hPhone?'Тел: '+h.hPhone+'\n':'')+(h.hColor?'Цвет: '+h.hColor+'\n':'')+(roomInfo()?roomInfo()+'\n':'')+'\n';
-  let n=0; const pr=l=>{n++;t+=n+'. '+l.name+' — '+qText(l)+(isGroup(l)&&divOf(l)!=1?' ÷ '+fmt(divOf(l))+' = '+fmt(lmat(l))+' м':'')+(!isGroup(l)&&!isSheet(l)&&linePrice(l)?' × '+money(linePrice(l))+' = '+money(lineSum(l))+' сум':'')+'\n'};
+  let n=0; const pr=l=>{n++;t+=n+'. '+l.name+' — '+qText(l)+(isGroup(l)&&divOf(l)!=1?' ÷ '+fmt(divOf(l))+' = '+fmt(lmat(l))+' м':'')+((!isGroup(l)||ownP(l))&&!isSheet(l)&&linePrice(l)?' × '+money(linePrice(l))+' = '+money(lineSum(l))+' сум':'')+'\n'};
   sheetIds().forEach(id=>{const L=order.filter(l=>l.itemId==id);L.forEach(pr);const m=itemMeters(id),p=num(PRICES[id]);t+='Всего: '+fmt(m)+' м'+(p?' × '+money(p)+' = '+money(m*p)+' сум':'')+'\n\n'});
   const B=order.filter(isGroup); if(B.length){t+='\nДоборные элементы:\n';B.forEach(pr);t+='Расход материала: '+fmt(grpMat())+' м'+(grpSum()?' × ('+money(num(GP))+' + '+money(num(GS))+') = '+money(grpSum())+' сум':'')+'\n\n'}
   order.filter(l=>!isSheet(l)&&!isGroup(l)).forEach(pr);
@@ -2158,7 +2164,7 @@ function cliText(){
 }
 function buildCliSheet(){
   const h=readHead(),pre=num(String($('cliPre').value).replace(/\s/g,''));
-  let n=0; const row=l=>{n++;const [q,u]=qBase(l),g=isGroup(l);return '<tr><td class="c">'+n+'</td><td>'+esc(l.name)+(!g&&l.note?' ('+esc(l.note)+')':'')+'</td><td>'+qText(l)+(g&&divOf(l)!=1?' ÷ '+fmt(divOf(l))+' = <b>'+fmt(lmat(l))+' м</b>':'')+'</td><td class="money">'+(!g&&!isSheet(l)&&linePrice(l)?money(linePrice(l))+' /'+u:'')+'</td><td class="money"><b>'+(!g&&!isSheet(l)&&lineSum(l)?money(lineSum(l)):'')+'</b></td></tr>'};
+  let n=0; const row=l=>{n++;const [q,u]=qBase(l),g=isGroup(l);return '<tr><td class="c">'+n+'</td><td>'+esc(l.name)+(!g&&l.note?' ('+esc(l.note)+')':'')+'</td><td>'+qText(l)+(g&&divOf(l)!=1?' ÷ '+fmt(divOf(l))+' = <b>'+fmt(lmat(l))+' м</b>':'')+'</td><td class="money">'+((!g||ownP(l))&&!isSheet(l)&&linePrice(l)?money(linePrice(l))+' /'+u:'')+'</td><td class="money"><b>'+((!g||ownP(l))&&!isSheet(l)&&lineSum(l)?money(lineSum(l)):'')+'</b></td></tr>'};
   const B=order.filter(isGroup);
   const rows=sheetIds().map(id=>{const L=order.filter(l=>l.itemId==id),m=itemMeters(id),p=num(PRICES[id]);return L.map(row).join('')+'<tr><td></td><td colspan="2"><b>Всего '+esc(L[0].name)+': '+fmt(m)+' м</b></td><td class="money">'+(p?money(p)+' /м':'')+'</td><td class="money"><b>'+(p?money(m*p):'')+'</b></td></tr>'}).join('')+
     (B.length?'<tr><td colspan="5" style="background:#eee;font-weight:bold">Доборные элементы</td></tr>'+B.map(row).join('')+'<tr><td></td><td colspan="2"><b>'+(MODE=='tun'?'Расход материала':'Расход материала (доборные)')+': '+fmt(grpMat())+' м</b></td><td class="money">'+(grpSum()?money(num(GP))+' + '+money(num(GS))+' /м':'')+'</td><td class="money"><b>'+(grpSum()?money(grpSum()):'')+'</b></td></tr>':'')+
