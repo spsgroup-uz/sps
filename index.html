@@ -456,7 +456,10 @@ input[readonly]{color:#000!important}
 .tg{display:inline-block;font-size:11px;font-weight:700;border-radius:999px;padding:2px 8px;margin:3px 4px 0 0;background:#f1f5f9;color:#475569}.tg.red{background:#fee2e2;color:#b91c1c}.tg.ok{background:#dcfce7;color:#166534}
 .twp{border-bottom:1px solid var(--line);padding:4px 0}.twp summary{display:flex;align-items:center;flex-wrap:wrap;gap:4px 8px;padding:8px 0;cursor:pointer;list-style:none}.twp summary::-webkit-details-marker{display:none}
 .twp summary small{display:inline;margin-right:auto}.twp summary .tg{margin:0}.twp[open]{padding-bottom:12px}
-@media(max-width:700px){.twr{grid-template-columns:1fr auto}.twr .tmx{grid-column:1/2}.twr .twh{grid-column:2/3}}
+@media(max-width:700px){.twr{grid-template-columns:1fr auto;gap:4px 8px;padding:7px 0}.twr .twn{grid-column:1/2;grid-row:1;min-width:0}.twr .twn b{font-size:14px}.twr .twh{grid-column:2/3;grid-row:1;font-size:14px;color:var(--ink,#0f172a)}
+ .twr .st{grid-column:1/-1;grid-row:2}.twr .st button{width:34px;height:30px;font-size:15px;border-radius:8px}
+ .twr .tmx{grid-column:1/-1;grid-row:3;gap:3px}.twr .tmx input{flex:1;min-width:0;width:auto;height:32px;padding:2px 4px;font-size:14px}.twr .tmx button{height:30px;width:30px;font-size:13px;flex:none}
+ .twr .tg{font-size:10px;padding:1px 6px;margin-top:2px}}
 .rk{border:1px solid var(--line);border-radius:14px;padding:12px;margin-bottom:10px}
 .rkh{display:flex;align-items:center;gap:8px;flex-wrap:wrap}.rkh b{font-size:16px}.rkn{font-size:20px;width:30px}
 .rkk{margin-left:auto;color:#fff;font-weight:800;border-radius:10px;padding:3px 10px;font-size:16px}
@@ -625,6 +628,10 @@ body.worker.tsex main>#vProd{display:block!important}body.worker.tsex main>#vPro
 .prph{width:100%;max-height:260px;object-fit:cover;border-radius:10px;margin:6px 0;cursor:zoom-in}
 .prc .stb .stn{padding:14px;font-size:16px}
 .aicw{margin-top:8px}.aics{font-size:12px;color:#475569}.aics a{color:#4f46e5}.aicg{margin-top:6px;overflow:auto}
+
+.coilsel{border:1.5px solid var(--line);border-radius:12px;padding:0;background:var(--card,#fff)}.coilsel{margin-top:-6px}.coilsel:not([open]){display:none}.coilsel>summary{display:none;padding:11px 12px;cursor:pointer;font-size:15px;list-style:none}.coilsel>summary::after{content:' ▾';float:right;color:var(--mut)}.coilsel[open]>summary::after{content:' ▴'}.coilsel>.coils{padding:0 10px 10px;max-height:50vh;overflow:auto}
+
+.pchs{display:flex;flex-wrap:wrap;gap:5px;margin:8px 0 2px}.pch{font-size:13px;font-weight:700;padding:5px 9px;border-radius:999px;background:#f1f5f9;color:#64748b}.pch.ok{background:#dcfce7;color:#166534}.pch small{font-weight:500;margin-left:4px;font-size:11px}
 </style>
 </head>
 <body class="worker">
@@ -700,13 +707,13 @@ body.worker.tsex main>#vProd{display:block!important}body.worker.tsex main>#vPro
     <div class="card hdr">
       <label>Клиент<input id="cClient" placeholder="Имя"></label>
       <label>Телефон<input id="cPhone" inputmode="tel" placeholder="+998…"></label>
-      <label style="grid-column:1/-1">Толщина / цвет<input id="cColor"></label>
+      <label style="grid-column:1/-1;position:relative">Толщина / цвет<input id="cColor" style="padding-right:44px"><b id="cColorDd" style="position:absolute;right:12px;bottom:11px;font-size:20px;color:var(--mut);cursor:pointer" hidden>▾</b></label>
+      <details id="cliCoils" class="coilsel" style="grid-column:1/-1" hidden></details>
       <label>Дата<input id="cDate"></label>
     </div>
     <details class="card cliroom" id="cliRoomBox" open><summary>📐 Размеры клиента → расчёт деталей</summary><div class="rw2" id="cliDes" style="margin:8px 0"></div><div id="cliRoom"></div></details>
     <button class="card godes" data-ai="ord">📷 Заказ по фото тетради — ИИ сам заполнит строки <b>›</b></button>
     <button class="card godes" data-godes>📐 Дизайны: Скат, Дила, Палма, Аликафон — расчёт по размерам клиента <b>›</b></button>
-    <div class="card" id="cliCoils" hidden></div>
     <div class="card roominfo" id="cliRoomInfo" hidden></div>
     <div id="cliList"></div>
     <div class="addrow"><button id="cAdd" class="pri">+ Добавить строку</button><button id="cFree">+ Своя строка</button></div>
@@ -754,7 +761,7 @@ body.worker.tsex main>#vProd{display:block!important}body.worker.tsex main>#vPro
       <div id="meState" style="font-size:16px;margin-bottom:14px"></div>
       <button class="mebtn in" id="meIn">✅ Я пришёл</button><button class="mebtn out" id="meOut">🚪 Я ушёл</button>
       <div id="meMsg" style="margin-top:12px;font-size:15px"></div>
-      <div class="merep"><button id="meSick">🤒 Я заболел</button><button id="meOff">📝 Отпроситься</button></div>
+      <div class="merep"><button id="meLate" style="grid-column:1/-1;background:#fff7ed;border-color:#fdba74">⏰ Задерживаюсь</button><button id="meSick">🤒 Я заболел</button><button id="meOff">📝 Отпроситься</button></div>
       <div style="font-size:12px;color:var(--mut);margin-top:12px">Время прихода и ухода (и фото отметки) видит руководитель.</div></div>
   </section>
   <section id="vRcv" hidden>
@@ -1009,7 +1016,19 @@ const user={isOwner:()=>isOwner(),canEdit:()=>isOwner(),can:()=>true,
   search:async()=>[]};
 
 // ---------- скачивание файлов ----------
-const downloads={save:async({filename,data})=>{const b=data instanceof Blob?data:new Blob([data]);const u=URL.createObjectURL(b);const a=document.createElement('a');a.href=u;a.download=filename||'file';document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(u);a.remove()},1500)}};
+const downloads={save:async({filename,data})=>{
+  const CP=window.Capacitor,NAT=CP&&CP.isNativePlatform&&CP.isNativePlatform();
+  if(NAT){const P=CP.Plugins||{};const b0=data instanceof Blob?data:new Blob([data]);
+    if(P.Filesystem&&P.Share){const b64=await new Promise((ok,no)=>{const r=new FileReader();r.onload=()=>ok(String(r.result).split(',')[1]);r.onerror=no;r.readAsDataURL(b0)});
+      const fn=String(filename||'file').replace(/[\\/:*?"<>|]+/g,'_');
+      try{await P.Filesystem.writeFile({path:'Download/'+fn,data:b64,directory:'EXTERNAL_STORAGE',recursive:true})}catch(_){}
+      const w=await P.Filesystem.writeFile({path:fn,data:b64,directory:'CACHE'});
+      try{await P.Share.share({title:fn,files:[w.uri],dialogTitle:'Сохранить / отправить '+fn})}catch(e){if(!/cancel/i.test(String(e&&e.message||e)))throw e}
+      return}
+    alert('Чтобы скачивать файлы в приложении, установите новую версию APK (кнопка «Скачать» вверху программы). Пока можно открыть сайт в Chrome.');
+    try{window.open('https://github.com/spsgroup-uz/sps/releases/latest/download/SPS-Group.apk','_system')}catch(_){}
+    return}
+const b=data instanceof Blob?data:new Blob([data]);const u=URL.createObjectURL(b);const a=document.createElement('a');a.href=u;a.download=filename||'file';document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(u);a.remove()},1500)}};
 
 // ---------- руководитель создаёт вход сотруднику (отдельный экземпляр, чтобы не выйти самому) ----------
 const phoneDigits=p=>{let d=String(p||'').replace(/\D/g,'');if(d.length==9)d='998'+d;return d};
@@ -1836,43 +1855,60 @@ document.addEventListener('change',async e=>{if(e.target.id!='ppFile')return;con
 
 // ===================== 🏭 ЦЕХ: общая доска этапов (prod/{id}) — видят руководитель, продавцы и цех =====================
 let PROD={},PROD_ON=false,PROD_ST=store.get('rz_prodst','*');
-const PROD_NM={l:'🔆 Лазер',r:'✂️ Резка',g:'🔧 Гибка',d:'🚚 Отгрузка'};
+const PROD_NM={l:'🔆 Лазер',r:'✂️ Резка',g:'🔧 Гибка',d:'🚚 Отгрузка',p:'📏 Профнастил'};
 function rolesOf(u){if(typeof ROLES=='undefined')return [];return [ROLES[u],ROLES[u]=='buh'?null:ROLES[u+'@r2']].filter(Boolean)}
 function hasRole(u,r){return rolesOf(u).some(x=>r instanceof RegExp?r.test(x):x==r)}
-function myStage(){if(IS_OWNER||typeof ROLES=='undefined')return '';const T=rolesOf(UID).filter(x=>/^tsex/.test(x));if(T.length!=1)return '';const m=T[0].match(/^tsex_([lrgd])$/);return m?m[1]:''}
+function myStage(){if(IS_OWNER||typeof ROLES=='undefined')return '';const T=rolesOf(UID).filter(x=>/^tsex/.test(x));if(T.length!=1)return '';const m=T[0].match(/^tsex_([lrgdp])$/);return m?m[1]:''}
 const PROD_MY={l:[0,1],r:[0,3],g:[4,5],d:[6,7]};let PROD_SH=store.get('rz_prodsh','*');
 function myShop(){if(IS_OWNER||typeof ROLES=='undefined')return '';return String(ROLES[UID+'@shop']||'')}
-function prodLines(L){return (L||[]).slice(0,60).map(l=>({n:l.name||'',len:l.len||'',qty:l.qty||'',u:l.unit||'',seg:(l.seg||[]).join('·'),note:l.note||''}))}
+function prodLines(L){return (L||[]).slice(0,60).map(l=>({ic:l.icon||'',n:l.name||'',len:l.len||'',qty:l.qty||'',u:l.unit||'',seg:(l.seg||[]).join('·'),note:l.note||''}))}
 function prodData(o){return {client:o.client||'',date:o.date||'',mode:o.mode||'roof',color:o.color||'',note:o.note||'',lines:prodLines(o.lines),photo:o.paper&&o.photo&&o.photo.length<400000?o.photo:'',paper:!!o.paper,col:o._col||'',ts:o.ts||Date.now(),seller:o._by?whoName(o._by):'руководитель'}}
 async function prodSync(o,extra){if(!DB||!o||!o.id)return;try{await DB.doc('prod/'+o.id).set({...prodData(o),...(extra||{})},{merge:true})}catch(_){}}
 function prodStart(){if(PROD_ON||!DB)return;PROD_ON=true;DB.collection('prod').onSnapshot(sn=>{PROD={};sn.docs.forEach(d=>PROD[d.id]={id:d.id,...d.data()});if(curTab=='log')renderLog();renderProd()},()=>{})}
 // заполнить доску старыми незавершёнными заказами (руководитель, один раз за сеанс)
 async function prodBackfill(){if(!IS_OWNER||!DB)return;const lim=Date.now()-60*864e5;for(const o of saved){if(PROD[o.id]||(o.ts||0)<lim||(+o.sf||0)>=8)continue;await prodSync(o,{sf:+o.sf||0,stH:o.stH||[]})}}
-function prodCard(p){const f=Math.max(0,Math.min(FLOW.length-1,+p.sf||0)),k=FLOW[f][0],busy=[1,3,5].includes(f),last=(p.stH||[])[(p.stH||[]).length-1];
+// этапы независимые: каждый отмечает свою работу, не дожидаясь предыдущего
+const PST=[['l','🔆','Лазер'],['r','✂️','Резка'],['g','🔧','Гибка'],['p','📏','Профнастил']];
+function isProfL(l){return l&&(l.ic=='prof'||/профнаст|профлист/i.test(l.n||''))}
+function pHasProf(p){return (p.lines||[]).some(isProfL)}
+function pProfOnly(p){return (p.lines||[]).length>0&&(p.lines||[]).every(isProfL)}
+function pNeed(p,k){return k=='p'?pHasProf(p):!pProfOnly(p)}
+function pDone(p,k){const d=p.dn&&p.dn[k];if(d)return d;if(d===null)return null;const f=+p.sf||0;if(k=='l'&&f>=2||k=='r'&&f>=4||k=='g'&&f>=6)return {};return null}
+function pCan(k){const ms=myStage();return !ms?true:ms==k}
+function prodCard(p){const f=Math.max(0,Math.min(FLOW.length-1,+p.sf||0)),ms=myStage();
+  const chips=PST.filter(([k])=>pNeed(p,k)).map(([k,ic,nm])=>{const d=pDone(p,k);return '<span class="pch'+(d?' ok':'')+'"'+(ms?'':' data-pdn="'+k+'" style="cursor:pointer"')+'>'+(d?'✅':'⬜')+' '+ic+' '+nm+(d&&d.t?'<small>'+esc(d.t)+(d.by?' · '+esc(whoName(d.by)):'')+'</small>':'')+'</span>'}).join('')+
+    '<span class="pch'+(f>=7?' ok':'')+'">'+(f>=8?'🚚 Отгружен':f>=7?'✅ Готов':'⬜ ✅ Готов')+'</span>';
+  const btn=!ms?'':PST.filter(([k])=>pNeed(p,k)&&ms==k).map(([k,ic,nm])=>pDone(p,k)?'<button class="stx" data-pdn="'+k+'" title="отменить">↶ '+ic+'</button>':'<button class="stn" data-pdn="'+k+'">'+ic+' '+nm+': сделал ✓</button>').join('');
+  const sh=(!ms||ms=='d')?(f<7?'<button class="stn" data-psf="7">✅ Заказ готов</button>':f<8?'<button class="stx" data-psf="0" title="не готов">↶</button><button class="stn" data-psf="8">🚚 Отгружен клиенту</button>':''):'';
+  const miss=f>=7?'':PST.filter(([k])=>pNeed(p,k)&&!pDone(p,k)).map(x=>x[2]);
   return '<div class="card prc" data-pr="'+p.id+'"><div class="prh"><b>'+esc(p.client||'без имени')+'</b> <span class="who">'+esc(p.date||'')+'</span>'+(p.paper?' <span class="who" style="background:#fef3c7;color:#92400e">📝 с бумаги</span>':'')+(myStage()||myShop()?(p.shop?' <span class="who" style="background:#ccfbf1;color:#0f766e">🏭 Цех '+esc(p.shop)+'</span>':''):'<span class="prshb">'+['1','2'].map(k=>'<button data-prshop="'+k+'" class="'+(p.shop==k?'on':'')+'">Цех '+k+'</button>').join('')+'</span>')+'<div class="prc2">'+esc(p.color||'')+' · '+(p.mode=='tun'?'тунукабонд':'кровля')+(p.seller?' · '+esc(p.seller):'')+'</div></div>'+
-   (p.lines&&p.lines.length?'<div class="prl">'+p.lines.map(l=>'<div><b>'+esc(l.n)+'</b> '+(l.len?fmt(num(l.len))+' м × ':'')+fmt(num(l.qty)||0)+' '+(l.u=='kg'?'кг':'шт')+(l.seg?' <span>('+esc(l.seg)+')</span>':'')+(l.note?' <i>'+esc(l.note)+'</i>':'')+'</div>').join('')+'</div>':'')+
+   (p.lines&&p.lines.length?'<div class="prl">'+p.lines.map(l=>'<div'+(ms=='p'&&!isProfL(l)?' style="opacity:.4"':'')+'><b>'+esc(l.n)+'</b> '+(l.len?fmt(num(l.len))+' м × ':'')+fmt(num(l.qty)||0)+' '+(l.u=='kg'?'кг':'шт')+(l.seg?' <span>('+esc(l.seg)+')</span>':'')+(l.note?' <i>'+esc(l.note)+'</i>':'')+'</div>').join('')+'</div>':'')+
    (p.note?'<div class="prc2">📝 '+esc(p.note)+'</div>':'')+(p.photo?'<img class="prph" src="'+p.photo+'" data-prph="'+p.id+'">':'')+
-   '<div class="stg">'+STAGES.map((x,i)=>'<span class="'+(i<k?'dn':i==k?(busy?'cu bz':'cu'):'')+'">'+x[0]+'<small>'+x[1]+'</small></span>').join('<i></i>')+'</div>'+
-   (last?'<div class="stl">'+(busy?'⏳ ':'✔ ')+esc(FLOW[last.f!=null?last.f:f][1])+' · '+esc(last.d||'')+' '+esc(last.t||'')+(last.by!=null?' · '+esc(whoName(last.by)):'')+'</div>':'')+
-   (()=>{const ms=myStage();if(ms=='r'&&f==1)return '<div class="stl">⏳ сейчас у лазера — ждите, когда передаст</div></div>';if(ms=='r'&&f==0)return '<div class="stb"><button class="stn" data-prb="j3">✂️ Резка: принял (без лазера)</button></div></div>';
-     const r=ms?PROD_MY[ms]:null,back=f>0&&(!r||f-1>=r[0]&&!(ms=='r'&&f-1<2));
-     return '<div class="stb">'+(back?'<button class="stx" data-prb="-1">↶</button>':'')+(f<FLOW.length-1?'<button class="stn'+(busy?' bz':'')+'" data-prb="1">'+NEXT_TXT[f]+'</button>':'<span class="stok">🚚 Отгружен</span>')+'</div></div>'})()}
+   '<div class="pchs">'+chips+'</div>'+(ms?'':'<div class="stl" style="margin-top:2px">нажмите на этап, чтобы отметить ✅ или снять</div>')+(ms=='d'&&miss.length?'<div class="stl" style="color:#b45309">⚠ ещё не отмечено: '+miss.join(', ')+'</div>':'')+
+   (btn||sh?'<div class="stb" style="flex-wrap:wrap">'+btn+sh+'</div>':'')+'</div>'}
 const PROD_F={'*':[0,7],'l':[0,1],'r':[2,3],'g':[4,5],'d':[6,7]};
 function renderProd(){const b=$('prodList');if(!b)return;const all=Object.values(PROD).filter(p=>(+p.sf||0)<8).sort((a,c)=>(a.ts||0)-(c.ts||0));
-  const inR=(p,k)=>{const f=+p.sf||0,r=PROD_F[k];return f>=r[0]&&f<=r[1]};const ms=myStage(),msh=myShop(),fsh=msh||(PROD_SH!='*'?PROD_SH:'');
+  const inR=(p,k)=>k=='*'?true:k=='d'?true:pNeed(p,k)&&!pDone(p,k)&&(+p.sf||0)<7;const ms=myStage(),msh=myShop(),fsh=msh||(PROD_SH!='*'?PROD_SH:'');
   const all0=all.length,cn={'1':all.filter(p=>!p.shop||p.shop=='1').length,'2':all.filter(p=>!p.shop||p.shop=='2').length},cnt=k=>cn[k];all.splice(0,all.length,...all.filter(p=>!fsh||!p.shop||p.shop==fsh));
   const shRow=msh?'<div class="chip on" style="cursor:default;background:#0f766e;border-color:#0f766e">🏭 Цех '+msh+'</div>':[['*','🏭 Оба цеха',all0],['1','Цех 1',cnt('1')],['2','Цех 2',cnt('2')]].map(([k,t,n])=>'<button class="chip'+(PROD_SH==k?' on':'')+'" data-prsh="'+k+'">'+t+' · '+n+'</button>').join('');
-  if(ms){const r=PROD_MY[ms],L=all.filter(p=>{const f=+p.sf||0;return f>=r[0]&&f<=r[1]});$('prodSt').innerHTML=shRow+'<div class="chip on" style="cursor:default">'+PROD_NM[ms]+' — ваши заказы · '+L.length+'</div>';b.innerHTML=L.length?L.map(prodCard).join(''):'<div class="card empty">Сейчас для вас заказов нет ✓</div>';return}
-  $('prodSt').innerHTML=shRow+'<div style="flex-basis:100%;height:0"></div>'+[['*','Все в работе'],['l','🔆 Лазер'],['r','✂️ Резка'],['g','🔧 Гибка'],['d','✅ Готово к отгрузке']].map(([k,t])=>'<button class="chip'+(PROD_ST==k?' on':'')+'" data-prst="'+k+'">'+t+' · '+all.filter(p=>inR(p,k)).length+'</button>').join('');
-  const L=all.filter(p=>inR(p,PROD_ST));b.innerHTML=L.length?L.map(prodCard).join(''):'<div class="card empty">Здесь заказов нет ✓</div>'}
+  if(ms){const L=all.filter(p=>inR(p,ms));$('prodSt').innerHTML=shRow+'<div class="chip on" style="cursor:default">'+PROD_NM[ms]+' — ваши заказы · '+L.length+'</div>';b.innerHTML=L.length?L.map(prodCard).join(''):'<div class="card empty">Сейчас для вас заказов нет ✓</div>';return}
+  $('prodSt').innerHTML=shRow+'<div style="flex-basis:100%;height:0"></div>'+[['*','Все в работе'],['l','🔆 Лазер'],['r','✂️ Резка'],['g','🔧 Гибка'],['p','📏 Профнастил']].map(([k,t])=>'<button class="chip'+(PROD_ST==k?' on':'')+'" data-prst="'+k+'">'+t+' · '+all.filter(p=>inR(p,k)).length+'</button>').join('');
+  const L=all.filter(p=>inR(p,PROD_ST=='d'?'*':PROD_ST));b.innerHTML=L.length?L.map(prodCard).join(''):'<div class="card empty">Здесь заказов нет ✓</div>'}
+async function prodMark(id,k){const p=PROD[id];if(!p)return;const ms=myStage();if(ms&&ms!=k){toast('Это не ваш участок');return}
+  const dt=new Date(),t=String(dt.getHours()).padStart(2,'0')+':'+String(dt.getMinutes()).padStart(2,'0'),cur=pDone(p,k);
+  const dn={...(p.dn||{}),[k]:cur?null:{d:today(),t,ts:Date.now(),by:UID||''}},old=p.dn;p.dn=dn;renderProd();if(curTab=='log')renderLog();
+  try{await DB.doc('prod/'+id).update({dn});toast((cur?'Отменено: ':'✓ ')+PROD_NM[k]+' — '+(p.client||'заказ'))}catch(_){p.dn=old;renderProd();toast('Не сохранилось — нет доступа')}
+  const o=saved.find(x=>x.id==id);if(o){o.dn=dn;try{await DB.doc(o._col+'/'+o.id).update({dn})}catch(_){}}}
 async function prodMove(id,d){const p=PROD[id];if(!p)return;const f=+p.sf||0;let n;if(d==='j3')n=3;else{d=+d;n=Math.max(0,Math.min(FLOW.length-1,f+d))}if(n==f)return;
-  const ms=myStage();if(ms){const r=PROD_MY[ms];if(f<r[0]||f>r[1]||n<r[0]&&d!=='j3'){toast('Это не ваш участок');return}}const dt=new Date(),t=String(dt.getHours()).padStart(2,'0')+':'+String(dt.getMinutes()).padStart(2,'0');
+  const ms=myStage();if(ms&&ms!='d'){toast('Это не ваш участок');return}const dt=new Date(),t=String(dt.getHours()).padStart(2,'0')+':'+String(dt.getMinutes()).padStart(2,'0');
   const h=(p.stH||[]).concat([{f:n,d:today(),t,ts:Date.now(),by:UID||''}]);const old=[p.sf,p.stH];p.sf=n;p.stH=h;renderProd();if(curTab=='log')renderLog();
   try{await DB.doc('prod/'+id).update({sf:n,stH:h});toast(FLOW[n][1]+' — '+(p.client||'заказ'))}catch(_){p.sf=old[0];p.stH=old[1];renderProd();toast('Не сохранилось — нет доступа')}
   const o=saved.find(x=>x.id==id);if(o){o.sf=n;o.stH=h;try{await DB.doc(o._col+'/'+o.id).update({sf:n,stH:h})}catch(_){}}}
 document.addEventListener('click',async e=>{const sh=e.target.closest('[data-prsh]');if(sh){PROD_SH=sh.dataset.prsh;store.set('rz_prodsh',PROD_SH);renderProd();return}
   const ps=e.target.closest('[data-prshop]');if(ps){const id=ps.closest('[data-pr]').dataset.pr,p=PROD[id];if(!p)return;const v=p.shop==ps.dataset.prshop?'':ps.dataset.prshop,old=p.shop;p.shop=v;renderProd();try{await DB.doc('prod/'+id).update({shop:v});toast(v?'Заказ → Цех '+v:'Цех не выбран — видят оба')}catch(_){p.shop=old;renderProd();toast('Не сохранилось')}return}});
 document.addEventListener('click',e=>{const s=e.target.closest('[data-prst]');if(s){PROD_ST=s.dataset.prst;store.set('rz_prodst',PROD_ST);renderProd();return}
+  const dn=e.target.closest('[data-pdn]');if(dn){prodMark(dn.closest('[data-pr]').dataset.pr,dn.dataset.pdn);return}
+  const sf=e.target.closest('[data-psf]');if(sf){const id=sf.closest('[data-pr]').dataset.pr,p=PROD[id];if(p){const v=+sf.dataset.psf;prodMove(id,v==0?(6-(+p.sf||0)):v-(+p.sf||0))}return}
   const b=e.target.closest('[data-prb]');if(b){const v=b.dataset.prb;prodMove(b.closest('[data-pr]').dataset.pr,v=='j3'?'j3':+v);return}
   const ph=e.target.closest('[data-prph]');if(ph){const p=PROD[ph.dataset.prph];if(p)shvFull({date:p.date,client:p.client,paper:true,photo:p.photo,lines:[]})}});
 
@@ -2560,13 +2596,18 @@ $('skMpt').addEventListener('input',e=>{const t=e.target.dataset.mpt;if(!t)retur
 function coilLabel(it){return num(it.t).toFixed(2)+'  '+(it.col||'')+(it.hap?'  хапёр':'')}
 function coilMatch(it){const v=$('hColor').value||'',th=(v.match(/\d[.,]\d+/)||[''])[0].replace(',','.');return String(num(th))==String(num(it.t))&&v.includes((it.col||'').split(' ').slice(0,2).join(' '))&&(/хап/i.test(v)==!!it.hap)}
 function renderCliCoils(){const box=$('cliCoils');if(!box)return;if(!IS_OWNER){box.hidden=true;return}const coils=SK_ITEMS.filter(i=>i.kind=='coil');
-  if(!coils.length){box.hidden=true;return} box.hidden=false;
+  if(!coils.length){box.hidden=true;if($('cColorDd'))$('cColorDd').hidden=true;return} box.hidden=false;if($('cColorDd'))$('cColorDd').hidden=false;
   const need=orderNeed().filter(r=>r.coil).reduce((a,r)=>a+r.qty,0);
-  box.innerHTML='<div style="font-weight:800;margin-bottom:6px">📦 Рулоны на складе'+(need?' <span style="font-weight:500;color:var(--mut);font-size:13px">· нужно '+fmt(Math.round(need*100)/100)+' м</span>':'')+'</div><div class="coils">'+
+  const sel=coils.find(coilMatch),sb=sel?skBal(sel.id):0;
+  box.innerHTML='<summary>📦 '+(sel?'<b>'+esc(num(sel.t).toFixed(2)+' · '+(sel.col||'').replace(/^RAL /,'')+(sel.hap?' · хапёр':''))+'</b> — '+fmt(Math.round(sb*100)/100)+' м'+(need?(sb>=need?' <em class="ok">✓ хватит</em>':' <em class="no">✗ не хватит</em>'):''):'Выбрать рулон со склада ('+coils.length+')')+(need?' <span style="font-weight:500;color:var(--mut);font-size:13px">· нужно '+fmt(Math.round(need*100)/100)+' м</span>':'')+'</summary><div style="font-size:13px;color:var(--mut);padding:8px 12px 6px">📦 Рулоны на складе'+(need?' · нужно '+fmt(Math.round(need*100)/100)+' м':'')+'</div><div class="coils">'+
     coils.map(it=>{const b=skBal(it.id),on=coilMatch(it),ok=!need||b>=need;
       return '<button class="coil'+(on?' on':'')+'" data-coil="'+it.id+'"><i style="background:'+skColor(it)+'"></i><span><b>'+esc(num(it.t).toFixed(2)+' · '+(it.col||'').replace(/^RAL /,'')+(it.hap?' · хапёр':''))+'</b><br>'+fmt(Math.round(b*100)/100)+' м'+(need&&on?(ok?' <em class="ok">✓ хватит</em>':' <em class="no">✗ не хватит</em>'):'')+'</span></button>'}).join('')+'</div>'}
+document.addEventListener('click',e=>{const bx=$('cliCoils');if(!bx||bx.hidden)return;
+  if(e.target.closest('#cColorDd')){e.preventDefault();bx.open=!bx.open;return}
+  if(e.target.id=='cColor'){bx.open=true;return}
+  if(!e.target.closest('#cliCoils'))bx.open=false},true);
 document.addEventListener('click',e=>{const b=e.target.closest('[data-coil]');if(!b)return;const it=SK_ITEMS.find(i=>i.id==b.dataset.coil);if(!it)return;
-  $('hColor').value=coilLabel(it);if($('cColor'))$('cColor').value=$('hColor').value;save();renderPick();renderCliCoils();toast('Рулон выбран: '+skName(it))});
+  $('hColor').value=coilLabel(it);if($('cColor'))$('cColor').value=$('hColor').value;save();renderPick();renderCliCoils();const bx=$('cliCoils');if(bx)bx.open=false;toast('Рулон выбран: '+skName(it))});
 // авто-списание: склад всегда совпадает с сохранённым заказом
 async function skSync(oid){ if(!DB||!oid) return 0;
   const mcol=movColFor(ordCur);const old=SK_MOVES.filter(m=>m.order==oid&&m.type=='order'); for(const m of old){ try{await DB.doc(m._col+'/'+m.id).delete()}catch(_){} }
@@ -2609,7 +2650,7 @@ function distM(a,b,c,d){const R=6371000,t=x=>x*Math.PI/180;const h=Math.sin(t(c-
 function getPos(){return new Promise((ok,no)=>{if(!navigator.geolocation){no({code:0});return}navigator.geolocation.getCurrentPosition(p=>ok(p.coords),no,{enableHighAccuracy:true,timeout:20000,maximumAge:0})})}
 function geoErr(e){return e&&e.code==1?'Телефон не разрешил местоположение. Разрешите доступ к геолокации для браузера и попробуйте ещё раз.':'Не удалось узнать местоположение. Включите GPS (геолокацию) и попробуйте ещё раз.'}
 function recOf(w,k){const m=(TD[k]||{})[w.id]||{};const ph=w.uid&&TK[w.uid]&&TK[w.uid][k];if(!ph)return m;
-  if(!ph.in&&ph.rep){const r={...m,ph};if(!m.st)r.st=ph.rep;return r}
+  if(!ph.in&&ph.rep){const r={...m,ph};if(!m.st&&ph.rep!='l')r.st=ph.rep;return r}
   const r={st:'w',in:ph.in||'',out:ph.out||'',ph};for(const f of ['in','out'])if(m[f])r[f]=m[f];if(m.st&&m.st!='w'&&!ph.in)r.st=m.st;return r}
 function noMark(w,k){const r=recOf(w,k);if(r&&r.st)return false;if(k!=dKey(new Date()))return false;const s=tMin(TW.start)||480;const n=new Date();return n.getHours()*60+n.getMinutes()>s+30}
 function watchTk(u){if(!DB||TK['__w'+u])return;TK['__w'+u]=1;DB.collection('um/'+u+'/tk').onSnapshot(sn=>{const o={};sn.docs.forEach(x=>o[x.id]=x.data());TK[u]=o;if(curTab=='tab')renderTab();if(curTab=='me')renderMe();if(curTab=='home')renderHome()},()=>{})}
@@ -2625,7 +2666,7 @@ let ME_GEO=null;
 function meKey(){return dKey(new Date())}
 function meRec(){return UID&&TK[UID]?TK[UID][meKey()]:null}
 function renderMe(){if(UID)watchTk(UID);$('meDate').textContent=dRu(new Date());$('meClock').textContent=nowT();const r=meRec()||{};
-  if(r.rep&&!r.in){$('meState').innerHTML='Вы сообщили: <b>'+(r.rep=='s'?'🤒 заболел':'📝 отпрашиваетесь')+'</b> в '+esc(r.repT||'');$('meIn').disabled=false;$('meOut').disabled=true;return}
+  if(r.rep&&!r.in){$('meState').innerHTML='Вы сообщили: <b>'+(r.rep=='l'?'⏰ задерживаетесь'+(r.repAt?' до '+esc(r.repAt):''):r.rep=='s'?'🤒 заболел':'📝 отпрашиваетесь')+'</b> в '+esc(r.repT||'');$('meIn').disabled=false;$('meOut').disabled=true;return}
   $('meState').innerHTML=r.in?'Пришёл: <b>'+esc(r.in)+'</b>'+(r.out?' · Ушёл: <b>'+esc(r.out)+'</b>':''):'Сегодня ещё не отмечались';
   $('meIn').disabled=!!r.in;$('meOut').disabled=!r.in||!!r.out}
 setInterval(()=>{if(curTab=='me')$('meClock').textContent=nowT()},15000);
@@ -2650,10 +2691,12 @@ async function autoMark(){askPos();if(!UID||!DB)return;watchTk(UID);
   const r=meRec()||{};if(r.in){$('meMsg').textContent='Сегодня вы уже отметились. Когда уходите — нажмите «Я ушёл».';return}
   $('meMsg').textContent='📍 Отмечаю приход автоматически…';await meMark('in')}
 function meReport(kind){const r0=meRec()||{};if(r0.in&&!r0.out&&kind=='o'){}
-  skOpen(kind=='s'?'🤒 Я заболел':'📝 Отпроситься','<div style="font-size:14px">Руководитель увидит ваше сообщение в табеле.</div><label>Причина (по желанию)<input id="fRep" placeholder="'+(kind=='s'?'температура, врач…':'семейные дела, до 12:00…')+'"></label>',
-    async()=>{if(!DB||!UID){toast('Нет связи с программой');return}const k=meKey(),r={...(meRec()||{}),rep:kind,repN:skVal('fRep').trim(),repT:nowT(),repTs:Date.now()};
-      try{await DB.doc('um/'+UID+'/tk/'+k).set(r);TK[UID]={...(TK[UID]||{}),[k]:r};$('mSk').classList.remove('show');renderMe();$('meMsg').innerHTML='<b style="color:#16a34a">✓ Сообщение отправлено руководителю</b>'}catch(_){toast('Не сохранилось')}})}
-$('meSick').onclick=()=>meReport('s');$('meOff').onclick=()=>meReport('o');
+  const L=kind=='l';
+  skOpen(L?'⏰ Задерживаюсь':kind=='s'?'🤒 Я заболел':'📝 Отпроситься','<div style="font-size:14px">Руководитель увидит ваше сообщение в табеле.</div>'+(L?'<div class="two"><label>Приду примерно в<input id="fRepAt" type="time"></label><label>или через, мин<input id="fRepMin" inputmode="numeric" placeholder="30"></label></div>':'')+'<label>Причина (по желанию)<input id="fRep" placeholder="'+(L?'пробка, автобус…':kind=='s'?'температура, врач…':'семейные дела, до 12:00…')+'"></label>',
+    async()=>{if(!DB||!UID){toast('Нет связи с программой');return}let at='';if(L){at=skVal('fRepAt');const mn=num(skVal('fRepMin'));if(!at&&mn>0){const d=new Date(Date.now()+mn*60000);at=String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0')}}
+      const k=meKey(),r={...(meRec()||{}),rep:kind,repN:skVal('fRep').trim(),repT:nowT(),repTs:Date.now(),...(L?{repAt:at}:{})};
+      try{await DB.doc('um/'+UID+'/tk/'+k).set(r);TK[UID]={...(TK[UID]||{}),[k]:r};try{if(typeof GEO_TG!='undefined'&&GEO_TG&&GEO_TG.token&&GEO_TG.chat){const t=(L?'⏰ '+whoName(UID)+' задерживается'+(r.repAt?', придёт ~'+r.repAt:''):kind=='s'?'🤒 '+whoName(UID)+' заболел':'📝 '+whoName(UID)+' отпрашивается')+(r.repN?' — «'+r.repN+'»':'');fetch('https://api.telegram.org/bot'+GEO_TG.token+'/sendMessage',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({chat_id:GEO_TG.chat,text:t})}).catch(()=>{})}}catch(_){}$('mSk').classList.remove('show');renderMe();$('meMsg').innerHTML='<b style="color:#16a34a">✓ Сообщение отправлено руководителю</b>'}catch(_){toast('Не сохранилось')}})}
+$('meSick').onclick=()=>meReport('s');$('meLate').onclick=()=>meReport('l');$('meOff').onclick=()=>meReport('o');
 $('meIn').onclick=()=>meMark('in');
 document.addEventListener('click',e=>{if(e.target.id=='meAllow'){askPos();meMark('in')}});$('meOut').onclick=()=>meMark('out');
 async function tdSet(k,wid,patch){const recs={...(TD[k]||{})};recs[wid]={...(recs[wid]||{}),...patch};TD[k]=recs;renderTab();
@@ -2670,7 +2713,7 @@ function renderTab(){if(!IS_OWNER)return;tbSegShow();tbStartDb();$('tbImpBox').h
     '<div class="st">'+Object.keys(ST).map(c=>'<button class="'+c+(r.st==c?' on':'')+'" data-st="'+c+'" title="'+ST[c][0].replace(/^\S+\s/,'')+'">'+ST[c][0].split(' ')[0]+'</button>').join('')+'</div>'+
     '<div class="tmx">'+(wk?'<input type="time" data-t="in" value="'+esc(r.in||'')+'"><button data-now="in" title="сейчас">⏱</button><span>–</span><input type="time" data-t="out" value="'+esc(r.out||'')+'"><button data-now="out" title="сейчас">⏱</button>':'<span class="mut">'+ST[r.st][0]+'</span>')+'</div>'+
     '<div class="twh">'+(h?hText(h):'')+'</div>'+
-    (r.ph&&r.ph.rep?'<div class="repn">📱 '+esc(r.ph.repT||'')+': <b>'+(r.ph.rep=='s'?'🤒 заболел':'📝 отпрашивается')+'</b>'+(r.ph.repN?' — «'+esc(r.ph.repN)+'»':'')+'</div>':'')+
+    (r.ph&&r.ph.rep?'<div class="repn">📱 '+esc(r.ph.repT||'')+': <b>'+(r.ph.rep=='l'?'⏰ задерживается'+(r.ph.repAt?' — придёт ~'+esc(r.ph.repAt):''):r.ph.rep=='s'?'🤒 заболел':'📝 отпрашивается')+'</b>'+(r.ph.repN?' — «'+esc(r.ph.repN)+'»':'')+'</div>':'')+
     (r.ph&&!r.ph.rep&&(r.ph.inPh||r.ph.outPh)?'<div class="repn" style="background:none;padding:0">'+['in','out'].filter(f=>r.ph[f+'Ph']).map(f=>'<img data-tz src="'+r.ph[f+'Ph']+'" title="'+(f=='in'?'пришёл':'ушёл')+'" style="width:36px;height:36px;object-fit:cover;border-radius:8px;cursor:zoom-in">').join(' ')+'</div>':'')+
     '</div>'}).join(''):'<div class="empty">Добавьте персонал во вкладке «👥 Сотрудники».</div>';
   if(!typing($('tbPeople')))
@@ -3265,10 +3308,13 @@ function jalApply(jid){const L=order.filter(l=>l.jalId==jid),it=L.find(l=>l.jal)
   it.name='Жалюзи межстенные — '+tag+' (изделие под ключ)';it.note=C.n+' ламелей + 2 стойки';
   if(it.price==null||num(it.price)==num(it.jalAuto)){it.price=P.t||null}it.jalAuto=P.t||null;return {C,P}}
 function jalCliHtml(){if(MODE=='tun')return '';const G=order.filter(l=>l.jal);
-  return '<div class="card cl" id="jalCli" style="border:2px solid #99f6e4"><div class="mh" style="justify-content:space-between"><b>🪟 Жалюзи межстенные</b><button class="chip on" data-jcadd style="background:#0f766e;border-color:#0f766e">+ Проём</button></div>'+
+  const op=G.length||window.JAL_OPEN;
+  return '<details class="card cl" id="jalCli" style="border:2px solid #99f6e4;display:block"'+(op?' open':'')+'><summary style="cursor:pointer;font-size:16px;list-style:none;display:flex;justify-content:space-between;align-items:center"><b>🪟 Жалюзи межстенные'+(G.length?' · '+G.length+' пр.':'')+'</b><span style="color:var(--mut)">'+(op?'▴':'▾')+'</span></summary><div class="mh" style="justify-content:flex-end;gap:6px;margin-top:6px"><button class="chip" data-jcfull>📐 Чертёж / DXF</button><button class="chip on" data-jcadd style="background:#0f766e;border-color:#0f766e">+ Проём</button></div>'+
    (G.length?G.map(l=>{const C=jalWith(l.jal,jalCalc),P=jalWith(l.jal,()=>jalPrice(C));return '<div class="rw" data-jid="'+l.jalId+'" style="flex-wrap:wrap;gap:6px;margin-top:6px;padding-top:6px;border-top:1px dashed #cbd5e1">Проём <input data-jw inputmode="decimal" value="'+esc(String(l.jal.W))+'" style="width:64px;text-align:center"> × <input data-jh inputmode="decimal" value="'+esc(String(l.jal.H))+'" style="width:64px;text-align:center"> см'+
      '<span data-jinfo style="font-size:12px;color:var(--mut)">'+(C.n?C.n+' ламелей × '+fmt(C.L/1000)+' м':'—')+'</span><b data-jsum style="margin-left:auto">'+(num(l.price)?money(num(l.price))+' сум':'')+'</b><button class="x" data-jdel title="удалить">✕</button>'+(C.warn.length?'<div style="flex-basis:100%;font-size:12px;color:#b91c1c">'+C.warn[0]+'</div>':'')+'</div>'}).join(''):'<div style="font-size:13px;color:var(--mut);margin-top:4px">Нажмите «+ Проём» и впишите ширину × высоту — детали и цена сами появятся в заказе.</div>')+
-   '<div class="rw" style="margin-top:6px;font-size:13px">цена за м² развёртки <input data-jpm inputmode="numeric" value="'+esc(String(JAL.pm2||''))+'" placeholder="0" style="width:96px;text-align:center"> сум</div></div>'}
+   '<div class="rw" style="margin-top:6px;font-size:13px">цена за м² развёртки <input data-jpm inputmode="numeric" value="'+esc(String(JAL.pm2||''))+'" placeholder="0" style="width:96px;text-align:center"> сум</div></details>'}
+document.addEventListener('toggle',e=>{if(e.target&&e.target.id=='jalCli'){window.JAL_OPEN=e.target.open;const sp=e.target.querySelector('summary span');if(sp)sp.textContent=e.target.open?'▴':'▾'}},true);
+document.addEventListener('click',e=>{if(e.target.closest('[data-jcfull]'))jalOpen()});
 let JC_T=null;
 function jalCliRefresh(){const a=document.activeElement,keep=a&&a.closest&&a.closest('#jalCli')?{jid:(a.closest('[data-jid]')||{}).dataset?.jid,k:a.hasAttribute('data-jw')?'jw':a.hasAttribute('data-jh')?'jh':a.hasAttribute('data-jpm')?'jpm':'',pos:a.selectionStart}:null;
   save();renderOrd();badge();renderCli();
@@ -3687,7 +3733,7 @@ function renderUsers(){const box=$('usrBox');if(!box||!IS_OWNER)return;if(typing
     const used={};SK_MOVES.forEach(m=>{if((m._by||'')!=u||num(m.qty)>=0||!inPeriod({ts:m.ts},per))return;used[m.item]=(used[m.item]||0)-num(m.qty)});
     const ul=Object.keys(used).filter(k=>its[k]).map(k=>esc(skName(its[k]))+': <b>'+fmt(Math.round(used[k]*100)/100)+' '+skUnit(its[k])+'</b>').join('<br>')||'<span style="color:var(--mut)">ничего</span>';
     const st=STAFF[u];
-    return '<tr><td class="n">'+(u?'<input data-alias="'+u+'" value="'+esc(ALIAS[u]||'')+'" placeholder="'+esc(PNAMES[u]||'Имя')+'"><select data-role="'+u+'" style="margin-top:4px;width:100%;font-size:13px"><option value="">Сотрудник (только отметка)</option><option value="sales"'+(ROLES[u]=='sales'?' selected':'')+'>🧾 Продавец (заказы)</option><option value="sklad"'+(ROLES[u]=='sklad'?' selected':'')+'>📦 Начальник склада</option><option value="tsex"'+(ROLES[u]=='tsex'?' selected':'')+'>🏭 Цех — все этапы (начальник цеха)</option><option value="tsex_l"'+(ROLES[u]=='tsex_l'?' selected':'')+'>🔆 Лазерщик</option><option value="tsex_r"'+(ROLES[u]=='tsex_r'?' selected':'')+'>✂️ Резка (гильотина)</option><option value="tsex_g"'+(ROLES[u]=='tsex_g'?' selected':'')+'>🔧 Гибка</option><option value="tsex_d"'+(ROLES[u]=='tsex_d'?' selected':'')+'>🚚 Отгрузчик</option><option value="cash"'+(ROLES[u]=='cash'?' selected':'')+'>💵 Кассир</option><option value="buh"'+(ROLES[u]=='buh'?' selected':'')+'>📒 Бухгалтер</option></select>'+(ROLES[u]!='buh'?'<select data-role2="'+u+'" style="margin-top:4px;width:100%;font-size:13px"><option value="">➕ Вторая роль — нет</option>'+[['sales','🧾 Продавец'],['sklad','📦 Начальник склада'],['tsex','🏭 Цех — все этапы'],['tsex_l','🔆 Лазерщик'],['tsex_r','✂️ Резка'],['tsex_g','🔧 Гибка'],['tsex_d','🚚 Отгрузчик'],['cash','💵 Кассир']].filter(([k])=>k!=ROLES[u]).map(([k,t])=>'<option value="'+k+'"'+(ROLES[u+'@r2']==k?' selected':'')+'>➕ '+t+'</option>').join('')+'</select>':'')+(hasRole(u,/^tsex/)?'<select data-shop="'+u+'" style="margin-top:4px;width:100%;font-size:13px"><option value="">🏭 Оба цеха</option><option value="1"'+(ROLES[u+'@shop']=='1'?' selected':'')+'>🏭 Цех 1</option><option value="2"'+(ROLES[u+'@shop']=='2'?' selected':'')+'>🏭 Цех 2</option></select>':''):'Руководитель (вы)')+(st&&st.last?'<div style="font-size:12px;color:var(--mut);font-weight:400">заходил: '+new Date(st.last).toLocaleDateString('ru-RU')+'</div>':'')+'</td><td>Заказов: <b>'+os.length+'</b><br>Сумма: <b>'+money(sum)+'</b>'+(debt?'<br><span style="color:#dc2626">долги: '+money(debt)+'</span>':'')+'</td><td>'+ul+'</td></tr>'}).join('');
+    return '<tr><td class="n">'+(u?'<input data-alias="'+u+'" value="'+esc(ALIAS[u]||'')+'" placeholder="'+esc(PNAMES[u]||'Имя')+'"><select data-role="'+u+'" style="margin-top:4px;width:100%;font-size:13px"><option value="">Сотрудник (только отметка)</option><option value="sales"'+(ROLES[u]=='sales'?' selected':'')+'>🧾 Продавец (заказы)</option><option value="sklad"'+(ROLES[u]=='sklad'?' selected':'')+'>📦 Начальник склада</option><option value="tsex"'+(ROLES[u]=='tsex'?' selected':'')+'>🏭 Цех — все этапы (начальник цеха)</option><option value="tsex_l"'+(ROLES[u]=='tsex_l'?' selected':'')+'>🔆 Лазерщик</option><option value="tsex_r"'+(ROLES[u]=='tsex_r'?' selected':'')+'>✂️ Резка (гильотина)</option><option value="tsex_g"'+(ROLES[u]=='tsex_g'?' selected':'')+'>🔧 Гибка</option><option value="tsex_d"'+(ROLES[u]=='tsex_d'?' selected':'')+'>🚚 Отгрузчик</option><option value="tsex_p"'+(ROLES[u]=='tsex_p'?' selected':'')+'>📏 Профнастил (прокат)</option><option value="cash"'+(ROLES[u]=='cash'?' selected':'')+'>💵 Кассир</option><option value="buh"'+(ROLES[u]=='buh'?' selected':'')+'>📒 Бухгалтер</option></select>'+(ROLES[u]!='buh'?'<select data-role2="'+u+'" style="margin-top:4px;width:100%;font-size:13px"><option value="">➕ Вторая роль — нет</option>'+[['sales','🧾 Продавец'],['sklad','📦 Начальник склада'],['tsex','🏭 Цех — все этапы'],['tsex_l','🔆 Лазерщик'],['tsex_r','✂️ Резка'],['tsex_g','🔧 Гибка'],['tsex_d','🚚 Отгрузчик'],['tsex_p','📏 Профнастил'],['cash','💵 Кассир']].filter(([k])=>k!=ROLES[u]).map(([k,t])=>'<option value="'+k+'"'+(ROLES[u+'@r2']==k?' selected':'')+'>➕ '+t+'</option>').join('')+'</select>':'')+(hasRole(u,/^tsex/)?'<select data-shop="'+u+'" style="margin-top:4px;width:100%;font-size:13px"><option value="">🏭 Оба цеха</option><option value="1"'+(ROLES[u+'@shop']=='1'?' selected':'')+'>🏭 Цех 1</option><option value="2"'+(ROLES[u+'@shop']=='2'?' selected':'')+'>🏭 Цех 2</option></select>':''):'Руководитель (вы)')+(st&&st.last?'<div style="font-size:12px;color:var(--mut);font-weight:400">заходил: '+new Date(st.last).toLocaleDateString('ru-RU')+'</div>':'')+'</td><td>Заказов: <b>'+os.length+'</b><br>Сумма: <b>'+money(sum)+'</b>'+(debt?'<br><span style="color:#dc2626">долги: '+money(debt)+'</span>':'')+'</td><td>'+ul+'</td></tr>'}).join('');
   box.innerHTML='<details id="usrDet"'+(USR_OPEN?' open':'')+'><summary style="font-weight:800;font-size:16px;cursor:pointer;list-style:none;display:flex;align-items:center;gap:8px">👥 Пользователи и роли <span class="tg">'+Object.keys(STAFF).length+'</span><span style="margin-left:auto;font-size:13px;color:var(--mut);font-weight:600">'+(USR_OPEN?'свернуть ▲':'открыть ▼')+'</span></summary><div style="margin-top:8px">'+
    '<div class="rw2" style="margin-bottom:8px">'+[['m0','Этот месяц'],['m1','Прошлый'],['y','Год'],['all','Всё']].map(p=>'<button class="chip'+(p[0]==per?' on':'')+'" data-uper="'+p[0]+'">'+p[1]+'</button>').join('')+'</div>'+
    '<table class="ub" style="width:100%;border-collapse:collapse"><tr style="color:var(--mut);font-size:12px"><td>Кто</td><td>Заказы</td><td>Израсходовал со склада</td></tr>'+rows+'</table>'+
@@ -3698,7 +3744,7 @@ document.addEventListener('change',async e=>{const a=e.target.closest('[data-ali
 document.addEventListener('change',async e=>{const sh=e.target.closest('[data-shop]');if(sh&&DB){const roles={...ROLES},k=sh.dataset.shop+'@shop';if(sh.value)roles[k]=sh.value;else delete roles[k];try{await DB.doc('sk_cfg/roles').set(roles);ROLES=roles;toast(sh.value?'Работает в Цехе '+sh.value:'Работает в обоих цехах')}catch(_){toast('Не сохранилось')}return}
   const r2=e.target.closest('[data-role2]');if(r2&&DB){const roles={...ROLES},k=r2.dataset.role2+'@r2';if(r2.value&&!roles[r2.dataset.role2])roles[r2.dataset.role2]=r2.value;else if(r2.value)roles[k]=r2.value;else delete roles[k];try{await DB.doc('sk_cfg/roles').set(roles);ROLES=roles;renderUsers();toast(r2.value?'Вторая роль добавлена':'Вторая роль убрана')}catch(_){toast('Не сохранилось')}return}
   const r=e.target.closest('[data-role]');if(!r||!DB)return;const roles={...ROLES};if(r.value)roles[r.dataset.role]=r.value;else delete roles[r.dataset.role];if(r.value=='buh'||roles[r.dataset.role+'@r2']==r.value)delete roles[r.dataset.role+'@r2'];
-  try{await DB.doc('sk_cfg/roles').set(roles);ROLES=roles;toast(r.value=='tsex'?'Назначен в цех — видит заказы и отмечает этапы':r.value=='tsex_l'?'Назначен лазерщиком — видит и отмечает только лазер':r.value=='tsex_r'?'Назначен на резку':r.value=='tsex_g'?'Назначен на гибку':r.value=='tsex_d'?'Назначен отгрузчиком — отмечает «готов» и «отгружен»':r.value=='sklad'?'Назначен начальником склада':r.value=='sales'?'Назначен продавцом':r.value=='cash'?'Назначен кассиром':r.value=='buh'?'Назначен бухгалтером':'Роль снята')}catch(_){toast('Не сохранилось')}});
+  try{await DB.doc('sk_cfg/roles').set(roles);ROLES=roles;toast(r.value=='tsex'?'Назначен в цех — видит заказы и отмечает этапы':r.value=='tsex_l'?'Назначен лазерщиком — видит и отмечает только лазер':r.value=='tsex_r'?'Назначен на резку':r.value=='tsex_g'?'Назначен на гибку':r.value=='tsex_d'?'Назначен отгрузчиком — отмечает «готов» и «отгружен»':r.value=='tsex_p'?'Назначен на профнастил — отмечает «профнастил сделал»':r.value=='sklad'?'Назначен начальником склада':r.value=='sales'?'Назначен продавцом':r.value=='cash'?'Назначен кассиром':r.value=='buh'?'Назначен бухгалтером':'Роль снята')}catch(_){toast('Не сохранилось')}});
 // ---------- приём рулонов: начальник склада фотографирует, руководитель подтверждает ----------
 const TAG_PROMPT='Это фото бирки (этикетки) рулона окрашенной/оцинкованной стали (фото может быть повёрнуто). Поля бывают на трёх языках: «O‘LCHAM / РАЗМЕР / DIMENSIONS mm» (например 0.40*1250 = толщина 0.40 мм × ширина 1250 мм), «RANG / ЦВЕТ / COLOR» (код RAL, например 1015T2 → 1015), «NETTO / НЕТТО кг» (бери НЕТТО, не брутто), «UZUNLIK / ДЛИНА м», «PARTIYA / РУЛОН №», производитель (например SMZ). Ответь ТОЛЬКО JSON: {"thickness_mm":0.4,"width_m":1.25,"weight_t":5.344,"length_m":1418,"ral":"1015","coating":"глянец или мат/хапёр или null","coil_no":"номер рулона","supplier":"производитель"}. Вес нетто переведи в тонны (кг ÷ 1000). Ширину в метры. Если чего-то нет — null.';
 function ralLabel(code){const c=RAL.find(x=>x[0]==String(code||''));return c?(c[0]=='ZN'?'Оцинковка':'RAL '+c[0]+' '+c[1]):(code?'RAL '+code:'')}
@@ -4167,7 +4213,7 @@ function renderHome(){if(!IS_OWNER||!$('homeBody'))return;expStart();tbStartDb()
   const al=[];if(ib.length)al.push(['📦','Ждут подтверждения рулонов: <b>'+ib.length+'</b>','sk']);if(!USD||!USD.rate)al.push(['💲','Курс доллара не загрузился — впишите вручную','usd']);
   if(cashDue>0.5)al.push(['🧾','Персонал ещё не сдал наличные: <b>'+money(cashDue)+' сум</b>','log']);low.forEach(it=>al.push(['⚠️','Мало на складе: <b>'+esc(skName(it))+'</b> — '+fmt(Math.round(skBal(it.id)))+' '+skUnit(it),'sk']));
   {const nm=TW.list.filter(w=>noMark(w,dKey(new Date())));if(nm.length)al.push(['⚠️','Не отметились на работе: <b>'+nm.length+'</b> — '+esc(nm.slice(0,4).map(w=>w.name.split(' ')[0]).join(', '))+(nm.length>4?'…':''),'tab'])}
-  {const rp=TW.list.map(w=>recOf(w,dKey(new Date()))).filter(r=>r&&r.ph&&r.ph.rep&&!r.ph.in).length;if(rp)al.push(['🤒','Сообщили о болезни / отгуле: <b>'+rp+'</b>','tab'])}
+  {const rp=TW.list.map(w=>recOf(w,dKey(new Date()))).filter(r=>r&&r.ph&&r.ph.rep&&!r.ph.in).length;if(rp)al.push(['🤒','Сообщили: болезнь / отгул / задерживаются: <b>'+rp+'</b>','tab'])}
   if(M.unk>0.5)al.push(['💲','У части металла нет цены закупки — прибыль неточная','pl']);
   const h=new Date().getHours(),hi=h<12?'Доброе утро':h<18?'Добрый день':'Добрый вечер';
   $('homeBody').innerHTML=newOrdHtml()+'<div class="hhead"><div><b>'+hi+'!</b><div>'+td+' · '+['воскресенье','понедельник','вторник','среда','четверг','пятница','суббота'][d0.getDay()]+'</div></div>'+(USD&&USD.rate?'<div class="hus">$1 = <b>'+money(USD.rate)+'</b>'+(USD.buy?'<div style="font-size:11px;opacity:.85">покупка '+money(USD.buy)+' · продажа '+money(USD.sell)+'</div>':'')+'</div>':'')+'</div>'+
